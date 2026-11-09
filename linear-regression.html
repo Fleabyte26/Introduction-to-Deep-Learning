@@ -1,0 +1,236 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Linear Regression: Symbols Become Numbers</title>
+<style>
+  :root {
+    --bg: #fbfaf7; --ink: #1d1d1b; --quiet: #6b6a65; --grid: #e4e2dc; --card: #ffffff;
+    --sym: #2f6fb3; --num: #1d1d1b; --hi: #c2410c; --hiBg: rgba(194, 65, 12, 0.10); --good: #2e7d4f;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #1b1b1a; --ink: #ecebe7; --quiet: #a3a19b; --grid: #34332f; --card: #242422;
+      --sym: #6aa6e8; --num: #ecebe7; --hi: #f08a4b; --hiBg: rgba(240, 138, 75, 0.14); --good: #5fbf86;
+    }
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--ink);
+    font: 16px/1.5 ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif; }
+  main { max-width: 820px; margin: 0 auto; padding: 32px 20px 48px; }
+  h1 { font-size: 26px; margin: 0 0 6px; letter-spacing: -0.01em; }
+  .lead { color: var(--quiet); margin: 0 0 22px; }
+  .row { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; margin-bottom: 14px; }
+  .row .lbl { font-weight: 600; margin-right: 4px; }
+  button { font: inherit; padding: 6px 14px; border-radius: 8px; border: 1px solid var(--grid);
+    background: var(--card); color: var(--ink); cursor: pointer; }
+  button[aria-pressed="true"] { border-color: var(--sym); box-shadow: inset 0 0 0 1px var(--sym); font-weight: 600; }
+  button.primary { background: var(--sym); color: #fff; border-color: var(--sym); font-weight: 600; }
+  button:disabled { opacity: 0.4; cursor: default; }
+  .panel { background: var(--card); border: 1px solid var(--grid); border-radius: 12px; padding: 22px 20px; }
+  .stage { font-size: 13px; color: var(--quiet); text-transform: uppercase; letter-spacing: 0.06em; font-weight: 600; }
+  .formula { font: 500 38px/1.3 ui-serif, Georgia, "Times New Roman", serif; min-height: 64px; margin: 10px 0 6px;
+    display: flex; flex-wrap: wrap; align-items: baseline; gap: 0 2px; }
+  .tok { display: inline-block; padding: 0 3px; border-radius: 6px; transition: color .3s, background-color .3s; }
+  .tok.sym { color: var(--sym); font-style: italic; }
+  .tok.num { color: var(--num); }
+  .tok.op { color: var(--quiet); }
+  .tok.sup { font-size: 24px; line-height: 1; align-self: flex-start; padding: 6px 2px 0 0; color: var(--quiet); }
+  .tok.res { color: var(--good); font-weight: 700; }
+  .tok.fresh { color: var(--hi); background: var(--hiBg); animation: pop .55s ease-out; }
+  @keyframes pop { 0% { transform: translateY(-14px) scale(1.25); opacity: 0; } 60% { transform: translateY(2px) scale(1.05); opacity: 1; } 100% { transform: none; } }
+  .caption { font-size: 17px; min-height: 52px; margin: 6px 0 14px; }
+  .progress { height: 6px; background: var(--grid); border-radius: 3px; overflow: hidden; margin-bottom: 16px; }
+  .progress > span { display: block; height: 100%; background: var(--sym); transition: width .35s; }
+  .controls { display: flex; gap: 8px; align-items: center; }
+  .controls .count { margin-left: auto; color: var(--quiet); font-variant-numeric: tabular-nums; font-size: 14px; }
+  h2 { font-size: 19px; margin: 30px 0 10px; }
+  table { width: 100%; border-collapse: collapse; font-size: 15px; font-variant-numeric: tabular-nums; }
+  th, td { text-align: left; padding: 8px 10px; border-bottom: 1px solid var(--grid); }
+  th { color: var(--quiet); font-weight: 600; font-size: 13px; }
+  td.s { color: var(--sym); font-style: italic; font-family: ui-serif, Georgia, serif; font-size: 18px; }
+  tr.lit td { background: var(--hiBg); }
+  tr.lit td.s { color: var(--hi); }
+  .houses td.cur { font-weight: 700; }
+  .note { color: var(--quiet); font-size: 14px; margin-top: 10px; }
+  @media (max-width: 560px) { .formula { font-size: 28px; } }
+</style>
+</head>
+<body>
+<main>
+  <h1>Linear regression: symbols become numbers</h1>
+  <p class="lead">The two key formulas from section 3.1, worked on a real house. Watch each symbol turn into a number, one step at a time.</p>
+
+  <div class="row" role="group" aria-label="Pick a house">
+    <span class="lbl">House</span>
+    <button data-h="0" aria-pressed="true">A</button>
+    <button data-h="1" aria-pressed="false">B</button>
+    <button data-h="2" aria-pressed="false">C</button>
+  </div>
+
+  <div class="panel">
+    <div class="progress"><span id="bar"></span></div>
+    <div class="stage" id="stage"></div>
+    <div class="formula" id="formula" aria-live="polite"></div>
+    <div class="caption" id="caption"></div>
+    <div class="controls">
+      <button id="back">Back</button>
+      <button id="play" class="primary">Play</button>
+      <button id="next">Next</button>
+      <span class="count" id="count"></span>
+    </div>
+  </div>
+
+  <h2>What each symbol stands for</h2>
+  <table id="legend">
+    <thead><tr><th>Symbol</th><th>Meaning</th><th>This house</th></tr></thead>
+    <tbody></tbody>
+  </table>
+
+  <h2>All three houses</h2>
+  <table class="houses" id="houses">
+    <thead><tr><th>House</th><th>Size x₁ (m²)</th><th>Age x₂ (yr)</th><th>Prediction ŷ</th><th>Actual y</th><th>Loss ℓ = ½(ŷ − y)²</th></tr></thead>
+    <tbody></tbody>
+  </table>
+  <p class="note">The model's learned values: w₁ = 3, w₂ = −2, b = 50. Prices are in $1,000s. The book puts ½ in the loss so its derivative comes out clean; drop the ½ and the average becomes 72, the number in your study guide.</p>
+</main>
+
+<script>
+(function () {
+  const W1 = 3, W2 = -2, B = 50;
+  const HOUSES = [
+    { name: 'A', size: 100, age: 10, y: 340 },
+    { name: 'B', size: 80, age: 30, y: 220 },
+    { name: 'C', size: 120, age: 5, y: 404 }
+  ];
+  const pred = h => W1 * h.size + W2 * h.age + B;
+  const loss = h => 0.5 * Math.pow(pred(h) - h.y, 2);
+  const fmt = n => (n < 0 ? '−' + Math.abs(n) : String(n));
+  const paren = n => (n < 0 ? '(' + fmt(n) + ')' : fmt(n));
+
+  let hi = 0, step = 0, timer = null;
+
+  const U = () => ({ t: '2', c: 'sup' }), S = t => ({ t, c: 'sym' }), N = t => ({ t: String(t), c: 'num' }), O = t => ({ t, c: 'op' }), R = t => ({ t: String(t), c: 'res' });
+
+  function buildSteps(h) {
+    const p = pred(h), miss = p - h.y, l = loss(h);
+    const ls = HOUSES.map(loss), avg = ls.reduce((a, b) => a + b, 0) / ls.length;
+    return [
+      { stage: 'Formula 1 · the prediction', toks: [S('ŷ'), O('='), S('w₁'), O('·'), S('x₁'), O('+'), S('w₂'), O('·'), S('x₂'), O('+'), S('b')],
+        cap: 'The model: multiply each input by its weight, add them up, add the bias.', lit: [] },
+      { stage: 'Formula 1 · plug in the house', toks: [S('ŷ'), O('='), S('w₁'), O('·'), N(h.size), O('+'), S('w₂'), O('·'), N(h.age), O('+'), S('b')],
+        cap: 'x is the house: size x₁ = ' + h.size + ' m², age x₂ = ' + h.age + ' years.', lit: ['x₁', 'x₂'] },
+      { stage: 'Formula 1 · plug in what the model learned', toks: [S('ŷ'), O('='), N(W1), O('·'), N(h.size), O('+'), N(paren(W2)), O('·'), N(h.age), O('+'), N(B)],
+        cap: 'w and b are the numbers training found: w₁ = 3, w₂ = −2, b = 50.', lit: ['w₁', 'w₂', 'b'] },
+      { stage: 'Formula 1 · multiply', toks: [S('ŷ'), O('='), N(W1 * h.size), O('+'), N(paren(W2 * h.age)), O('+'), N(B)],
+        cap: '3 × ' + h.size + ' = ' + W1 * h.size + ', and −2 × ' + h.age + ' = ' + fmt(W2 * h.age) + '. Older houses lose value.', lit: [] },
+      { stage: 'Formula 1 · add', toks: [S('ŷ'), O('='), R(p)],
+        cap: 'Prediction: $' + p + 'k.', lit: ['ŷ'] },
+      { stage: 'Formula 2 · the loss', toks: [S('ℓ'), O('='), O('½'), O('('), S('ŷ'), O('−'), S('y'), O(')'), U()],
+        cap: 'How wrong was it? Take the miss, square it, halve it.', lit: [] },
+      { stage: 'Formula 2 · plug in', toks: [S('ℓ'), O('='), O('½'), O('('), N(p), O('−'), N(h.y), O(')'), U()],
+        cap: 'Predicted ' + p + ', actual price y = ' + h.y + '.', lit: ['y', 'ŷ'] },
+      { stage: 'Formula 2 · the miss', toks: [S('ℓ'), O('='), O('½'), O('·'), N('(' + fmt(miss) + ')'), U()],
+        cap: miss === 0 ? 'A perfect guess.' : 'Missed by ' + Math.abs(miss) + ' (' + (miss < 0 ? 'too low' : 'too high') + '). The sign won’t matter once we square it.', lit: [] },
+      { stage: 'Formula 2 · square', toks: [S('ℓ'), O('='), O('½'), O('·'), N(miss * miss)],
+        cap: 'Squaring makes every miss positive and punishes big misses much more than small ones.', lit: [] },
+      { stage: 'Formula 2 · halve', toks: [S('ℓ'), O('='), R(l)],
+        cap: 'This house’s loss is ' + l + '.', lit: ['ℓ'] },
+      { stage: 'Average over all houses', toks: [S('L'), O('='), O('('), N(ls[0]), O('+'), N(ls[1]), O('+'), N(ls[2]), O(')'), O('/'), N(3), O('='), R(avg)],
+        cap: 'Training repeats this for every house and averages: L = ' + avg + '. Gradient descent then nudges w₁, w₂ and b to make this number smaller.', lit: ['L'] }
+    ];
+  }
+
+  const LEGEND = [
+    ['x₁', 'input 1: size (m²)', h => h.size],
+    ['x₂', 'input 2: age (years)', h => h.age],
+    ['w₁', 'weight on size, learned', () => 3],
+    ['w₂', 'weight on age, learned', () => '−2'],
+    ['b', 'bias, the constant, learned', () => 50],
+    ['ŷ', 'prediction, “y-hat”', h => pred(h)],
+    ['y', 'actual price', h => h.y],
+    ['ℓ', 'loss for this house', h => loss(h)],
+    ['L', 'average loss, all houses', () => HOUSES.map(loss).reduce((a, b) => a + b, 0) / 3]
+  ];
+
+  const $ = id => document.getElementById(id);
+  let prevToks = [];
+
+  function render(animate) {
+    const h = HOUSES[hi], steps = buildSteps(h), s = steps[step];
+    $('stage').textContent = s.stage;
+    const f = $('formula');
+    f.replaceChildren();
+    s.toks.forEach((tk, i) => {
+      const span = document.createElement('span');
+      span.className = 'tok ' + tk.c;
+      const old = prevToks[i];
+      if (animate && (!old || old.t !== tk.t) && tk.c !== 'op' && tk.c !== 'sup') span.classList.add('fresh');
+      span.textContent = tk.t;
+      f.append(span);
+    });
+    prevToks = s.toks;
+    $('caption').textContent = s.cap;
+    $('bar').style.width = ((step + 1) / steps.length * 100) + '%';
+    $('count').textContent = 'Step ' + (step + 1) + ' of ' + steps.length;
+    $('back').disabled = step === 0;
+    $('next').disabled = step === steps.length - 1;
+
+    const tb = $('legend').tBodies[0];
+    tb.replaceChildren();
+    LEGEND.forEach(([sym, meaning, val]) => {
+      const tr = document.createElement('tr');
+      if (s.lit.includes(sym)) tr.className = 'lit';
+      tr.innerHTML = '<td class="s"></td><td></td><td></td>';
+      tr.children[0].textContent = sym;
+      tr.children[1].textContent = meaning;
+      tr.children[2].textContent = String(val(h));
+      tb.append(tr);
+    });
+
+    const hb = $('houses').tBodies[0];
+    hb.replaceChildren();
+    HOUSES.forEach((x, i) => {
+      const tr = document.createElement('tr');
+      [x.name, x.size, x.age, pred(x), x.y, loss(x)].forEach(v => {
+        const td = document.createElement('td');
+        td.textContent = String(v);
+        if (i === hi) td.className = 'cur';
+        tr.append(td);
+      });
+      hb.append(tr);
+    });
+  }
+
+  function stop() { clearInterval(timer); timer = null; $('play').textContent = step === buildSteps(HOUSES[hi]).length - 1 ? 'Replay' : 'Play'; }
+  function go(n) { step = n; render(true); }
+
+  $('next').addEventListener('click', () => { stop(); go(Math.min(step + 1, buildSteps(HOUSES[hi]).length - 1)); stop(); });
+  $('back').addEventListener('click', () => { stop(); go(Math.max(step - 1, 0)); });
+  $('play').addEventListener('click', () => {
+    if (timer) { stop(); return; }
+    const last = buildSteps(HOUSES[hi]).length - 1;
+    if (step === last) { prevToks = []; go(0); }
+    $('play').textContent = 'Pause';
+    timer = setInterval(() => {
+      if (step >= last) { stop(); return; }
+      go(step + 1);
+      if (step >= last) stop();
+    }, 2200);
+  });
+  document.querySelectorAll('[data-h]').forEach(b => b.addEventListener('click', () => {
+    stop();
+    hi = parseInt(b.dataset.h, 10);
+    document.querySelectorAll('[data-h]').forEach(x => x.setAttribute('aria-pressed', x === b));
+    prevToks = [];
+    step = 0;
+    render(true);
+    $('play').textContent = 'Play';
+  }));
+
+  render(false);
+})();
+</script>
+</body>
+</html>
