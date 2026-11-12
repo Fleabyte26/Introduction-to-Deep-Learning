@@ -1,0 +1,309 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Early Stopping: Clean Labels First, Noise Later</title>
+<style>
+  :root {
+    --bg: #fbfaf7; --ink: #1d1d1b; --quiet: #6b6a65; --grid: #e4e2dc; --axis: #9a978f; --card: #ffffff;
+    --curve: #2f6fb3; --ball: #c2410c; --trail: #c2410c; --good: #2e7d4f; --warn: #b7791f; --bad: #b42318;
+    --alt: #7a4fb5; --teal: #1f8a8a;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #1b1b1a; --ink: #ecebe7; --quiet: #a3a19b; --grid: #34332f; --axis: #6f6d67; --card: #242422;
+      --curve: #6aa6e8; --ball: #f08a4b; --trail: #f08a4b; --good: #5fbf86; --warn: #e0b04f; --bad: #f2786d;
+      --alt: #b497e6; --teal: #5cc4c4;
+    }
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--ink);
+    font: 16px/1.5 ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif; }
+  main { max-width: 860px; margin: 0 auto; padding: 32px 20px 48px; }
+  h1 { font-size: 26px; margin: 0 0 6px; letter-spacing: -0.01em; }
+  .lead { color: var(--quiet); margin: 0 0 22px; }
+  .panel { background: var(--card); border: 1px solid var(--grid); border-radius: 12px; padding: 16px; }
+  .panel + .panel, h2 + .panel { margin-top: 0; }
+  svg, canvas { width: 100%; height: auto; display: block; }
+  .two { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; align-items: start; }
+  .cap { font-size: 13px; color: var(--quiet); margin: 0 0 4px; font-weight: 600; }
+  .ctrl { display: grid; grid-template-columns: 170px 1fr 76px; align-items: center; gap: 10px; margin: 10px 0; }
+  .ctrl label { font-weight: 600; }
+  input[type=range] { width: 100%; accent-color: var(--curve); }
+  .val { font-variant-numeric: tabular-nums; text-align: right; font-weight: 600; }
+  .presets { display: flex; gap: 8px; flex-wrap: wrap; margin: 4px 0 12px 180px; }
+  button { font: inherit; padding: 6px 14px; border-radius: 8px; border: 1px solid var(--grid);
+    background: var(--card); color: var(--ink); cursor: pointer; }
+  button.primary { background: var(--curve); color: #fff; border-color: var(--curve); font-weight: 600; }
+  button.chip { font-size: 14px; padding: 4px 10px; }
+  button.chip.on { border-color: var(--curve); box-shadow: inset 0 0 0 1px var(--curve); font-weight: 600; }
+  .buttons { display: flex; gap: 8px; margin-top: 6px; flex-wrap: wrap; }
+  .update { font: 500 20px/1.45 ui-serif, Georgia, serif; margin: 14px 0 4px; min-height: 32px; }
+  .update .sym { color: var(--curve); font-style: italic; }
+  .update .hi { color: var(--ball); font-weight: 700; }
+  .update .sub { color: var(--quiet); font: 400 15px/1.4 ui-sans-serif, system-ui, sans-serif; display: block; margin-top: 2px; }
+  .stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-top: 12px; }
+  .stats.three { grid-template-columns: repeat(3, 1fr); }
+  .stat { border: 1px solid var(--grid); border-radius: 10px; padding: 10px 12px; }
+  .stat .k { font-size: 13px; color: var(--quiet); }
+  .stat .v { font-size: 21px; font-weight: 650; font-variant-numeric: tabular-nums; }
+  .verdict { margin-top: 14px; padding: 12px 14px; border-radius: 10px; border-left: 4px solid var(--good);
+    background: color-mix(in srgb, var(--good) 10%, transparent); }
+  .verdict.warn { border-left-color: var(--warn); background: color-mix(in srgb, var(--warn) 12%, transparent); }
+  .verdict.bad { border-left-color: var(--bad); background: color-mix(in srgb, var(--bad) 10%, transparent); }
+  h2 { font-size: 19px; margin: 30px 0 10px; }
+  table { width: 100%; border-collapse: collapse; font-size: 15px; font-variant-numeric: tabular-nums; }
+  th, td { text-align: right; padding: 6px 10px; border-bottom: 1px solid var(--grid); }
+  th:first-child, td:first-child { text-align: left; }
+  th { color: var(--quiet); font-weight: 600; font-size: 13px; }
+  tr.cur td { background: color-mix(in srgb, var(--ball) 10%, transparent); font-weight: 600; }
+  .note { color: var(--quiet); font-size: 14px; margin-top: 10px; }
+  .key { display: flex; gap: 16px; flex-wrap: wrap; font-size: 13px; color: var(--quiet); margin: 6px 0 0; }
+  .key span::before { content: ""; display: inline-block; width: 18px; height: 3px; border-radius: 2px; vertical-align: middle; margin-right: 6px; background: var(--c); }
+  .key span.dot::before { width: 9px; height: 9px; border-radius: 50%; }
+  .back { font-size: 14px; margin: 0 0 14px; }
+  .back a { color: var(--curve); text-decoration: none; }
+  @media (max-width: 640px) { .two { grid-template-columns: 1fr; } .ctrl { grid-template-columns: 1fr 70px; } .ctrl label { grid-column: 1 / -1; } .presets { margin-left: 0; } .stats, .stats.three { grid-template-columns: 1fr 1fr; } }
+</style>
+</head>
+<body>
+<main>
+  <h1>Early stopping: the pattern first, the noise later</h1>
+  <p class="lead">A network big enough to memorize anything is trained on points where some labels are wrong. It learns the real pattern first and only later bends itself around the wrong labels. Early stopping keeps the model from the moment validation loss was lowest. Press Play.</p>
+
+  <div class="panel">
+    <div class="two">
+      <div>
+        <p class="cap">What the network predicts (shading) and the training points</p>
+        <canvas id="map" width="800" height="600" role="img" aria-label="Decision regions of the network with training points"></canvas>
+        <div class="key"><span class="dot" style="--c:var(--curve)">Class A</span><span class="dot" style="--c:var(--ball)">Class B</span><span class="dot" style="--c:var(--ink)">Ringed: label is wrong</span></div>
+      </div>
+      <div>
+        <p class="cap">Loss over training</p>
+        <svg id="lossPlot" role="img" aria-label="Training and validation loss over training steps"></svg>
+        <div class="key"><span style="--c:var(--curve)">Training loss</span><span style="--c:var(--ball)">Validation loss</span><span style="--c:var(--good)">Best validation</span></div>
+      </div>
+    </div>
+
+    <div class="ctrl">
+      <label for="noise">Wrong labels</label>
+      <input id="noise" type="range" min="0" max="40" step="5" value="20">
+      <span class="val" id="noiseOut">20%</span>
+    </div>
+    <div class="ctrl">
+      <label for="pat">Patience (checks)</label>
+      <input id="pat" type="range" min="2" max="30" step="1" value="8">
+      <span class="val" id="patOut">8</span>
+    </div>
+    <div class="buttons">
+      <button id="play" class="primary">Play</button>
+      <button id="reset">Reset</button>
+      <button id="newData">New data</button>
+    </div>
+
+    <div class="stats">
+      <div class="stat"><div class="k">Training step</div><div class="v" id="sStep">0</div></div>
+      <div class="stat"><div class="k">Correct labels fitted</div><div class="v" id="sClean">0%</div></div>
+      <div class="stat"><div class="k">Wrong labels memorized</div><div class="v" id="sNoisy">0%</div></div>
+      <div class="stat"><div class="k">Accuracy on new points</div><div class="v" id="sAcc">0%</div></div>
+    </div>
+    <div class="verdict" id="verdict"></div>
+  </div>
+
+  <h2>Stopping early against training to the end</h2>
+  <table id="cmp">
+    <thead><tr><th>Model kept</th><th>Step</th><th>Validation loss</th><th>Wrong labels memorized</th><th>Accuracy on new points</th></tr></thead>
+    <tbody></tbody>
+  </table>
+  <p class="note">How early stopping decides: every 10 steps it checks the validation loss. If the loss has not improved for the number of checks set by Patience, training stops and the best model seen so far is kept. Here training carries on past that point so you can see what stopping saved you from.</p>
+  <p class="note">This is the argument of Section 5.5 of <i>Dive into Deep Learning</i>: with label noise, networks tend to fit the cleanly labeled data first and only afterwards the mislabeled data, so stopping early acts as a regularizer. Set Wrong labels to 0% and the book's other point shows up: with clean, separable data, early stopping saves time but changes little.</p>
+  <p class="note">What runs here: a real network trained live in your browser, with 2 inputs, 200 hidden ReLU units and 1 output, on 80 training points, using the Adam optimizer. Validation loss is measured on 300 other points whose labels are noisy at the same rate. "Accuracy on new points" compares against the true classes.</p>
+</main>
+
+<script>
+(function () {
+  const $ = id => document.getElementById(id);
+  const css = n => getComputedStyle(document.documentElement).getPropertyValue(n).trim();
+  const el = (tag, attrs, text) => { const e = document.createElementNS('http://www.w3.org/2000/svg', tag); for (const k in attrs) e.setAttribute(k, attrs[k]); if (text !== undefined) e.textContent = text; return e; };
+  const minus = s => String(s).replace(/-/g, '−');
+  const fx = (v, d) => { const t = Math.abs(v) >= 1e5 ? v.toExponential(2) : v.toFixed(d === undefined ? 3 : d); return minus(/^-0(\.0+)?$/.test(t) ? t.slice(1) : t); };
+  const sci = v => { if (v === 0) return '0'; const a = Math.abs(v); return minus(a >= 0.001 && a < 1000 ? v.toPrecision(3) : v.toExponential(1)); };
+  // Small seeded random generator so a run can be replayed exactly.
+  function rng(seed) {
+    let a = seed >>> 0, spare = null;
+    const u = () => { a |= 0; a = a + 0x6D2B79F5 | 0; let t = Math.imul(a ^ a >>> 15, 1 | a); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; };
+    const g = () => { if (spare !== null) { const s = spare; spare = null; return s; } let x, y, r; do { x = 2 * u() - 1; y = 2 * u() - 1; r = x * x + y * y; } while (r >= 1 || r === 0); const m = Math.sqrt(-2 * Math.log(r) / r); spare = y * m; return x * m; };
+    return { u, g };
+  }
+  // Draws axes into an svg and returns the coordinate mappers. o.logY plots log10(y).
+  function axes(svg, o) {
+    const W = o.W, H = o.H, l = o.l === undefined ? 52 : o.l, r = o.r === undefined ? 16 : o.r, t = o.t === undefined ? 14 : o.t, b = o.b === undefined ? 38 : o.b;
+    svg.setAttribute('viewBox', '0 0 ' + W + ' ' + H); svg.replaceChildren();
+    const grid = css('--grid'), quiet = css('--quiet'), axis = css('--axis');
+    const ty = v => o.logY ? Math.log10(v) : v;
+    const y0 = ty(o.y0), y1 = ty(o.y1);
+    const X = x => l + (x - o.x0) / (o.x1 - o.x0) * (W - l - r);
+    const Y = y => t + (y1 - ty(y)) / (y1 - y0) * (H - t - b);
+    (o.yt || []).forEach(v => {
+      svg.append(el('line', { x1: l, x2: W - r, y1: Y(v), y2: Y(v), stroke: grid }));
+      svg.append(el('text', { x: l - 7, y: Y(v) + 4, 'text-anchor': 'end', 'font-size': 12, fill: quiet }, o.yf ? o.yf(v) : minus(v)));
+    });
+    (o.xt || []).forEach(v => svg.append(el('text', { x: X(v), y: H - b + 17, 'text-anchor': 'middle', 'font-size': 12, fill: quiet }, o.xf ? o.xf(v) : minus(v))));
+    svg.append(el('line', { x1: l, x2: W - r, y1: H - b, y2: H - b, stroke: axis }));
+    if (o.xl) svg.append(el('text', { x: (l + W - r) / 2, y: H - 4, 'text-anchor': 'middle', 'font-size': 12, fill: quiet }, o.xl));
+    if (o.yl) svg.append(el('text', { x: l, y: t - 3, 'text-anchor': 'start', 'font-size': 12, fill: quiet }, o.yl));
+    const id = 'clip' + Math.random().toString(36).slice(2, 8);
+    const defs = el('defs'), cp = el('clipPath', { id }); cp.append(el('rect', { x: l, y: t, width: W - l - r, height: H - t - b })); defs.append(cp); svg.append(defs);
+    const g = el('g', { 'clip-path': 'url(#' + id + ')' }); svg.append(g);
+    return { X, Y, g, l, r, t, b, W, H };
+  }
+  const pathOf = (pts, X, Y) => pts.map((p, i) => (i ? 'L' : 'M') + X(p[0]).toFixed(1) + ' ' + Y(p[1]).toFixed(1)).join('');
+  // Elliptical contours of a*x^2 + b*y^2 for the given levels.
+  function ellipses(ax, a, b, levels) {
+    const sx = Math.abs(ax.X(1) - ax.X(0)), sy = Math.abs(ax.Y(1) - ax.Y(0));
+    levels.forEach(L => ax.g.append(el('ellipse', { cx: ax.X(0), cy: ax.Y(0), rx: Math.sqrt(L / a) * sx, ry: Math.sqrt(L / b) * sy, fill: 'none', stroke: css('--grid'), 'stroke-width': 1.4 })));
+    ax.g.append(el('circle', { cx: ax.X(0), cy: ax.Y(0), r: 3.5, fill: css('--good') }));
+  }
+  const onTheme = fn => { if (window.matchMedia) window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', fn); };
+
+  const HID = 200, NTR = 80, NVA = 300, LRATE = 0.005, MAX_STEP = 1500, CHECK = 10, PER_FRAME = 5, GW = 64, GH = 48;
+  const XR = [-1.8, 1.8], YR = [-1.65, 1.65];
+  let noise = 0.2, patience = 8, seed = 3, R, tr, va, W1, b1, W2, b2, mA, vA, step, hist, best, stopped, timer = null;
+  const hid = new Float64Array(HID);
+
+  function moons(n) {
+    const P = [];
+    for (let i = 0; i < n; i++) {
+      const c = i % 2, t = Math.PI * R.u(); let x, y;
+      if (c === 0) { x = Math.cos(t); y = Math.sin(t); } else { x = 1 - Math.cos(t); y = 0.5 - Math.sin(t); }
+      x += 0.12 * R.g(); y += 0.12 * R.g();
+      P.push({ x: (x - 0.5) * 1.2, y: (y - 0.25) * 1.6, c, flip: false });
+    }
+    return P;
+  }
+  const label = p => p.flip ? 1 - p.c : p.c;
+  function forward(x, y, keep) {
+    let o = b2;
+    for (let h = 0; h < HID; h++) { const a = W1[2 * h] * x + W1[2 * h + 1] * y + b1[h], r = a > 0 ? a : 0; if (keep) hid[h] = r; o += W2[h] * r; }
+    return o;
+  }
+  const bce = (o, t) => Math.max(o, 0) - o * t + Math.log1p(Math.exp(-Math.abs(o)));
+
+  function init(newData) {
+    if (newData) seed++;
+    R = rng(seed); tr = moons(NTR); va = moons(NVA);
+    const idx = tr.map((_, i) => i); for (let i = idx.length - 1; i > 0; i--) { const k = Math.floor(R.u() * (i + 1)); [idx[i], idx[k]] = [idx[k], idx[i]]; }
+    const nFlip = Math.round(noise * NTR); for (let i = 0; i < nFlip; i++) tr[idx[i]].flip = true;
+    va.forEach(p => { p.flip = R.u() < noise; });
+    W1 = new Float64Array(2 * HID); b1 = new Float64Array(HID); W2 = new Float64Array(HID); b2 = 0;
+    for (let h = 0; h < HID; h++) { W1[2 * h] = R.g() * 1.5; W1[2 * h + 1] = R.g() * 1.5; b1[h] = R.g() * 0.5; W2[h] = R.g() / Math.sqrt(HID); }
+    mA = new Float64Array(4 * HID + 1); vA = new Float64Array(4 * HID + 1);
+    step = 0; hist = []; best = null; stopped = null; measure();
+  }
+  function measure() {
+    let lt = 0, lv = 0, cOk = 0, cN = 0, nOk = 0, nN = 0, acc = 0;
+    tr.forEach(p => { const o = forward(p.x, p.y), pred = o > 0 ? 1 : 0; lt += bce(o, label(p)); if (p.flip) { nN++; if (pred === label(p)) nOk++; } else { cN++; if (pred === label(p)) cOk++; } });
+    va.forEach(p => { const o = forward(p.x, p.y); lv += bce(o, label(p)); if ((o > 0 ? 1 : 0) === p.c) acc++; });
+    const m = { s: step, tr: lt / NTR, va: lv / NVA, clean: cN ? cOk / cN : 1, noisy: nN ? nOk / nN : null, acc: acc / NVA };
+    hist.push(m);
+    if (!best || m.va < best.va - 1e-4) best = m;
+    if (!stopped && step > 0 && (step - best.s) / CHECK >= patience) stopped = { at: step, kept: best };
+    return m;
+  }
+  function trainStep() {
+    const n = 4 * HID + 1, g = new Float64Array(n);
+    tr.forEach(p => {
+      const o = forward(p.x, p.y, true), d = (1 / (1 + Math.exp(-o)) - label(p)) / NTR;
+      g[4 * HID] += d;
+      for (let h = 0; h < HID; h++) { g[3 * HID + h] += d * hid[h]; if (hid[h] > 0) { const dh = d * W2[h]; g[2 * h] += dh * p.x; g[2 * h + 1] += dh * p.y; g[2 * HID + h] += dh; } }
+    });
+    step++;
+    const c1 = 1 - Math.pow(0.9, step), c2 = 1 - Math.pow(0.999, step);
+    for (let i = 0; i < n; i++) {
+      mA[i] = 0.9 * mA[i] + 0.1 * g[i]; vA[i] = 0.999 * vA[i] + 0.001 * g[i] * g[i];
+      const up = LRATE * (mA[i] / c1) / (Math.sqrt(vA[i] / c2) + 1e-8);
+      if (i < 2 * HID) W1[i] -= up; else if (i < 3 * HID) b1[i - 2 * HID] -= up; else if (i < 4 * HID) W2[i - 3 * HID] -= up; else b2 -= up;
+    }
+    if (step % CHECK === 0) measure();
+  }
+
+  const hex = v => { const m = /^#?([0-9a-f]{6})$/i.exec(v.trim()); return m ? [parseInt(m[1].slice(0, 2), 16), parseInt(m[1].slice(2, 4), 16), parseInt(m[1].slice(4, 6), 16)] : [128, 128, 128]; };
+  function drawMap() {
+    const cv = $('map'), ctx = cv.getContext('2d'), W = cv.width, H = cv.height;
+    const cA = hex(css('--curve')), cB = hex(css('--ball')), bg = hex(css('--card')), ink = css('--ink'), card = css('--card');
+    const cw = W / GW, ch = H / GH;
+    for (let j = 0; j < GH; j++) for (let i = 0; i < GW; i++) {
+      const x = XR[0] + (i + 0.5) / GW * (XR[1] - XR[0]), y = YR[1] - (j + 0.5) / GH * (YR[1] - YR[0]);
+      const p = 1 / (1 + Math.exp(-forward(x, y))), c = p > 0.5 ? cB : cA, a = 0.08 + 0.42 * Math.abs(p - 0.5) * 2;
+      ctx.fillStyle = 'rgb(' + c.map((v, k) => Math.round(bg[k] + (v - bg[k]) * a)).join(',') + ')';
+      ctx.fillRect(Math.floor(i * cw), Math.floor(j * ch), Math.ceil(cw), Math.ceil(ch));
+    }
+    const PX = x => (x - XR[0]) / (XR[1] - XR[0]) * W, PY = y => (YR[1] - y) / (YR[1] - YR[0]) * H;
+    tr.forEach(p => {
+      const col = label(p) === 1 ? css('--ball') : css('--curve');
+      ctx.beginPath(); ctx.arc(PX(p.x), PY(p.y), 9, 0, 2 * Math.PI); ctx.fillStyle = col; ctx.fill(); ctx.lineWidth = 2; ctx.strokeStyle = card; ctx.stroke();
+      if (p.flip) { ctx.beginPath(); ctx.arc(PX(p.x), PY(p.y), 15, 0, 2 * Math.PI); ctx.lineWidth = 3; ctx.strokeStyle = ink; ctx.stroke(); }
+    });
+  }
+  function drawLoss() {
+    const top = Math.max(1.2, Math.ceil(Math.max(...hist.map(h => h.va)) * 5) / 5);
+    const yt = []; for (let v = 0; v <= top + 1e-9; v += top > 2 ? 0.5 : 0.2) yt.push(Math.round(v * 10) / 10);
+    const ax = axes($('lossPlot'), { W: 400, H: 300, x0: 0, x1: MAX_STEP, y0: 0, y1: top, xt: [0, 500, 1000, 1500], yt, yf: v => v.toFixed(1), xl: 'training step', l: 40 });
+    if (stopped) {
+      ax.g.append(el('rect', { x: ax.X(stopped.at), y: ax.t, width: ax.X(MAX_STEP) - ax.X(stopped.at), height: ax.H - ax.t - ax.b, fill: css('--bad'), 'fill-opacity': 0.07 }));
+      ax.g.append(el('line', { x1: ax.X(stopped.at), x2: ax.X(stopped.at), y1: ax.t, y2: ax.H - ax.b, stroke: css('--bad'), 'stroke-dasharray': '4 4' }));
+      ax.g.append(el('text', { x: ax.X(stopped.at) + 5, y: ax.t + 14, 'font-size': 11, fill: css('--bad') }, 'early stopping ends here'));
+    }
+    ax.g.append(el('path', { d: pathOf(hist.map(h => [h.s, h.tr]), ax.X, ax.Y), fill: 'none', stroke: css('--curve'), 'stroke-width': 2.5 }));
+    ax.g.append(el('path', { d: pathOf(hist.map(h => [h.s, Math.min(h.va, top)]), ax.X, ax.Y), fill: 'none', stroke: css('--ball'), 'stroke-width': 2.5 }));
+    if (best && step > 0) {
+      ax.g.append(el('circle', { cx: ax.X(best.s), cy: ax.Y(best.va), r: 6, fill: css('--good'), stroke: css('--card'), 'stroke-width': 2 }));
+      ax.g.append(el('text', { x: ax.X(best.s) + 9, y: ax.Y(best.va) + 16, 'font-size': 11, fill: css('--good') }, 'best: step ' + best.s));
+    }
+  }
+  const pct = v => v === null ? 'none' : Math.round(v * 100) + '%';
+  function render() {
+    const m = hist[hist.length - 1];
+    $('sStep').textContent = step; $('sClean').textContent = pct(m.clean); $('sNoisy').textContent = pct(m.noisy); $('sAcc').textContent = (m.acc * 100).toFixed(1) + '%';
+    let cls = '', msg;
+    if (step === 0) msg = 'Press Play. The ringed points carry the wrong label on purpose. Watch which points the shading wraps around first.';
+    else if (!stopped) msg = 'Still learning the real pattern: ' + pct(m.clean) + ' of the correctly labeled points are fitted, and ' + (m.noisy === null ? 'there are no wrong labels to memorize.' : 'only ' + pct(m.noisy) + ' of the wrong labels.') + ' Validation loss was lowest at step ' + best.s + '.';
+    else if (noise === 0) msg = 'No wrong labels: early stopping ended at step ' + stopped.at + ' and kept step ' + stopped.kept.s + ' (' + (stopped.kept.acc * 100).toFixed(1) + '% on new points). Training longer gives ' + (m.acc * 100).toFixed(1) + '%. With clean data it saves time but changes little.';
+    else {
+      const lost = (stopped.kept.acc - m.acc) * 100;
+      cls = lost > 2 ? 'bad' : 'warn';
+      msg = 'Early stopping ended at step ' + stopped.at + ' and kept the model from step ' + stopped.kept.s + ': ' + (stopped.kept.acc * 100).toFixed(1) + '% on new points, with ' + pct(stopped.kept.noisy) + ' of wrong labels memorized. Training on to step ' + step + ', the network has memorized ' + pct(m.noisy) + ' of the wrong labels and scores ' + (m.acc * 100).toFixed(1) + '% on new points.';
+    }
+    $('verdict').className = 'verdict' + (cls ? ' ' + cls : ''); $('verdict').textContent = msg;
+    const tb = $('cmp').tBodies[0]; tb.replaceChildren();
+    const rows = [];
+    if (stopped) rows.push(['Early stopping (best validation loss)', stopped.kept, true]);
+    rows.push([step >= MAX_STEP ? 'Trained to the end' : 'Still training', m, false]);
+    rows.forEach(([name, h, cur]) => { const trEl = document.createElement('tr'); if (cur) trEl.className = 'cur'; [name, h.s, h.va.toFixed(3), pct(h.noisy), (h.acc * 100).toFixed(1) + '%'].forEach(v => { const td = document.createElement('td'); td.textContent = String(v); trEl.append(td); }); tb.append(trEl); });
+    drawMap(); drawLoss();
+  }
+  function stop() { clearInterval(timer); timer = null; $('play').textContent = 'Play'; }
+  function reset(newData) { stop(); init(newData); render(); }
+  $('play').addEventListener('click', () => {
+    if (timer) { stop(); return; }
+    if (step >= MAX_STEP) reset(false);
+    $('play').textContent = 'Pause';
+    timer = setInterval(() => { for (let i = 0; i < PER_FRAME && step < MAX_STEP; i++) trainStep(); render(); if (step >= MAX_STEP) stop(); }, 40);
+  });
+  $('reset').addEventListener('click', () => reset(false));
+  $('newData').addEventListener('click', () => reset(true));
+  $('noise').addEventListener('input', e => { noise = parseInt(e.target.value, 10) / 100; $('noiseOut').textContent = e.target.value + '%'; reset(false); });
+  $('pat').addEventListener('input', e => {
+    patience = parseInt(e.target.value, 10); $('patOut').textContent = patience;
+    // Recompute where early stopping would have ended for the run so far.
+    stopped = null; let bestSoFar = null;
+    for (const h of hist) { if (!bestSoFar || h.va < bestSoFar.va - 1e-4) bestSoFar = h; if (h.s > 0 && (h.s - bestSoFar.s) / CHECK >= patience) { stopped = { at: h.s, kept: bestSoFar }; break; } }
+    render();
+  });
+  onTheme(render);
+  init(false); render();
+})();
+</script>
+</body>
+</html>

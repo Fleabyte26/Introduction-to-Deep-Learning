@@ -1,0 +1,245 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Momentum: A Heavy Ball That Remembers</title>
+<style>
+  :root {
+    --bg: #fbfaf7; --ink: #1d1d1b; --quiet: #6b6a65; --grid: #e4e2dc; --axis: #9a978f; --card: #ffffff;
+    --curve: #2f6fb3; --ball: #c2410c; --trail: #c2410c; --good: #2e7d4f; --warn: #b7791f; --bad: #b42318;
+    --alt: #7a4fb5; --teal: #1f8a8a;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #1b1b1a; --ink: #ecebe7; --quiet: #a3a19b; --grid: #34332f; --axis: #6f6d67; --card: #242422;
+      --curve: #6aa6e8; --ball: #f08a4b; --trail: #f08a4b; --good: #5fbf86; --warn: #e0b04f; --bad: #f2786d;
+      --alt: #b497e6; --teal: #5cc4c4;
+    }
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--ink);
+    font: 16px/1.5 ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif; }
+  main { max-width: 860px; margin: 0 auto; padding: 32px 20px 48px; }
+  h1 { font-size: 26px; margin: 0 0 6px; letter-spacing: -0.01em; }
+  .lead { color: var(--quiet); margin: 0 0 22px; }
+  .panel { background: var(--card); border: 1px solid var(--grid); border-radius: 12px; padding: 16px; }
+  .panel + .panel, h2 + .panel { margin-top: 0; }
+  svg, canvas { width: 100%; height: auto; display: block; }
+  .two { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; align-items: start; }
+  .cap { font-size: 13px; color: var(--quiet); margin: 0 0 4px; font-weight: 600; }
+  .ctrl { display: grid; grid-template-columns: 170px 1fr 76px; align-items: center; gap: 10px; margin: 10px 0; }
+  .ctrl label { font-weight: 600; }
+  input[type=range] { width: 100%; accent-color: var(--curve); }
+  .val { font-variant-numeric: tabular-nums; text-align: right; font-weight: 600; }
+  .presets { display: flex; gap: 8px; flex-wrap: wrap; margin: 4px 0 12px 180px; }
+  button { font: inherit; padding: 6px 14px; border-radius: 8px; border: 1px solid var(--grid);
+    background: var(--card); color: var(--ink); cursor: pointer; }
+  button.primary { background: var(--curve); color: #fff; border-color: var(--curve); font-weight: 600; }
+  button.chip { font-size: 14px; padding: 4px 10px; }
+  button.chip.on { border-color: var(--curve); box-shadow: inset 0 0 0 1px var(--curve); font-weight: 600; }
+  .buttons { display: flex; gap: 8px; margin-top: 6px; flex-wrap: wrap; }
+  .update { font: 500 20px/1.45 ui-serif, Georgia, serif; margin: 14px 0 4px; min-height: 32px; }
+  .update .sym { color: var(--curve); font-style: italic; }
+  .update .hi { color: var(--ball); font-weight: 700; }
+  .update .sub { color: var(--quiet); font: 400 15px/1.4 ui-sans-serif, system-ui, sans-serif; display: block; margin-top: 2px; }
+  .stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-top: 12px; }
+  .stats.three { grid-template-columns: repeat(3, 1fr); }
+  .stat { border: 1px solid var(--grid); border-radius: 10px; padding: 10px 12px; }
+  .stat .k { font-size: 13px; color: var(--quiet); }
+  .stat .v { font-size: 21px; font-weight: 650; font-variant-numeric: tabular-nums; }
+  .verdict { margin-top: 14px; padding: 12px 14px; border-radius: 10px; border-left: 4px solid var(--good);
+    background: color-mix(in srgb, var(--good) 10%, transparent); }
+  .verdict.warn { border-left-color: var(--warn); background: color-mix(in srgb, var(--warn) 12%, transparent); }
+  .verdict.bad { border-left-color: var(--bad); background: color-mix(in srgb, var(--bad) 10%, transparent); }
+  h2 { font-size: 19px; margin: 30px 0 10px; }
+  table { width: 100%; border-collapse: collapse; font-size: 15px; font-variant-numeric: tabular-nums; }
+  th, td { text-align: right; padding: 6px 10px; border-bottom: 1px solid var(--grid); }
+  th:first-child, td:first-child { text-align: left; }
+  th { color: var(--quiet); font-weight: 600; font-size: 13px; }
+  tr.cur td { background: color-mix(in srgb, var(--ball) 10%, transparent); font-weight: 600; }
+  .note { color: var(--quiet); font-size: 14px; margin-top: 10px; }
+  .key { display: flex; gap: 16px; flex-wrap: wrap; font-size: 13px; color: var(--quiet); margin: 6px 0 0; }
+  .key span::before { content: ""; display: inline-block; width: 18px; height: 3px; border-radius: 2px; vertical-align: middle; margin-right: 6px; background: var(--c); }
+  .key span.dot::before { width: 9px; height: 9px; border-radius: 50%; }
+  .back { font-size: 14px; margin: 0 0 14px; }
+  .back a { color: var(--curve); text-decoration: none; }
+  @media (max-width: 640px) { .two { grid-template-columns: 1fr; } .ctrl { grid-template-columns: 1fr 70px; } .ctrl label { grid-column: 1 / -1; } .presets { margin-left: 0; } .stats, .stats.three { grid-template-columns: 1fr 1fr; } }
+</style>
+</head>
+<body>
+<main>
+  <h1>Momentum: a heavy ball that remembers</h1>
+  <p class="lead">This valley is gentle along x₁ and steep along x₂. Plain gradient descent has to choose: a small step that crawls along the floor, or a big step that bounces off the walls. Momentum averages recent gradients, so the bouncing cancels out and the steady push along the floor adds up. Try the four presets from the book.</p>
+
+  <div class="panel">
+    <p class="cap">The path on f(x₁, x₂) = 0.1x₁² + 2x₂²</p>
+    <svg id="plot" role="img" aria-label="Path of gradient descent with momentum in a narrow valley"></svg>
+    <div class="key"><span style="--c:var(--ball)">With momentum β</span><span style="--c:var(--axis)">Plain gradient descent, same η</span><span class="dot" style="--c:var(--good)">Goal (0, 0)</span></div>
+
+    <div class="ctrl">
+      <label for="eta">Learning rate η</label>
+      <input id="eta" type="range" min="0.05" max="0.7" step="0.05" value="0.6">
+      <span class="val" id="etaOut">0.60</span>
+    </div>
+    <div class="ctrl">
+      <label for="beta">Momentum β</label>
+      <input id="beta" type="range" min="0" max="0.95" step="0.05" value="0.5">
+      <span class="val" id="betaOut">0.50</span>
+    </div>
+    <div class="presets" role="group" aria-label="Presets from the book">
+      <button class="chip" data-eta="0.4" data-beta="0">η 0.4, no momentum</button>
+      <button class="chip" data-eta="0.6" data-beta="0">η 0.6, no momentum</button>
+      <button class="chip" data-eta="0.6" data-beta="0.5">η 0.6, β 0.5</button>
+      <button class="chip" data-eta="0.6" data-beta="0.25">η 0.6, β 0.25</button>
+    </div>
+    <div class="buttons">
+      <button id="play" class="primary">Play</button>
+      <button id="stepBtn">One step</button>
+      <button id="reset">Reset</button>
+    </div>
+
+    <div class="update" id="update"></div>
+    <div class="stats">
+      <div class="stat"><div class="k">Step</div><div class="v" id="sStep">0</div></div>
+      <div class="stat"><div class="k">x₁ (gentle direction)</div><div class="v" id="sX1">−5.000</div></div>
+      <div class="stat"><div class="k">x₂ (steep direction)</div><div class="v" id="sX2">−2.000</div></div>
+      <div class="stat"><div class="k">Gradients remembered</div><div class="v" id="sEff">2.0</div></div>
+    </div>
+    <div class="verdict" id="verdict"></div>
+  </div>
+
+  <h2>What "remembering" means</h2>
+  <div class="panel">
+    <p class="cap">How much each past gradient still counts in the current velocity</p>
+    <svg id="weights" role="img" aria-label="Weight given to each past gradient"></svg>
+    <p class="note" id="wNote"></p>
+  </div>
+  <p class="note">From Section 12.6 of <i>Dive into Deep Learning</i>. The function, the starting point (−5, −2) and the four presets are the book's. With η = 0.6 and β = 0.5 the book reports x₁ = 0.007188 and x₂ = 0.002553 after 20 steps, and this page gives the same numbers. The velocity is a "leaky average": v ← βv + gradient, then x ← x − ηv. A gradient from k steps ago still counts with weight βᵏ, and the weights add up to 1 / (1 − β).</p>
+  <p class="note">Why it rescues the steep direction: in x₂ the gradients flip sign on every bounce, so in the average they mostly cancel. In x₁ they all point the same way, so they add. On a bowl like this, plain gradient descent is stable only if η times the curvature is below 2; momentum raises that limit to 2(1 + β).</p>
+</main>
+
+<script>
+(function () {
+  const $ = id => document.getElementById(id);
+  const css = n => getComputedStyle(document.documentElement).getPropertyValue(n).trim();
+  const el = (tag, attrs, text) => { const e = document.createElementNS('http://www.w3.org/2000/svg', tag); for (const k in attrs) e.setAttribute(k, attrs[k]); if (text !== undefined) e.textContent = text; return e; };
+  const minus = s => String(s).replace(/-/g, '−');
+  const fx = (v, d) => { const t = Math.abs(v) >= 1e5 ? v.toExponential(2) : v.toFixed(d === undefined ? 3 : d); return minus(/^-0(\.0+)?$/.test(t) ? t.slice(1) : t); };
+  const sci = v => { if (v === 0) return '0'; const a = Math.abs(v); return minus(a >= 0.001 && a < 1000 ? v.toPrecision(3) : v.toExponential(1)); };
+  // Small seeded random generator so a run can be replayed exactly.
+  function rng(seed) {
+    let a = seed >>> 0, spare = null;
+    const u = () => { a |= 0; a = a + 0x6D2B79F5 | 0; let t = Math.imul(a ^ a >>> 15, 1 | a); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; };
+    const g = () => { if (spare !== null) { const s = spare; spare = null; return s; } let x, y, r; do { x = 2 * u() - 1; y = 2 * u() - 1; r = x * x + y * y; } while (r >= 1 || r === 0); const m = Math.sqrt(-2 * Math.log(r) / r); spare = y * m; return x * m; };
+    return { u, g };
+  }
+  // Draws axes into an svg and returns the coordinate mappers. o.logY plots log10(y).
+  function axes(svg, o) {
+    const W = o.W, H = o.H, l = o.l === undefined ? 52 : o.l, r = o.r === undefined ? 16 : o.r, t = o.t === undefined ? 14 : o.t, b = o.b === undefined ? 38 : o.b;
+    svg.setAttribute('viewBox', '0 0 ' + W + ' ' + H); svg.replaceChildren();
+    const grid = css('--grid'), quiet = css('--quiet'), axis = css('--axis');
+    const ty = v => o.logY ? Math.log10(v) : v;
+    const y0 = ty(o.y0), y1 = ty(o.y1);
+    const X = x => l + (x - o.x0) / (o.x1 - o.x0) * (W - l - r);
+    const Y = y => t + (y1 - ty(y)) / (y1 - y0) * (H - t - b);
+    (o.yt || []).forEach(v => {
+      svg.append(el('line', { x1: l, x2: W - r, y1: Y(v), y2: Y(v), stroke: grid }));
+      svg.append(el('text', { x: l - 7, y: Y(v) + 4, 'text-anchor': 'end', 'font-size': 12, fill: quiet }, o.yf ? o.yf(v) : minus(v)));
+    });
+    (o.xt || []).forEach(v => svg.append(el('text', { x: X(v), y: H - b + 17, 'text-anchor': 'middle', 'font-size': 12, fill: quiet }, o.xf ? o.xf(v) : minus(v))));
+    svg.append(el('line', { x1: l, x2: W - r, y1: H - b, y2: H - b, stroke: axis }));
+    if (o.xl) svg.append(el('text', { x: (l + W - r) / 2, y: H - 4, 'text-anchor': 'middle', 'font-size': 12, fill: quiet }, o.xl));
+    if (o.yl) svg.append(el('text', { x: l, y: t - 3, 'text-anchor': 'start', 'font-size': 12, fill: quiet }, o.yl));
+    const id = 'clip' + Math.random().toString(36).slice(2, 8);
+    const defs = el('defs'), cp = el('clipPath', { id }); cp.append(el('rect', { x: l, y: t, width: W - l - r, height: H - t - b })); defs.append(cp); svg.append(defs);
+    const g = el('g', { 'clip-path': 'url(#' + id + ')' }); svg.append(g);
+    return { X, Y, g, l, r, t, b, W, H };
+  }
+  const pathOf = (pts, X, Y) => pts.map((p, i) => (i ? 'L' : 'M') + X(p[0]).toFixed(1) + ' ' + Y(p[1]).toFixed(1)).join('');
+  // Elliptical contours of a*x^2 + b*y^2 for the given levels.
+  function ellipses(ax, a, b, levels) {
+    const sx = Math.abs(ax.X(1) - ax.X(0)), sy = Math.abs(ax.Y(1) - ax.Y(0));
+    levels.forEach(L => ax.g.append(el('ellipse', { cx: ax.X(0), cy: ax.Y(0), rx: Math.sqrt(L / a) * sx, ry: Math.sqrt(L / b) * sy, fill: 'none', stroke: css('--grid'), 'stroke-width': 1.4 })));
+    ax.g.append(el('circle', { cx: ax.X(0), cy: ax.Y(0), r: 3.5, fill: css('--good') }));
+  }
+  const onTheme = fn => { if (window.matchMedia) window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', fn); };
+
+  const START = [-5, -2], MAX = 40, H1 = 0.2, H2 = 4; // gradient is (0.2*x1, 4*x2)
+  let eta = 0.6, beta = 0.5, xs, vs, plain, timer = null;
+  function init() { xs = [START.slice()]; vs = [[0, 0]]; plain = [START.slice()]; }
+  function step() {
+    const x = xs[xs.length - 1], v = vs[vs.length - 1], q = plain[plain.length - 1];
+    const nv = [beta * v[0] + H1 * x[0], beta * v[1] + H2 * x[1]];
+    vs.push(nv); xs.push([x[0] - eta * nv[0], x[1] - eta * nv[1]]);
+    plain.push([q[0] - eta * H1 * q[0], q[1] - eta * H2 * q[1]]);
+  }
+  const big = p => !isFinite(p[0]) || !isFinite(p[1]) || Math.abs(p[1]) > 1e6;
+
+  function drawPlot() {
+    const ax = axes($('plot'), { W: 760, H: 330, x0: -5.6, x1: 1.6, y0: -3, y1: 3, xt: [-5, -4, -3, -2, -1, 0, 1], yt: [-3, -2, -1, 0, 1, 2, 3], xl: 'x₁', yl: 'x₂', l: 34 });
+    ellipses(ax, 0.1, 2, [0.05, 0.3, 0.8, 1.6, 2.6, 4, 6, 8.5, 11.5]);
+    const clip = pts => pts.map(p => [p[0], Math.max(-40, Math.min(40, p[1]))]);
+    if (beta > 0) ax.g.append(el('path', { d: pathOf(clip(plain), ax.X, ax.Y), fill: 'none', stroke: css('--axis'), 'stroke-width': 1.5, 'stroke-dasharray': '4 3' }));
+    ax.g.append(el('path', { d: pathOf(clip(xs), ax.X, ax.Y), fill: 'none', stroke: css('--ball'), 'stroke-width': 2 }));
+    xs.forEach((p, i) => { if (i < xs.length - 1 && Math.abs(p[1]) <= 3.2) ax.g.append(el('circle', { cx: ax.X(p[0]), cy: ax.Y(p[1]), r: 3.2, fill: css('--ball'), 'fill-opacity': 0.55 })); });
+    const p = xs[xs.length - 1];
+    if (Math.abs(p[1]) <= 3 && Math.abs(p[0]) <= 5.6) ax.g.append(el('circle', { cx: ax.X(p[0]), cy: ax.Y(p[1]), r: 8, fill: css('--ball'), stroke: css('--card'), 'stroke-width': 2 }));
+    else $('plot').append(el('text', { x: 400, y: 40, 'text-anchor': 'middle', 'font-size': 15, 'font-weight': 700, fill: css('--bad') }, 'Off the chart: x₂ = ' + sci(p[1])));
+  }
+  function drawWeights() {
+    const K = 16, ax = axes($('weights'), { W: 760, H: 200, x0: -0.7, x1: K - 0.3, y0: 0, y1: 1.05, xt: [0, 2, 4, 6, 8, 10, 12, 14], xf: v => v === 0 ? 'now' : v + ' ago', yt: [0, 0.5, 1], yf: v => v.toFixed(1), xl: 'steps ago', l: 40 });
+    const bw = (ax.X(1) - ax.X(0)) * 0.6;
+    for (let k = 0; k < K; k++) { const wgt = Math.pow(beta, k); ax.g.append(el('rect', { x: ax.X(k) - bw / 2, y: ax.Y(wgt), width: bw, height: Math.max(0, ax.Y(0) - ax.Y(wgt)), fill: css('--curve'), 'fill-opacity': 0.85 })); }
+    const eff = 1 / (1 - beta);
+    $('wNote').textContent = beta === 0 ? 'β = 0: only the current gradient counts. This is plain gradient descent.' :
+      'β = ' + beta.toFixed(2) + ': the current gradient counts fully, the one before counts ' + beta.toFixed(2) + ', the one before that ' + (beta * beta).toFixed(2) + ', and so on. Together that is worth 1 / (1 − ' + beta.toFixed(2) + ') = ' + eff.toFixed(1) + ' gradients, which is also why the steady push along the valley floor gets up to ' + eff.toFixed(1) + ' times stronger.';
+  }
+  function verdict() {
+    const n = xs.length - 1, p = xs[n], lim = 2 * (1 + beta), a2 = eta * H2;
+    if (n === 0) {
+      if (a2 >= lim) return ['bad', 'Before you press Play: η × curvature in x₂ is ' + a2.toFixed(1) + ', which is not below the limit of ' + lim.toFixed(1) + ' for this β. Expect x₂ to blow up.'];
+      return ['', 'Press Play. Watch x₂ (up and down) settle, and x₁ (left to right) travel toward the goal.'];
+    }
+    if (big(p) || Math.abs(p[1]) > 3) return ['bad', 'x₂ has left the chart (' + sci(p[1]) + '). The step is too big for the steep direction: η × curvature = ' + a2.toFixed(1) + ', and the limit is ' + lim.toFixed(1) + (beta === 0 ? '. Without momentum, η would have to be below 0.5 here.' : '.')];
+    const d = Math.hypot(p[0], p[1]);
+    if (n < 20) return ['', 'Step ' + n + ': ' + d.toFixed(3) + ' from the goal.' + (beta > 0 ? ' The dashed grey line is the same learning rate with no momentum.' : '')];
+    if (beta === 0 && Math.abs(p[0]) > 0.05) return ['warn', 'After ' + n + ' steps x₂ is at the bottom, but x₁ is still at ' + fx(p[0], 2) + '. Each step only removes ' + (eta * H1 * 100).toFixed(0) + '% of the remaining distance along the gentle direction, and η cannot go much higher without x₂ blowing up.'];
+    if (a2 > lim * 0.9) return ['warn', 'It converges, but only just: η × curvature in x₂ is ' + a2.toFixed(1) + ' against a limit of ' + lim.toFixed(1) + ', so x₂ keeps swinging for a long time. After ' + n + ' steps it is ' + d.toFixed(3) + ' from the goal.'];
+    return ['', 'After ' + n + ' steps it is ' + d.toFixed(4) + ' from the goal' + (beta > 0 ? ', where plain gradient descent with the same η is at x₂ = ' + sci(plain[n][1]) + '.' : '.') + (beta > 0 ? ' The bounces in x₂ cancelled in the average, and the push along x₁ built up.' : '')];
+  }
+  function render() {
+    const n = xs.length - 1, p = xs[n];
+    $('sStep').textContent = n; $('sX1').textContent = big(p) ? sci(p[0]) : fx(p[0], 3); $('sX2').textContent = Math.abs(p[1]) >= 1000 ? sci(p[1]) : fx(p[1], 3); $('sEff').textContent = (1 / (1 - beta)).toFixed(1);
+    const u = $('update');
+    if (n === 0) u.innerHTML = '<span class="sym">v</span> ← <span class="sym">β</span><span class="sym">v</span> + gradient, &nbsp; <span class="sym">x</span> ← <span class="sym">x</span> − <span class="sym">η</span><span class="sym">v</span><span class="sub">v is the velocity: a running total of gradients in which older ones fade by a factor β each step.</span>';
+    else {
+      const a = xs[n - 1], v0 = vs[n - 1], v1 = vs[n];
+      u.innerHTML = '<span class="sym">v</span>₂ ← ' + beta.toFixed(2) + ' · ' + sci(v0[1]) + ' + ' + sci(H2 * a[1]) + ' = ' + sci(v1[1]) + ', &nbsp; <span class="sym">x</span>₂ ← ' + sci(a[1]) + ' − ' + eta.toFixed(2) + ' · ' + sci(v1[1]) + ' = <span class="hi">' + sci(p[1]) + '</span><span class="sub">The steep direction, written out for the last step. The gradient there is 4x₂.</span>';
+    }
+    const [cls, msg] = verdict(); $('verdict').className = 'verdict' + (cls ? ' ' + cls : ''); $('verdict').textContent = msg;
+    drawPlot(); drawWeights();
+  }
+  const finished = () => xs.length > MAX || big(xs[xs.length - 1]);
+  function stop() { clearInterval(timer); timer = null; $('play').textContent = 'Play'; }
+  function reset() { stop(); init(); render(); }
+  $('play').addEventListener('click', () => {
+    if (timer) { stop(); return; }
+    if (finished()) reset();
+    $('play').textContent = 'Pause';
+    timer = setInterval(() => { step(); render(); if (finished()) stop(); }, 220);
+  });
+  $('stepBtn').addEventListener('click', () => { stop(); if (!finished()) { step(); render(); } });
+  $('reset').addEventListener('click', reset);
+  const setParams = (e, b) => { eta = e; beta = b; $('eta').value = e; $('beta').value = b; $('etaOut').textContent = e.toFixed(2); $('betaOut').textContent = b.toFixed(2); reset(); };
+  $('eta').addEventListener('input', e => setParams(parseFloat(e.target.value), beta));
+  $('beta').addEventListener('input', e => setParams(eta, parseFloat(e.target.value)));
+  document.querySelectorAll('[data-eta]').forEach(bn => bn.addEventListener('click', () => setParams(parseFloat(bn.dataset.eta), parseFloat(bn.dataset.beta))));
+  // Exposed so the numbers can be checked against the book.
+  window.momentumCheck = (e, b, steps) => { let x = START.slice(), v = [0, 0]; for (let i = 0; i < steps; i++) { v = [b * v[0] + H1 * x[0], b * v[1] + H2 * x[1]]; x = [x[0] - e * v[0], x[1] - e * v[1]]; } return x; };
+  onTheme(render);
+  init(); render();
+})();
+</script>
+</body>
+</html>

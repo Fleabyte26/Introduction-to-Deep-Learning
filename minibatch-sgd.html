@@ -1,0 +1,286 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Minibatch Size: Noise Against Speed</title>
+<style>
+  :root {
+    --bg: #fbfaf7; --ink: #1d1d1b; --quiet: #6b6a65; --grid: #e4e2dc; --axis: #9a978f; --card: #ffffff;
+    --curve: #2f6fb3; --ball: #c2410c; --trail: #c2410c; --good: #2e7d4f; --warn: #b7791f; --bad: #b42318;
+    --alt: #7a4fb5; --teal: #1f8a8a;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #1b1b1a; --ink: #ecebe7; --quiet: #a3a19b; --grid: #34332f; --axis: #6f6d67; --card: #242422;
+      --curve: #6aa6e8; --ball: #f08a4b; --trail: #f08a4b; --good: #5fbf86; --warn: #e0b04f; --bad: #f2786d;
+      --alt: #b497e6; --teal: #5cc4c4;
+    }
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--ink);
+    font: 16px/1.5 ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif; }
+  main { max-width: 860px; margin: 0 auto; padding: 32px 20px 48px; }
+  h1 { font-size: 26px; margin: 0 0 6px; letter-spacing: -0.01em; }
+  .lead { color: var(--quiet); margin: 0 0 22px; }
+  .panel { background: var(--card); border: 1px solid var(--grid); border-radius: 12px; padding: 16px; }
+  .panel + .panel, h2 + .panel { margin-top: 0; }
+  svg, canvas { width: 100%; height: auto; display: block; }
+  .two { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; align-items: start; }
+  .cap { font-size: 13px; color: var(--quiet); margin: 0 0 4px; font-weight: 600; }
+  .ctrl { display: grid; grid-template-columns: 170px 1fr 76px; align-items: center; gap: 10px; margin: 10px 0; }
+  .ctrl label { font-weight: 600; }
+  input[type=range] { width: 100%; accent-color: var(--curve); }
+  .val { font-variant-numeric: tabular-nums; text-align: right; font-weight: 600; }
+  .presets { display: flex; gap: 8px; flex-wrap: wrap; margin: 4px 0 12px 180px; }
+  button { font: inherit; padding: 6px 14px; border-radius: 8px; border: 1px solid var(--grid);
+    background: var(--card); color: var(--ink); cursor: pointer; }
+  button.primary { background: var(--curve); color: #fff; border-color: var(--curve); font-weight: 600; }
+  button.chip { font-size: 14px; padding: 4px 10px; }
+  button.chip.on { border-color: var(--curve); box-shadow: inset 0 0 0 1px var(--curve); font-weight: 600; }
+  .buttons { display: flex; gap: 8px; margin-top: 6px; flex-wrap: wrap; }
+  .update { font: 500 20px/1.45 ui-serif, Georgia, serif; margin: 14px 0 4px; min-height: 32px; }
+  .update .sym { color: var(--curve); font-style: italic; }
+  .update .hi { color: var(--ball); font-weight: 700; }
+  .update .sub { color: var(--quiet); font: 400 15px/1.4 ui-sans-serif, system-ui, sans-serif; display: block; margin-top: 2px; }
+  .stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-top: 12px; }
+  .stats.three { grid-template-columns: repeat(3, 1fr); }
+  .stat { border: 1px solid var(--grid); border-radius: 10px; padding: 10px 12px; }
+  .stat .k { font-size: 13px; color: var(--quiet); }
+  .stat .v { font-size: 21px; font-weight: 650; font-variant-numeric: tabular-nums; }
+  .verdict { margin-top: 14px; padding: 12px 14px; border-radius: 10px; border-left: 4px solid var(--good);
+    background: color-mix(in srgb, var(--good) 10%, transparent); }
+  .verdict.warn { border-left-color: var(--warn); background: color-mix(in srgb, var(--warn) 12%, transparent); }
+  .verdict.bad { border-left-color: var(--bad); background: color-mix(in srgb, var(--bad) 10%, transparent); }
+  h2 { font-size: 19px; margin: 30px 0 10px; }
+  table { width: 100%; border-collapse: collapse; font-size: 15px; font-variant-numeric: tabular-nums; }
+  th, td { text-align: right; padding: 6px 10px; border-bottom: 1px solid var(--grid); }
+  th:first-child, td:first-child { text-align: left; }
+  th { color: var(--quiet); font-weight: 600; font-size: 13px; }
+  tr.cur td { background: color-mix(in srgb, var(--ball) 10%, transparent); font-weight: 600; }
+  .note { color: var(--quiet); font-size: 14px; margin-top: 10px; }
+  .key { display: flex; gap: 16px; flex-wrap: wrap; font-size: 13px; color: var(--quiet); margin: 6px 0 0; }
+  .key span::before { content: ""; display: inline-block; width: 18px; height: 3px; border-radius: 2px; vertical-align: middle; margin-right: 6px; background: var(--c); }
+  .key span.dot::before { width: 9px; height: 9px; border-radius: 50%; }
+  .back { font-size: 14px; margin: 0 0 14px; }
+  .back a { color: var(--curve); text-decoration: none; }
+  @media (max-width: 640px) { .two { grid-template-columns: 1fr; } .ctrl { grid-template-columns: 1fr 70px; } .ctrl label { grid-column: 1 / -1; } .presets { margin-left: 0; } .stats, .stats.three { grid-template-columns: 1fr 1fr; } }
+</style>
+</head>
+<body>
+<main>
+  <h1>Minibatch size: noise against speed</h1>
+  <p class="lead">One example per update is noisy. All 1,500 per update is exact but slow to get going. A minibatch sits in between: averaging b examples cuts the noise by about √b, and the computer can process them together. Move the slider, then run the race.</p>
+
+  <div class="panel">
+    <p class="cap">60 minibatch gradients at the same starting point. Each dot is the gradient one minibatch would report.</p>
+    <svg id="cloud" role="img" aria-label="Scatter of minibatch gradients around the true gradient"></svg>
+    <div class="key"><span class="dot" style="--c:var(--ball)">Gradient from one minibatch</span><span class="dot" style="--c:var(--good)">True gradient (all 1,500 examples)</span><span style="--c:var(--curve)">Predicted spread</span></div>
+    <div class="ctrl">
+      <label for="bs">Minibatch size b</label>
+      <input id="bs" type="range" min="0" max="9" step="1" value="0">
+      <span class="val" id="bsOut">1</span>
+    </div>
+    <div class="buttons"><button id="redraw">Draw 60 new minibatches</button></div>
+    <div class="stats">
+      <div class="stat"><div class="k">Examples per update</div><div class="v" id="cB">1</div></div>
+      <div class="stat"><div class="k">Measured spread</div><div class="v" id="cStd">0</div></div>
+      <div class="stat"><div class="k">Predicted spread</div><div class="v" id="cPred">0</div></div>
+      <div class="stat"><div class="k">Noise relative to b = 1</div><div class="v" id="cRel">100%</div></div>
+    </div>
+    <div class="verdict" id="cVerdict"></div>
+  </div>
+
+  <h2>The race: four batch sizes, same data</h2>
+  <div class="panel">
+    <div class="two">
+      <div>
+        <p class="cap">Paths across the loss surface (two weights)</p>
+        <svg id="race" role="img" aria-label="Paths of four batch sizes across the loss surface"></svg>
+      </div>
+      <div>
+        <p class="cap">Loss against passes through the data (epochs)</p>
+        <svg id="raceLoss" role="img" aria-label="Loss against epochs for four batch sizes"></svg>
+      </div>
+    </div>
+    <div class="key">
+      <span style="--c:var(--ball)">b = 1 (stochastic)</span><span style="--c:var(--alt)">b = 10</span><span style="--c:var(--teal)">b = 100</span><span style="--c:var(--curve)">b = 1,500 (full gradient descent)</span>
+    </div>
+    <div class="buttons">
+      <button id="play" class="primary">Play</button>
+      <button id="reset">Reset</button>
+    </div>
+    <table id="raceTable" style="margin-top:12px">
+      <thead><tr><th>Batch size</th><th>Learning rate</th><th>Updates so far</th><th>Loss now</th><th>Book: seconds per epoch</th></tr></thead>
+      <tbody></tbody>
+    </table>
+    <div class="verdict" id="verdict"></div>
+  </div>
+  <p class="note">The last column is the timing the book measured on its airfoil dataset (1,500 examples) in Section 12.5 of <i>Dive into Deep Learning</i>: 0.020 seconds per epoch for full gradient descent, 0.685 for batch size 1, 0.090 for batch size 10 and 0.025 for batch size 100. All four reached about the same loss (0.245 to 0.247). Batch size 1 learns the most per example but takes 34 times longer per pass, because the computer handles 1,500 tiny updates one at a time instead of using vectorized arithmetic. A batch of 100 is nearly as fast per pass as the full batch and makes 15 updates in that time.</p>
+  <p class="note">This page uses its own small dataset (1,500 examples, two weights, so the path can be drawn) with the book's batch sizes and learning rates: 1 for the full batch, 0.4 for b = 100, 0.05 for b = 10 and 0.005 for b = 1. The predicted spread is σ / √b, with a correction for drawing from a finite dataset, which is why the noise falls to zero when b reaches all 1,500 examples.</p>
+</main>
+
+<script>
+(function () {
+  const $ = id => document.getElementById(id);
+  const css = n => getComputedStyle(document.documentElement).getPropertyValue(n).trim();
+  const el = (tag, attrs, text) => { const e = document.createElementNS('http://www.w3.org/2000/svg', tag); for (const k in attrs) e.setAttribute(k, attrs[k]); if (text !== undefined) e.textContent = text; return e; };
+  const minus = s => String(s).replace(/-/g, '−');
+  const fx = (v, d) => { const t = Math.abs(v) >= 1e5 ? v.toExponential(2) : v.toFixed(d === undefined ? 3 : d); return minus(/^-0(\.0+)?$/.test(t) ? t.slice(1) : t); };
+  const sci = v => { if (v === 0) return '0'; const a = Math.abs(v); return minus(a >= 0.001 && a < 1000 ? v.toPrecision(3) : v.toExponential(1)); };
+  // Small seeded random generator so a run can be replayed exactly.
+  function rng(seed) {
+    let a = seed >>> 0, spare = null;
+    const u = () => { a |= 0; a = a + 0x6D2B79F5 | 0; let t = Math.imul(a ^ a >>> 15, 1 | a); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; };
+    const g = () => { if (spare !== null) { const s = spare; spare = null; return s; } let x, y, r; do { x = 2 * u() - 1; y = 2 * u() - 1; r = x * x + y * y; } while (r >= 1 || r === 0); const m = Math.sqrt(-2 * Math.log(r) / r); spare = y * m; return x * m; };
+    return { u, g };
+  }
+  // Draws axes into an svg and returns the coordinate mappers. o.logY plots log10(y).
+  function axes(svg, o) {
+    const W = o.W, H = o.H, l = o.l === undefined ? 52 : o.l, r = o.r === undefined ? 16 : o.r, t = o.t === undefined ? 14 : o.t, b = o.b === undefined ? 38 : o.b;
+    svg.setAttribute('viewBox', '0 0 ' + W + ' ' + H); svg.replaceChildren();
+    const grid = css('--grid'), quiet = css('--quiet'), axis = css('--axis');
+    const ty = v => o.logY ? Math.log10(v) : v;
+    const y0 = ty(o.y0), y1 = ty(o.y1);
+    const X = x => l + (x - o.x0) / (o.x1 - o.x0) * (W - l - r);
+    const Y = y => t + (y1 - ty(y)) / (y1 - y0) * (H - t - b);
+    (o.yt || []).forEach(v => {
+      svg.append(el('line', { x1: l, x2: W - r, y1: Y(v), y2: Y(v), stroke: grid }));
+      svg.append(el('text', { x: l - 7, y: Y(v) + 4, 'text-anchor': 'end', 'font-size': 12, fill: quiet }, o.yf ? o.yf(v) : minus(v)));
+    });
+    (o.xt || []).forEach(v => svg.append(el('text', { x: X(v), y: H - b + 17, 'text-anchor': 'middle', 'font-size': 12, fill: quiet }, o.xf ? o.xf(v) : minus(v))));
+    svg.append(el('line', { x1: l, x2: W - r, y1: H - b, y2: H - b, stroke: axis }));
+    if (o.xl) svg.append(el('text', { x: (l + W - r) / 2, y: H - 4, 'text-anchor': 'middle', 'font-size': 12, fill: quiet }, o.xl));
+    if (o.yl) svg.append(el('text', { x: l, y: t - 3, 'text-anchor': 'start', 'font-size': 12, fill: quiet }, o.yl));
+    const id = 'clip' + Math.random().toString(36).slice(2, 8);
+    const defs = el('defs'), cp = el('clipPath', { id }); cp.append(el('rect', { x: l, y: t, width: W - l - r, height: H - t - b })); defs.append(cp); svg.append(defs);
+    const g = el('g', { 'clip-path': 'url(#' + id + ')' }); svg.append(g);
+    return { X, Y, g, l, r, t, b, W, H };
+  }
+  const pathOf = (pts, X, Y) => pts.map((p, i) => (i ? 'L' : 'M') + X(p[0]).toFixed(1) + ' ' + Y(p[1]).toFixed(1)).join('');
+  // Elliptical contours of a*x^2 + b*y^2 for the given levels.
+  function ellipses(ax, a, b, levels) {
+    const sx = Math.abs(ax.X(1) - ax.X(0)), sy = Math.abs(ax.Y(1) - ax.Y(0));
+    levels.forEach(L => ax.g.append(el('ellipse', { cx: ax.X(0), cy: ax.Y(0), rx: Math.sqrt(L / a) * sx, ry: Math.sqrt(L / b) * sy, fill: 'none', stroke: css('--grid'), 'stroke-width': 1.4 })));
+    ax.g.append(el('circle', { cx: ax.X(0), cy: ax.Y(0), r: 3.5, fill: css('--good') }));
+  }
+  const onTheme = fn => { if (window.matchMedia) window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', fn); };
+
+  const N = 1500, SIZES = [1, 2, 5, 10, 20, 50, 100, 200, 500, 1500], WSTAR = [2, -1.5], W0 = [0.2, 1.6];
+  // Data: two correlated, standardized features and a noisy linear target.
+  const DR = rng(4), XS = new Float64Array(2 * N), YS = new Float64Array(N);
+  (function () {
+    const rho = 0.8, c = Math.sqrt(1 - rho * rho); let m1 = 0, m2 = 0, s1 = 0, s2 = 0;
+    for (let i = 0; i < N; i++) { const a = DR.g(), bb = DR.g(); XS[2 * i] = a; XS[2 * i + 1] = rho * a + c * bb; m1 += XS[2 * i]; m2 += XS[2 * i + 1]; }
+    m1 /= N; m2 /= N;
+    for (let i = 0; i < N; i++) { XS[2 * i] -= m1; XS[2 * i + 1] -= m2; s1 += XS[2 * i] ** 2; s2 += XS[2 * i + 1] ** 2; }
+    s1 = Math.sqrt(s1 / N); s2 = Math.sqrt(s2 / N);
+    for (let i = 0; i < N; i++) { XS[2 * i] /= s1; XS[2 * i + 1] /= s2; YS[i] = WSTAR[0] * XS[2 * i] + WSTAR[1] * XS[2 * i + 1] + 0.5 * DR.g(); }
+  })();
+  const gradOne = (w, i) => { const r = w[0] * XS[2 * i] + w[1] * XS[2 * i + 1] - YS[i]; return [r * XS[2 * i], r * XS[2 * i + 1]]; };
+  function lossAt(w) { let L = 0; for (let i = 0; i < N; i++) { const r = w[0] * XS[2 * i] + w[1] * XS[2 * i + 1] - YS[i]; L += r * r / 2; } return L / N; }
+  function shuffled(R) { const o = Array.from({ length: N }, (_, i) => i); for (let i = N - 1; i > 0; i--) { const k = Math.floor(R.u() * (i + 1)); [o[i], o[k]] = [o[k], o[i]]; } return o; }
+  // Least-squares solution, so the plots can be centred on the true minimum of this dataset.
+  const BEST = (function () { let a = 0, b = 0, d = 0, p = 0, q = 0; for (let i = 0; i < N; i++) { const x = XS[2 * i], z = XS[2 * i + 1]; a += x * x; b += x * z; d += z * z; p += x * YS[i]; q += z * YS[i]; } const det = a * d - b * b; return [(d * p - b * q) / det, (a * q - b * p) / det]; })();
+  const FLOOR = lossAt(BEST);
+
+  // ---- Panel 1: the cloud of minibatch gradients ----
+  const FULL = (function () { let g = [0, 0]; for (let i = 0; i < N; i++) { const q = gradOne(W0, i); g[0] += q[0]; g[1] += q[1]; } return [g[0] / N, g[1] / N]; })();
+  const SIG1 = (function () { let s = 0; for (let i = 0; i < N; i++) { const q = gradOne(W0, i); s += (q[0] - FULL[0]) ** 2 + (q[1] - FULL[1]) ** 2; } return Math.sqrt(s / N); })();
+  let bIdx = 0, cSeed = 9, cloud = [];
+  const predicted = b => SIG1 / Math.sqrt(b) * Math.sqrt((N - b) / (N - 1));
+  function sampleCloud() {
+    const R = rng(cSeed), b = SIZES[bIdx]; cloud = [];
+    for (let k = 0; k < 60; k++) { const o = shuffled(R); let g = [0, 0]; for (let j = 0; j < b; j++) { const q = gradOne(W0, o[j]); g[0] += q[0]; g[1] += q[1]; } cloud.push([g[0] / b, g[1] / b]); }
+  }
+  function drawCloud() {
+    const b = SIZES[bIdx], hx = 8.4, hy = 4.4;
+    const ticks = (lo, hi) => { const t = []; for (let v = Math.ceil(lo / 2) * 2; v <= hi; v += 2) t.push(v); return t; };
+    const ax = axes($('cloud'), { W: 760, H: 380, x0: FULL[0] - hx, x1: FULL[0] + hx, y0: FULL[1] - hy, y1: FULL[1] + hy, xt: ticks(FULL[0] - hx, FULL[0] + hx), yt: ticks(FULL[1] - hy, FULL[1] + hy), xl: 'gradient for weight 1', yl: 'gradient for weight 2', l: 40 });
+    const sx = Math.abs(ax.X(1) - ax.X(0)), sy = Math.abs(ax.Y(1) - ax.Y(0)), pr = predicted(b);
+    if (pr > 0) ax.g.append(el('ellipse', { cx: ax.X(FULL[0]), cy: ax.Y(FULL[1]), rx: pr * sx, ry: pr * sy, fill: css('--curve'), 'fill-opacity': 0.07, stroke: css('--curve'), 'stroke-width': 1.5, 'stroke-dasharray': '5 4' }));
+    cloud.forEach(g => ax.g.append(el('circle', { cx: ax.X(g[0]), cy: ax.Y(g[1]), r: 4.5, fill: css('--ball'), 'fill-opacity': 0.6 })));
+    ax.g.append(el('circle', { cx: ax.X(FULL[0]), cy: ax.Y(FULL[1]), r: 7, fill: css('--good'), stroke: css('--card'), 'stroke-width': 2 }));
+    const m = Math.sqrt(cloud.reduce((s, g) => s + (g[0] - FULL[0]) ** 2 + (g[1] - FULL[1]) ** 2, 0) / cloud.length);
+    $('cB').textContent = b.toLocaleString('en-US'); $('cStd').textContent = m.toFixed(2); $('cPred').textContent = pr.toFixed(2); $('cRel').textContent = (pr / SIG1 * 100).toFixed(pr / SIG1 < 0.1 ? 1 : 0) + '%';
+    const v = $('cVerdict'); let cls = '', msg;
+    if (b === 1) { cls = 'warn'; msg = 'One example at a time: the reported gradients are scattered widely around the true one. Each is right on average, but any single one can point well off course.'; }
+    else if (b === N) msg = 'All 1,500 examples: every minibatch is the whole dataset, so every dot lands exactly on the true gradient. No noise, but each update costs 1,500 examples.';
+    else msg = 'Averaging ' + b + ' examples shrinks the scatter to ' + (pr / SIG1 * 100).toFixed(0) + '% of what it was at b = 1, close to 1/√' + b + ' = ' + (100 / Math.sqrt(b)).toFixed(0) + '%. Going from 1 to 100 examples cuts the noise by ten; going from 100 to 1,500 costs fifteen times more and has much less noise left to remove.';
+    v.className = 'verdict' + (cls ? ' ' + cls : ''); v.textContent = msg;
+  }
+
+  // ---- Panel 2: the race ----
+  const RUNS = [{ b: 1, lr: 0.005, col: '--ball', book: '0.685' }, { b: 10, lr: 0.05, col: '--alt', book: '0.090' }, { b: 100, lr: 0.4, col: '--teal', book: '0.025' }, { b: 1500, lr: 1, col: '--curve', book: '0.020' }];
+  const EPOCHS = 6, CHUNK = 30; let seen, timer = null;
+  function raceInit() {
+    seen = 0;
+    RUNS.forEach((r, k) => { r.R = rng(40 + k); r.w = W0.slice(); r.path = [W0.slice()]; r.hist = [[0, lossAt(W0)]]; r.order = shuffled(r.R); r.pos = 0; r.updates = 0; r.done = 0; });
+  }
+  function advance() {
+    seen += CHUNK;
+    RUNS.forEach(r => {
+      while (r.done + r.b <= seen) {
+        if (r.pos + r.b > N) { r.order = shuffled(r.R); r.pos = 0; }
+        let g = [0, 0]; for (let j = 0; j < r.b; j++) { const q = gradOne(r.w, r.order[r.pos + j]); g[0] += q[0]; g[1] += q[1]; }
+        r.pos += r.b; r.done += r.b; r.updates++;
+        r.w = [r.w[0] - r.lr * g[0] / r.b, r.w[1] - r.lr * g[1] / r.b];
+        if (r.b >= 10 || r.updates % 10 === 0) { r.path.push(r.w.slice()); r.hist.push([r.done / N, lossAt(r.w)]); }
+      }
+    });
+  }
+  function drawRace() {
+    const ax = axes($('race'), { W: 400, H: 320, x0: -1.6, x1: 3.2, y0: -3, y1: 2.2, xt: [-1, 0, 1, 2, 3], yt: [-3, -2, -1, 0, 1, 2], xl: 'weight 1', yl: 'weight 2', l: 34 });
+    // Contours of the true loss surface, traced as level curves through a coarse grid.
+    const grid = css('--grid');
+    [0.05, 0.3, 0.8, 1.6, 2.8, 4.4].forEach(L => {
+      const pts = [];
+      for (let a = 0; a <= 72; a++) {
+        const th = a / 72 * 2 * Math.PI, dx = Math.cos(th), dy = Math.sin(th);
+        // extra loss along a ray from the minimum is quadratic: q(dx,dy) * t^2 = L
+        const q = 0.5 * (dx * dx + dy * dy + 2 * 0.8 * dx * dy), t = Math.sqrt(L / q);
+        pts.push([BEST[0] + t * dx, BEST[1] + t * dy]);
+      }
+      ax.g.append(el('path', { d: pathOf(pts, ax.X, ax.Y) + 'Z', fill: 'none', stroke: grid, 'stroke-width': 1.4 }));
+    });
+    ax.g.append(el('circle', { cx: ax.X(BEST[0]), cy: ax.Y(BEST[1]), r: 4, fill: css('--good') }));
+    RUNS.forEach(r => {
+      ax.g.append(el('path', { d: pathOf(r.path, ax.X, ax.Y), fill: 'none', stroke: css(r.col), 'stroke-width': 1.8, 'stroke-opacity': 0.9 }));
+      ax.g.append(el('circle', { cx: ax.X(r.w[0]), cy: ax.Y(r.w[1]), r: 6, fill: css(r.col), stroke: css('--card'), 'stroke-width': 2 }));
+    });
+    const lx = axes($('raceLoss'), { W: 400, H: 320, x0: 0, x1: EPOCHS, y0: 0.1, y1: 10, logY: true, xt: [0, 1, 2, 3, 4, 5, 6], yt: [0.1, 1, 10], yf: v => String(v), xl: 'epochs (passes through all 1,500 examples)', l: 40 });
+    lx.g.append(el('line', { x1: lx.X(0), x2: lx.X(EPOCHS), y1: lx.Y(FLOOR), y2: lx.Y(FLOOR), stroke: css('--good'), 'stroke-dasharray': '4 4' }));
+    lx.g.append(el('text', { x: lx.X(EPOCHS) - 4, y: lx.Y(FLOOR) - 6, 'text-anchor': 'end', 'font-size': 11, fill: css('--good') }, 'best possible: ' + FLOOR.toFixed(3)));
+    RUNS.forEach(r => {
+      lx.g.append(el('path', { d: pathOf(r.hist, lx.X, lx.Y), fill: 'none', stroke: css(r.col), 'stroke-width': 2.2, 'stroke-linejoin': 'round' }));
+      const h = r.hist[r.hist.length - 1]; lx.g.append(el('circle', { cx: lx.X(h[0]), cy: lx.Y(h[1]), r: 4.5, fill: css(r.col) }));
+    });
+    const tb = $('raceTable').tBodies[0]; tb.replaceChildren();
+    RUNS.forEach(r => { const trEl = document.createElement('tr'); [r.b.toLocaleString('en-US'), r.lr, r.updates.toLocaleString('en-US'), lossAt(r.w).toFixed(3), r.book].forEach(v => { const td = document.createElement('td'); td.textContent = String(v); trEl.append(td); }); tb.append(trEl); });
+    const ep = seen / N, v = $('verdict'); let msg;
+    if (seen === 0) msg = 'Press Play. Every run sees the same number of examples per tick, so the horizontal axis is fair: one epoch means each run has used all 1,500 examples once.';
+    else if (ep < 1) msg = 'Not yet one pass through the data: the full-batch run (blue) has not moved at all, because it needs all 1,500 examples before its first update. Batch size 1 has already made ' + RUNS[0].updates.toLocaleString('en-US') + ' small noisy updates.';
+    else {
+      // Epoch at which each run first came within 10% of the best possible loss.
+      const reach = r => { const h = r.hist.find(q => q[1] <= FLOOR * 1.1); return h ? h[0] : null; };
+      const say = r => { const e = reach(r); return 'b = ' + r.b.toLocaleString('en-US') + (e === null ? ' has not got there yet (loss ' + lossAt(r.w).toFixed(3) + ' after ' + r.updates + ' updates)' : ' got there after ' + (e < 0.1 ? e.toFixed(2) : e.toFixed(1)) + ' passes'); };
+      msg = 'After ' + ep.toFixed(1) + ' passes through the data. Time to come within 10% of the best possible loss: ' + RUNS.map(say).join('; ') + '. Measured per example seen, small batches win. Measured in seconds, the last column of the table changes the picture.';
+    }
+    v.className = 'verdict'; v.textContent = msg;
+  }
+  function stop() { clearInterval(timer); timer = null; $('play').textContent = 'Play'; }
+  $('play').addEventListener('click', () => {
+    if (timer) { stop(); return; }
+    if (seen >= EPOCHS * N) raceInit();
+    $('play').textContent = 'Pause';
+    timer = setInterval(() => { advance(); drawRace(); if (seen >= EPOCHS * N) stop(); }, 40);
+  });
+  $('reset').addEventListener('click', () => { stop(); raceInit(); drawRace(); });
+  $('bs').addEventListener('input', e => { bIdx = parseInt(e.target.value, 10); $('bsOut').textContent = SIZES[bIdx].toLocaleString('en-US'); sampleCloud(); drawCloud(); });
+  $('redraw').addEventListener('click', () => { cSeed++; sampleCloud(); drawCloud(); });
+  onTheme(() => { drawCloud(); drawRace(); });
+  sampleCloud(); drawCloud(); raceInit(); drawRace();
+})();
+</script>
+</body>
+</html>

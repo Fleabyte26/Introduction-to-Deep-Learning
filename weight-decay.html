@@ -1,0 +1,272 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Weight Decay: A Leash on the Weights</title>
+<style>
+  :root {
+    --bg: #fbfaf7; --ink: #1d1d1b; --quiet: #6b6a65; --grid: #e4e2dc; --axis: #9a978f; --card: #ffffff;
+    --curve: #2f6fb3; --ball: #c2410c; --trail: #c2410c; --good: #2e7d4f; --warn: #b7791f; --bad: #b42318;
+    --alt: #7a4fb5; --teal: #1f8a8a;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #1b1b1a; --ink: #ecebe7; --quiet: #a3a19b; --grid: #34332f; --axis: #6f6d67; --card: #242422;
+      --curve: #6aa6e8; --ball: #f08a4b; --trail: #f08a4b; --good: #5fbf86; --warn: #e0b04f; --bad: #f2786d;
+      --alt: #b497e6; --teal: #5cc4c4;
+    }
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--ink);
+    font: 16px/1.5 ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif; }
+  main { max-width: 860px; margin: 0 auto; padding: 32px 20px 48px; }
+  h1 { font-size: 26px; margin: 0 0 6px; letter-spacing: -0.01em; }
+  .lead { color: var(--quiet); margin: 0 0 22px; }
+  .panel { background: var(--card); border: 1px solid var(--grid); border-radius: 12px; padding: 16px; }
+  .panel + .panel, h2 + .panel { margin-top: 0; }
+  svg, canvas { width: 100%; height: auto; display: block; }
+  .two { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; align-items: start; }
+  .cap { font-size: 13px; color: var(--quiet); margin: 0 0 4px; font-weight: 600; }
+  .ctrl { display: grid; grid-template-columns: 170px 1fr 76px; align-items: center; gap: 10px; margin: 10px 0; }
+  .ctrl label { font-weight: 600; }
+  input[type=range] { width: 100%; accent-color: var(--curve); }
+  .val { font-variant-numeric: tabular-nums; text-align: right; font-weight: 600; }
+  .presets { display: flex; gap: 8px; flex-wrap: wrap; margin: 4px 0 12px 180px; }
+  button { font: inherit; padding: 6px 14px; border-radius: 8px; border: 1px solid var(--grid);
+    background: var(--card); color: var(--ink); cursor: pointer; }
+  button.primary { background: var(--curve); color: #fff; border-color: var(--curve); font-weight: 600; }
+  button.chip { font-size: 14px; padding: 4px 10px; }
+  button.chip.on { border-color: var(--curve); box-shadow: inset 0 0 0 1px var(--curve); font-weight: 600; }
+  .buttons { display: flex; gap: 8px; margin-top: 6px; flex-wrap: wrap; }
+  .update { font: 500 20px/1.45 ui-serif, Georgia, serif; margin: 14px 0 4px; min-height: 32px; }
+  .update .sym { color: var(--curve); font-style: italic; }
+  .update .hi { color: var(--ball); font-weight: 700; }
+  .update .sub { color: var(--quiet); font: 400 15px/1.4 ui-sans-serif, system-ui, sans-serif; display: block; margin-top: 2px; }
+  .stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-top: 12px; }
+  .stats.three { grid-template-columns: repeat(3, 1fr); }
+  .stat { border: 1px solid var(--grid); border-radius: 10px; padding: 10px 12px; }
+  .stat .k { font-size: 13px; color: var(--quiet); }
+  .stat .v { font-size: 21px; font-weight: 650; font-variant-numeric: tabular-nums; }
+  .verdict { margin-top: 14px; padding: 12px 14px; border-radius: 10px; border-left: 4px solid var(--good);
+    background: color-mix(in srgb, var(--good) 10%, transparent); }
+  .verdict.warn { border-left-color: var(--warn); background: color-mix(in srgb, var(--warn) 12%, transparent); }
+  .verdict.bad { border-left-color: var(--bad); background: color-mix(in srgb, var(--bad) 10%, transparent); }
+  h2 { font-size: 19px; margin: 30px 0 10px; }
+  table { width: 100%; border-collapse: collapse; font-size: 15px; font-variant-numeric: tabular-nums; }
+  th, td { text-align: right; padding: 6px 10px; border-bottom: 1px solid var(--grid); }
+  th:first-child, td:first-child { text-align: left; }
+  th { color: var(--quiet); font-weight: 600; font-size: 13px; }
+  tr.cur td { background: color-mix(in srgb, var(--ball) 10%, transparent); font-weight: 600; }
+  .note { color: var(--quiet); font-size: 14px; margin-top: 10px; }
+  .key { display: flex; gap: 16px; flex-wrap: wrap; font-size: 13px; color: var(--quiet); margin: 6px 0 0; }
+  .key span::before { content: ""; display: inline-block; width: 18px; height: 3px; border-radius: 2px; vertical-align: middle; margin-right: 6px; background: var(--c); }
+  .key span.dot::before { width: 9px; height: 9px; border-radius: 50%; }
+  .back { font-size: 14px; margin: 0 0 14px; }
+  .back a { color: var(--curve); text-decoration: none; }
+  @media (max-width: 640px) { .two { grid-template-columns: 1fr; } .ctrl { grid-template-columns: 1fr 70px; } .ctrl label { grid-column: 1 / -1; } .presets { margin-left: 0; } .stats, .stats.three { grid-template-columns: 1fr 1fr; } }
+</style>
+</head>
+<body>
+<main>
+  <h1>Weight decay: a leash on the weights</h1>
+  <p class="lead">This model has 200 inputs but only 20 training examples, so it can memorize them. Weight decay adds a penalty for large weights, which shrinks every weight a little on each update. Press Play with λ = 0, then try λ = 3.</p>
+
+  <div class="panel">
+    <div class="two">
+      <div>
+        <p class="cap">Loss over training (log scale)</p>
+        <svg id="lossPlot" role="img" aria-label="Training and validation loss over epochs"></svg>
+        <div class="key"><span style="--c:var(--curve)">Training loss</span><span style="--c:var(--ball)">Validation loss</span></div>
+      </div>
+      <div>
+        <p class="cap">The 200 weights right now</p>
+        <svg id="wPlot" role="img" aria-label="Current value of each of the 200 weights"></svg>
+        <div class="key"><span style="--c:var(--good)">True value, 0.01 for every weight</span></div>
+      </div>
+    </div>
+
+    <div class="ctrl">
+      <label for="lam">Weight decay λ</label>
+      <input id="lam" type="range" min="0" max="10" step="0.5" value="0">
+      <span class="val" id="lamOut">0.0</span>
+    </div>
+    <div class="presets" role="group" aria-label="Weight decay presets">
+      <button class="chip" data-lam="0">0 no decay</button>
+      <button class="chip" data-lam="3">3 the book's value</button>
+      <button class="chip" data-lam="10">10 heavy</button>
+    </div>
+    <div class="buttons">
+      <button id="play" class="primary">Play</button>
+      <button id="stepBtn">One epoch</button>
+      <button id="reset">Reset</button>
+      <button id="newData">New data</button>
+    </div>
+
+    <div class="update" id="update"></div>
+    <div class="stats">
+      <div class="stat"><div class="k">Epoch</div><div class="v" id="sEpoch">0</div></div>
+      <div class="stat"><div class="k">Training loss</div><div class="v" id="sTrain">0</div></div>
+      <div class="stat"><div class="k">Validation loss</div><div class="v" id="sVal">0</div></div>
+      <div class="stat"><div class="k">Penalty ‖w‖² / 2</div><div class="v" id="sNorm">0</div></div>
+    </div>
+    <div class="verdict" id="verdict"></div>
+  </div>
+
+  <h2>Epoch by epoch</h2>
+  <table id="log">
+    <thead><tr><th>Epoch</th><th>Training loss</th><th>Validation loss</th><th>Gap (validation ÷ training)</th><th>‖w‖² / 2</th></tr></thead>
+    <tbody></tbody>
+  </table>
+  <p class="note">The setup is the experiment in Section 3.7 of <i>Dive into Deep Learning</i>: y = 0.05 + the sum of 0.01·xᵢ, plus a little noise, with 200 inputs, 20 training examples, 100 validation examples, minibatches of 5 and learning rate 0.01. After 10 epochs the book reports ‖w‖² / 2 of about 0.0099 without decay and 0.0017 with λ = 3. This page trains the same model live in your browser and lands close to both. It keeps going to epoch 30 so the curves have time to separate.</p>
+  <p class="note">Why it works: only 20 directions in the 200-dimensional weight space are pinned down by the data. Without decay, the weights in the other 180 directions stay wherever they started, which is random. Decay pulls those toward zero, and zero is a better guess than random.</p>
+</main>
+
+<script>
+(function () {
+  const $ = id => document.getElementById(id);
+  const css = n => getComputedStyle(document.documentElement).getPropertyValue(n).trim();
+  const el = (tag, attrs, text) => { const e = document.createElementNS('http://www.w3.org/2000/svg', tag); for (const k in attrs) e.setAttribute(k, attrs[k]); if (text !== undefined) e.textContent = text; return e; };
+  const minus = s => String(s).replace(/-/g, '−');
+  const fx = (v, d) => { const t = Math.abs(v) >= 1e5 ? v.toExponential(2) : v.toFixed(d === undefined ? 3 : d); return minus(/^-0(\.0+)?$/.test(t) ? t.slice(1) : t); };
+  const sci = v => { if (v === 0) return '0'; const a = Math.abs(v); return minus(a >= 0.001 && a < 1000 ? v.toPrecision(3) : v.toExponential(1)); };
+  // Small seeded random generator so a run can be replayed exactly.
+  function rng(seed) {
+    let a = seed >>> 0, spare = null;
+    const u = () => { a |= 0; a = a + 0x6D2B79F5 | 0; let t = Math.imul(a ^ a >>> 15, 1 | a); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; };
+    const g = () => { if (spare !== null) { const s = spare; spare = null; return s; } let x, y, r; do { x = 2 * u() - 1; y = 2 * u() - 1; r = x * x + y * y; } while (r >= 1 || r === 0); const m = Math.sqrt(-2 * Math.log(r) / r); spare = y * m; return x * m; };
+    return { u, g };
+  }
+  // Draws axes into an svg and returns the coordinate mappers. o.logY plots log10(y).
+  function axes(svg, o) {
+    const W = o.W, H = o.H, l = o.l === undefined ? 52 : o.l, r = o.r === undefined ? 16 : o.r, t = o.t === undefined ? 14 : o.t, b = o.b === undefined ? 38 : o.b;
+    svg.setAttribute('viewBox', '0 0 ' + W + ' ' + H); svg.replaceChildren();
+    const grid = css('--grid'), quiet = css('--quiet'), axis = css('--axis');
+    const ty = v => o.logY ? Math.log10(v) : v;
+    const y0 = ty(o.y0), y1 = ty(o.y1);
+    const X = x => l + (x - o.x0) / (o.x1 - o.x0) * (W - l - r);
+    const Y = y => t + (y1 - ty(y)) / (y1 - y0) * (H - t - b);
+    (o.yt || []).forEach(v => {
+      svg.append(el('line', { x1: l, x2: W - r, y1: Y(v), y2: Y(v), stroke: grid }));
+      svg.append(el('text', { x: l - 7, y: Y(v) + 4, 'text-anchor': 'end', 'font-size': 12, fill: quiet }, o.yf ? o.yf(v) : minus(v)));
+    });
+    (o.xt || []).forEach(v => svg.append(el('text', { x: X(v), y: H - b + 17, 'text-anchor': 'middle', 'font-size': 12, fill: quiet }, o.xf ? o.xf(v) : minus(v))));
+    svg.append(el('line', { x1: l, x2: W - r, y1: H - b, y2: H - b, stroke: axis }));
+    if (o.xl) svg.append(el('text', { x: (l + W - r) / 2, y: H - 4, 'text-anchor': 'middle', 'font-size': 12, fill: quiet }, o.xl));
+    if (o.yl) svg.append(el('text', { x: l, y: t - 3, 'text-anchor': 'start', 'font-size': 12, fill: quiet }, o.yl));
+    const id = 'clip' + Math.random().toString(36).slice(2, 8);
+    const defs = el('defs'), cp = el('clipPath', { id }); cp.append(el('rect', { x: l, y: t, width: W - l - r, height: H - t - b })); defs.append(cp); svg.append(defs);
+    const g = el('g', { 'clip-path': 'url(#' + id + ')' }); svg.append(g);
+    return { X, Y, g, l, r, t, b, W, H };
+  }
+  const pathOf = (pts, X, Y) => pts.map((p, i) => (i ? 'L' : 'M') + X(p[0]).toFixed(1) + ' ' + Y(p[1]).toFixed(1)).join('');
+  // Elliptical contours of a*x^2 + b*y^2 for the given levels.
+  function ellipses(ax, a, b, levels) {
+    const sx = Math.abs(ax.X(1) - ax.X(0)), sy = Math.abs(ax.Y(1) - ax.Y(0));
+    levels.forEach(L => ax.g.append(el('ellipse', { cx: ax.X(0), cy: ax.Y(0), rx: Math.sqrt(L / a) * sx, ry: Math.sqrt(L / b) * sy, fill: 'none', stroke: css('--grid'), 'stroke-width': 1.4 })));
+    ax.g.append(el('circle', { cx: ax.X(0), cy: ax.Y(0), r: 3.5, fill: css('--good') }));
+  }
+  const onTheme = fn => { if (window.matchMedia) window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', fn); };
+
+  const D = 200, NT = 20, NV = 100, BS = 5, LR = 0.01, MAX_EPOCH = 30, PER_EPOCH = NT / BS;
+  let lam = 0, seed = 1, R, tr, va, w, b, order, batch, hist, timer = null;
+
+  function makeData(n) {
+    const X = [], y = [];
+    for (let i = 0; i < n; i++) {
+      const x = new Float64Array(D); let s = 0.05;
+      for (let j = 0; j < D; j++) { x[j] = R.g(); s += 0.01 * x[j]; }
+      X.push(x); y.push(s + 0.01 * R.g());
+    }
+    return { X, y };
+  }
+  function loss(S) {
+    let L = 0;
+    for (let i = 0; i < S.X.length; i++) { let p = b; const x = S.X[i]; for (let j = 0; j < D; j++) p += w[j] * x[j]; L += (p - S.y[i]) * (p - S.y[i]) / 2; }
+    return L / S.X.length;
+  }
+  const penalty = () => { let s = 0; for (let j = 0; j < D; j++) s += w[j] * w[j]; return s / 2; };
+  const record = () => hist.push({ e: batch / PER_EPOCH, tr: loss(tr), va: loss(va), n: penalty() });
+
+  function init(newData) {
+    if (newData) seed++;
+    R = rng(seed); tr = makeData(NT); va = makeData(NV);
+    w = new Float64Array(D); for (let j = 0; j < D; j++) w[j] = 0.01 * R.g();
+    b = 0; batch = 0; hist = []; order = null; record();
+  }
+  function minibatch() {
+    const k = batch % PER_EPOCH;
+    if (k === 0) { order = Array.from({ length: NT }, (_, i) => i); for (let i = NT - 1; i > 0; i--) { const q = Math.floor(R.u() * (i + 1)); [order[i], order[q]] = [order[q], order[i]]; } }
+    const gw = new Float64Array(D); let gb = 0;
+    for (let q = k * BS; q < k * BS + BS; q++) {
+      const x = tr.X[order[q]]; let p = b; for (let j = 0; j < D; j++) p += w[j] * x[j];
+      const r = p - tr.y[order[q]]; gb += r; for (let j = 0; j < D; j++) gw[j] += r * x[j];
+    }
+    // w <- (1 - lr*lambda) * w - lr * (average gradient of the data loss)
+    for (let j = 0; j < D; j++) w[j] = (1 - LR * lam) * w[j] - LR * gw[j] / BS;
+    b -= LR * gb / BS; batch++; record();
+  }
+
+  function drawLoss() {
+    const ax = axes($('lossPlot'), { W: 400, H: 280, x0: 0, x1: MAX_EPOCH, y0: 1e-7, y1: 0.1, logY: true, xt: [0, 10, 20, 30], yt: [1e-7, 1e-5, 1e-3, 1e-1], yf: v => '1e' + Math.round(Math.log10(v)), xl: 'epoch', l: 46 });
+    ax.g.append(el('line', { x1: ax.X(10), x2: ax.X(10), y1: ax.Y(0.1), y2: ax.Y(1e-7), stroke: css('--axis'), 'stroke-dasharray': '3 4' }));
+    ax.g.append(el('text', { x: ax.X(10) + 5, y: ax.Y(1e-7) - 6, 'font-size': 11, fill: css('--quiet') }, 'book stops at 10'));
+    const cl = v => Math.max(v, 1e-7);
+    ax.g.append(el('path', { d: pathOf(hist.map(h => [h.e, cl(h.tr)]), ax.X, ax.Y), fill: 'none', stroke: css('--curve'), 'stroke-width': 2.5 }));
+    ax.g.append(el('path', { d: pathOf(hist.map(h => [h.e, cl(h.va)]), ax.X, ax.Y), fill: 'none', stroke: css('--ball'), 'stroke-width': 2.5 }));
+    const last = hist[hist.length - 1];
+    ax.g.append(el('circle', { cx: ax.X(last.e), cy: ax.Y(cl(last.tr)), r: 4.5, fill: css('--curve') }));
+    ax.g.append(el('circle', { cx: ax.X(last.e), cy: ax.Y(cl(last.va)), r: 4.5, fill: css('--ball') }));
+  }
+  function drawWeights() {
+    const ax = axes($('wPlot'), { W: 400, H: 280, x0: -1, x1: D, y0: -0.04, y1: 0.06, xt: [0, 50, 100, 150, 199], yt: [-0.04, -0.02, 0, 0.02, 0.04, 0.06], yf: v => minus(v.toFixed(2)), xl: 'weight number', l: 46 });
+    const bw = (ax.X(1) - ax.X(0)) * 0.8, col = css('--curve');
+    for (let j = 0; j < D; j++) { const v = Math.max(-0.04, Math.min(0.06, w[j])), y0 = ax.Y(0), y1 = ax.Y(v); ax.g.append(el('rect', { x: ax.X(j) - bw / 2, y: Math.min(y0, y1), width: bw, height: Math.abs(y1 - y0), fill: col, 'fill-opacity': 0.75 })); }
+    ax.g.append(el('line', { x1: ax.X(-1), x2: ax.X(D), y1: ax.Y(0.01), y2: ax.Y(0.01), stroke: css('--good'), 'stroke-width': 2 }));
+    ax.g.append(el('line', { x1: ax.X(-1), x2: ax.X(D), y1: ax.Y(0), y2: ax.Y(0), stroke: css('--axis') }));
+  }
+  function verdict() {
+    const last = hist[hist.length - 1], first = hist[0], ep = Math.floor(last.e);
+    if (ep === 0) return ['', 'Press Play. Watch the gap between the two curves: training loss is what the model sees, validation loss is how it does on 100 examples it never trained on.'];
+    const drop = (1 - last.va / first.va) * 100;
+    if (lam === 0) return ['bad', 'No decay: training loss dives toward zero while validation loss has moved only ' + drop.toFixed(0) + '% from where it started. The model is memorizing 20 examples with 200 weights. That gap is overfitting.'];
+    if (lam <= 6) return ['', 'With decay, training loss levels off instead of diving (the penalty will not let the weights chase the noise), and validation loss is down ' + drop.toFixed(0) + '% from the start. The weights are much smaller: look at the bars.'];
+    return ['warn', 'Heavy decay: the weights are squeezed almost to zero and training loss stays high. Validation loss is down ' + drop.toFixed(0) + '% here, because the true weights in this problem are tiny (0.01). On real data, this much decay usually underfits.'];
+  }
+  function render() {
+    const last = hist[hist.length - 1], ep = Math.floor(last.e + 1e-9);
+    $('sEpoch').textContent = ep; $('sTrain').textContent = sci(last.tr); $('sVal').textContent = sci(last.va); $('sNorm').textContent = last.n.toFixed(5);
+    const keep = 1 - LR * lam;
+    $('update').innerHTML = '<span class="sym">w</span> ← (1 − <span class="sym">η</span><span class="sym">λ</span>) · <span class="sym">w</span> − <span class="sym">η</span> · (gradient of the data loss)' +
+      '<span class="sub">Here 1 − ' + LR + ' × ' + lam.toFixed(1) + ' = <b>' + keep.toFixed(3) + '</b>: ' + (lam === 0 ? 'nothing is taken off, so weights only move when the data pushes them.' : 'every update first keeps ' + (keep * 100).toFixed(1) + '% of each weight, then adds the push from the data.') + '</span>';
+    const [cls, msg] = verdict(); $('verdict').className = 'verdict' + (cls ? ' ' + cls : ''); $('verdict').textContent = msg;
+    const tb = $('log').tBodies[0]; tb.replaceChildren();
+    const rows = hist.filter((h, i) => i % PER_EPOCH === 0);
+    rows.slice(-8).forEach((h, i, a) => {
+      const trEl = document.createElement('tr'); if (i === a.length - 1) trEl.className = 'cur';
+      [Math.round(h.e), sci(h.tr), sci(h.va), h.tr > 0 ? (h.va / h.tr >= 100 ? Math.round(h.va / h.tr).toLocaleString('en-US') + '×' : (h.va / h.tr).toFixed(1) + '×') : '', h.n.toFixed(5)].forEach(v => { const td = document.createElement('td'); td.textContent = String(v); trEl.append(td); });
+      tb.append(trEl);
+    });
+    drawLoss(); drawWeights();
+  }
+  const done = () => batch >= MAX_EPOCH * PER_EPOCH;
+  function stop() { clearInterval(timer); timer = null; $('play').textContent = 'Play'; }
+  function reset(newData) { stop(); init(newData); render(); }
+  $('play').addEventListener('click', () => {
+    if (timer) { stop(); return; }
+    if (done()) reset(false);
+    $('play').textContent = 'Pause';
+    timer = setInterval(() => { minibatch(); render(); if (done()) stop(); }, 70);
+  });
+  $('stepBtn').addEventListener('click', () => { stop(); if (done()) return; do { minibatch(); } while (batch % PER_EPOCH !== 0); render(); });
+  $('reset').addEventListener('click', () => reset(false));
+  $('newData').addEventListener('click', () => reset(true));
+  const setLam = v => { lam = v; $('lam').value = v; $('lamOut').textContent = v.toFixed(1); reset(false); };
+  $('lam').addEventListener('input', e => setLam(parseFloat(e.target.value)));
+  document.querySelectorAll('[data-lam]').forEach(bn => bn.addEventListener('click', () => setLam(parseFloat(bn.dataset.lam))));
+  onTheme(render);
+  init(false); render();
+})();
+</script>
+</body>
+</html>
