@@ -2,6 +2,8 @@
 
 BrokenLabsFix · Kris Hornung · November 2026
 
+Watch the recorded video: https://www.youtube.com/watch?v=YQF4lMUv9d4
+
 This file holds two scripts. Episode 1, below, covers the first three pages. [Episode 2](#episode-2-how-models-stop-memorizing-and-learn-faster) covers the six newer pages: weight decay, early stopping, dropout, SGD, minibatch size and momentum.
 
 ## At a glance
