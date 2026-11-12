@@ -151,6 +151,8 @@ deep learning, machine learning, gradient descent, linear regression, sigmoid, R
 
 BrokenLabsFix · Kris Hornung · November 2026
 
+Watch the recorded video: https://www.youtube.com/watch?v=_69pXSvmCOY
+
 ## Episode 2 at a glance
 
 An 18-minute screen-recorded walkthrough of the six newer explainers. Episode 1 ended with one loop: guess, measure, step downhill, repeat. This episode asks two questions about that loop. First: how do we stop the model from memorizing? Second: how do we make each step cheaper and faster?
