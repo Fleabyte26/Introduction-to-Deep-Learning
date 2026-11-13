@@ -381,6 +381,8 @@ deep learning, machine learning, overfitting, weight decay, L2 regularization, e
 
 BrokenLabsFix · Kris Hornung · November 2026
 
+Watch the recorded video: https://www.youtube.com/watch?v=r_NqjxmXD8g
+
 Earlier episodes: [Episode 1](https://www.youtube.com/watch?v=YQF4lMUv9d4) · [Episode 2](https://www.youtube.com/watch?v=_69pXSvmCOY)
 
 ## Episode 3 at a glance
