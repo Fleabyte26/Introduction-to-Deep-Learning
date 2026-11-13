@@ -4,7 +4,7 @@ BrokenLabsFix · Kris Hornung · November 2026
 
 Watch the recorded video: https://www.youtube.com/watch?v=YQF4lMUv9d4
 
-This file holds three scripts. Episode 1, below, covers the first three pages. [Episode 2](#episode-2-how-models-stop-memorizing-and-learn-faster) covers the six newer pages: weight decay, early stopping, dropout, SGD, minibatch size and momentum. [Episode 3](#episode-3-batch-normalization-you-can-drag) covers the batch normalization page.
+This file holds four scripts. Episode 1, below, covers the first three pages. [Episode 2](#episode-2-how-models-stop-memorizing-and-learn-faster) covers the six newer pages: weight decay, early stopping, dropout, SGD, minibatch size and momentum. [Episode 3](#episode-3-batch-normalization-you-can-drag) covers the batch normalization page. [Episode 4](#episode-4-four-ways-to-close-the-overfitting-gap) covers the regularization comparison page.
 
 ## At a glance
 
@@ -543,3 +543,169 @@ Based on Dive into Deep Learning (d2l.ai), Chapter 8: Modern CNNs, Section 8.5: 
 ## Episode 3 tags
 
 batch normalization, batch norm, deep learning, dive into deep learning, d2l, modern CNNs, vanishing gradient, minibatch, running average, training vs inference, model.eval, neural networks, machine learning tutorial, interactive explainer
+
+# Episode 4: Four Ways to Close the Overfitting Gap
+
+BrokenLabsFix · Kris Hornung · November 2026
+
+Earlier episodes: [Episode 1](https://www.youtube.com/watch?v=YQF4lMUv9d4) · [Episode 2](https://www.youtube.com/watch?v=_69pXSvmCOY) · [Episode 3](https://www.youtube.com/watch?v=r_NqjxmXD8g)
+
+## Episode 4 at a glance
+
+A 9-minute walkthrough of one page that puts four regularization techniques side by side on the same network. The story: they are not four unrelated tricks, they are four places to plug something into the same five lines of Keras.
+
+| Part | Time | What happens |
+| --- | --- | --- |
+| Hook: the gap | 0:00–0:45 | Two curves that drift apart |
+| Part 1: The skeleton | 0:45–2:00 | Build, compile, fit |
+| Part 2: The baseline | 2:00–3:15 | Press Play, watch 7.7 points open up |
+| Part 3: L2 | 3:15–4:15 | An argument inside the layer |
+| Part 4: Dropout | 4:15–5:30 | A layer between the layers |
+| Part 5: Early stopping | 5:30–6:45 | A callback on fit |
+| Part 6: Batch normalization | 6:45–8:00 | The one that goes the wrong way |
+| Wrap-up | 8:00–9:00 | What the bars say |
+
+Page: [regularization-compared.html](https://fleabyte26.github.io/Introduction-to-Deep-Learning/regularization-compared.html)
+
+Same format as before: left column is what to do on screen, right column is what to say. Short sentences, no idioms, for the Hindi and Bahasa auto-dub.
+
+Every number below is printed on the page, so they will match what the viewer sees. Before recording, open the page fresh and leave it on "None (baseline)" at the last epoch.
+
+## Hook (0:00–0:45)
+
+| Show | Say |
+| --- | --- |
+| The page on "None (baseline)", chart showing the pink gap | "Look at these two lines. The blue one is how often the model is right on the images it trained on. The orange one is images it has never seen." |
+| Point at the pink shaded area | "They should move together. They do not. This pink area is the problem, and it has a name: overfitting." |
+| Point at the Gap stat: 7.7 pts | "The model is 7.7 points better on the data it memorized. That part of its skill is fake." |
+| Same | "There are four standard ways to fix this. Most courses teach them as four separate topics. Today I want to show you something simpler: they all plug into the same five lines of code." |
+
+## Part 1: The skeleton (0:45–2:00)
+
+Goal: the viewer sees the pipeline before any technique is added.
+
+| Show | Say |
+| --- | --- |
+| Point at the code panel, top to bottom | "This is every Keras model you will ever write. Three steps. Build, compile, fit." |
+| Point at the Sequential block | "Build: a list of layers. 784 pixels come in. Three hidden layers of 256, 128 and 64. Ten outputs, one for each kind of clothing." |
+| Point at compile | "Compile: which optimizer, which loss function. Adam, and crossentropy for picking one of ten classes." |
+| Point at fit | "Fit: here is the data, train for 30 rounds. That is it. 242,000 numbers get adjusted." |
+| Point at the line "Attaches as nothing added" | "Right now nothing is added. This is the plain model, and it overfits." |
+| Same | "Watch this line as I click through the four techniques. It tells you where each one plugs in." |
+
+## Part 2: The baseline (2:00–3:15)
+
+| Show | Say |
+| --- | --- |
+| Drag the epoch slider back to 1 | "Let me go back to the first epoch and play the training." |
+| Press Play, let it run | "Watch the two lines. For the first two or three epochs they rise together. The model is learning real patterns." |
+| Let it continue, point at where they separate | "Now they split. Blue keeps climbing. Orange goes flat. From here, every extra round of training only helps on data the model already saw." |
+| Let it reach epoch 30 | "At the end: 95.3 percent on training data, 87.7 percent on new data. A gap of 7.7 points." |
+| Point at the bar chart below, baseline row | "On the final test set it scored 0.870. Remember that number." |
+
+## Part 3: L2, an argument inside the layer (3:15–4:15)
+
+| Show | Say |
+| --- | --- |
+| Click "L2 (weight decay)" | "First fix. L2, also called weight decay." |
+| Point at the green highlighted lines in the code | "Look where it goes. Inside each Dense layer, as an extra argument. No new layers. The model has the same shape." |
+| Same | "What it does: it adds a penalty for large weights. The model is allowed to fit the data, but it has to pay for every big number it uses." |
+| Press Play | "Watch the two lines now. They stay much closer together." |
+| Point at the stats | "At the end: 90.9 percent training, 87.7 percent validation. The gap dropped from 7.7 points to 3.2." |
+| Point at the bar chart, L2 row | "But look at the test score. 0.872. Almost the same as before. This is important. L2 did not make the model smarter. It stopped the model from fooling us." |
+
+## Part 4: Dropout, a layer between the layers (4:15–5:30)
+
+| Show | Say |
+| --- | --- |
+| Click "Dropout" | "Second fix. Dropout." |
+| Point at the highlighted Dropout lines | "This one is a real layer. It sits between the Dense layers. Three of them." |
+| Same | "What it does: on every minibatch, it switches off 30 percent of the neurons at random. The model can never rely on one neuron, because that neuron might be gone next time." |
+| Press Play, point at the start where orange is above blue | "Watch the beginning. The orange line is above the blue one. That looks wrong, but it is not." |
+| Same | "Dropout is only on during training. So the model is handicapped on the blue line and running at full strength on the orange line." |
+| Let it finish, point at the Gap stat | "At the end: 90.0 and 89.4. A gap of 0.6 points. Almost nothing." |
+| Point at the bar chart, Dropout row | "And the test score is 0.888. The best of all five. Dropout wins both." |
+
+## Part 5: Early stopping, a callback on fit (5:30–6:45)
+
+| Show | Say |
+| --- | --- |
+| Click "Early stopping" | "Third fix, and it is the strangest one, because it changes nothing in the model." |
+| Point at the Sequential block, unhighlighted | "Look at the layers. No regularizer. No dropout. This is the plain model from the beginning." |
+| Point at the highlighted EarlyStopping block and the callbacks line | "The change is down here. A callback, handed to fit. It watches the validation loss after every epoch." |
+| Point at "patience=5" | "Patience 5 means: if the validation loss does not improve for five epochs in a row, stop." |
+| Point at "restore_best_weights=True" | "And this line matters. When it stops, it throws away the last five epochs and goes back to the best one." |
+| Point at the epoch counter: 11 | "We asked for a maximum of 100 epochs. It stopped itself after 11." |
+| Press Play | "The gap never gets a chance to open, because training ends before it can." |
+| Point at the bar and stats | "Gap 3.1 points, test score 0.880. Very good, for one extra line of code and a third of the training time." |
+
+## Part 6: Batch normalization, the surprise (6:45–8:00)
+
+| Show | Say |
+| --- | --- |
+| Click "Batch normalization" | "Fourth. And this one does not do what you expect." |
+| Point at the highlighted BatchNormalization lines | "Same position as dropout: a layer after each hidden Dense layer." |
+| Same | "What it does: it resets the numbers passing through, back to average zero and spread one. I made a whole video about this one, Episode 3." |
+| Press Play | "Now watch. The blue line goes higher and faster than any other model we have seen." |
+| Let it finish, point at the Gap stat: 11.1 | "97.4 percent on training. 86.3 on validation. A gap of 11.1 points. That is worse than the model with no fix at all." |
+| Point at the bar chart, Batch Norm row | "And the test score is 0.862. The lowest of the five." |
+| Same | "Here is the lesson. Batch normalization is not a regularizer. It makes training easier and more stable. And when training is easier, the model memorizes the training set faster. It is a tool for a different job." |
+
+## Wrap-up (8:00–9:00)
+
+| Show | Say |
+| --- | --- |
+| Scroll to the bar chart, all five rows visible | "Five models. Same 242,000 parameters. Same data. Here is everything." |
+| Point at the gap column, top to bottom | "Dropout: 0.6 points. Early stopping: 3.1. L2: 3.2. No fix: 7.7. Batch norm: 11.1." |
+| Point at the test numbers | "Now the test scores. 0.888, 0.880, 0.872, 0.870, 0.862." |
+| Same | "Look how close they are. From the best to the worst is about two and a half points. None of these techniques made the network much better at recognizing clothing." |
+| Same | "What they changed is whether you can trust the training numbers. That is what regularization is for." |
+| Point at the code panel | "And remember the one simple idea: build, compile, fit. L2 goes inside a layer. Dropout and batch norm go between layers. Early stopping goes on fit. Four techniques, three places." |
+| The repo README | "The page is in the description. Click the buttons, drag the slider, break it. Tell me in the comments which topic you want next." |
+
+## Episode 4 recording checklist
+
+- [ ] Check the live link opens: https://fleabyte26.github.io/Introduction-to-Deep-Learning/regularization-compared.html
+- [ ] Reload the page before recording so it starts on "None (baseline)" at the last epoch
+- [ ] Browser zoom at 125% so the numbers are readable on a phone
+- [ ] Light mode for recording
+- [ ] Bookmarks bar hidden, notifications off
+- [ ] Practice the Play timing once: a full sweep takes about 5 seconds, so start talking before you press it
+- [ ] Have the bar chart and the top panel both reachable with one scroll
+- [ ] Publishing on BrokenLabsFix (Hindi/Bahasa audience, auto-dubbing on)
+
+## Episode 4 title options
+
+1. Four Ways to Stop a Neural Network Overfitting (See Them Side by Side)
+2. Dropout vs L2 vs Early Stopping vs Batch Norm: One Network, Real Numbers
+3. Why Batch Normalization Made My Model Worse
+
+## Episode 4 description
+
+```
+One interactive page comparing four regularization techniques on the same neural network, with real training curves. No install, no code.
+
+Four ways to close the overfitting gap
+https://fleabyte26.github.io/Introduction-to-Deep-Learning/regularization-compared.html
+
+All pages and source: https://github.com/Fleabyte26/Introduction-to-Deep-Learning
+
+Episode 1 (linear regression, gradient descent, sigmoid): https://www.youtube.com/watch?v=YQF4lMUv9d4
+Episode 2 (weight decay, early stopping, dropout, SGD, minibatch size, momentum): https://www.youtube.com/watch?v=_69pXSvmCOY
+Episode 3 (batch normalization): https://www.youtube.com/watch?v=r_NqjxmXD8g
+
+Based on Dive into Deep Learning (d2l.ai), sections 3.7, 5.5, 5.6 and 8.5. Trained on Fashion-MNIST: 36,000 training images, 12,000 validation, 12,000 test.
+
+0:00 The gap
+0:45 Build, compile, fit
+2:00 The baseline overfits
+3:15 L2: inside the layer
+4:15 Dropout: between the layers
+5:30 Early stopping: on fit
+6:45 Batch norm goes the wrong way
+8:00 What the numbers say
+```
+
+## Episode 4 tags
+
+overfitting, regularization, dropout, L2 regularization, weight decay, early stopping, batch normalization, deep learning, neural networks, fashion mnist, keras, tensorflow, d2l, dive into deep learning, machine learning tutorial, validation accuracy, interactive explainer
