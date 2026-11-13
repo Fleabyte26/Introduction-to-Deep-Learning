@@ -1,0 +1,270 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Batch Normalization: Resetting the Scale at Every Layer</title>
+
+<style>
+  :root {
+    --bg: #fbfaf7; --ink: #1d1d1b; --quiet: #6b6a65; --grid: #e4e2dc; --axis: #9a978f; --card: #ffffff;
+    --curve: #2f6fb3; --ball: #c2410c; --trail: #c2410c; --good: #2e7d4f; --warn: #b7791f; --bad: #b42318;
+    --alt: #7a4fb5; --teal: #1f8a8a;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #1b1b1a; --ink: #ecebe7; --quiet: #a3a19b; --grid: #34332f; --axis: #6f6d67; --card: #242422;
+      --curve: #6aa6e8; --ball: #f08a4b; --trail: #f08a4b; --good: #5fbf86; --warn: #e0b04f; --bad: #f2786d;
+      --alt: #b497e6; --teal: #5cc4c4;
+    }
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--ink);
+    font: 16px/1.5 ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif; }
+  main { max-width: 860px; margin: 0 auto; padding: 32px 20px 48px; }
+  h1 { font-size: 26px; margin: 0 0 6px; letter-spacing: -0.01em; }
+  .lead { color: var(--quiet); margin: 0 0 22px; }
+  .panel { background: var(--card); border: 1px solid var(--grid); border-radius: 12px; padding: 16px; }
+  .panel + .panel, h2 + .panel { margin-top: 0; }
+  svg, canvas { width: 100%; height: auto; display: block; }
+  .two { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; align-items: start; }
+  .cap { font-size: 13px; color: var(--quiet); margin: 0 0 4px; font-weight: 600; }
+  .ctrl { display: grid; grid-template-columns: 170px 1fr 76px; align-items: center; gap: 10px; margin: 10px 0; }
+  .ctrl label { font-weight: 600; }
+  input[type=range] { width: 100%; accent-color: var(--curve); }
+  .val { font-variant-numeric: tabular-nums; text-align: right; font-weight: 600; }
+  .presets { display: flex; gap: 8px; flex-wrap: wrap; margin: 4px 0 12px 180px; }
+  button { font: inherit; padding: 6px 14px; border-radius: 8px; border: 1px solid var(--grid);
+    background: var(--card); color: var(--ink); cursor: pointer; }
+  button.primary { background: var(--curve); color: #fff; border-color: var(--curve); font-weight: 600; }
+  button.chip { font-size: 14px; padding: 4px 10px; }
+  button.chip.on { border-color: var(--curve); box-shadow: inset 0 0 0 1px var(--curve); font-weight: 600; }
+  .buttons { display: flex; gap: 8px; margin-top: 6px; flex-wrap: wrap; }
+  .update { font: 500 20px/1.45 ui-serif, Georgia, serif; margin: 14px 0 4px; min-height: 32px; }
+  .update .sym { color: var(--curve); font-style: italic; }
+  .update .hi { color: var(--ball); font-weight: 700; }
+  .update .sub { color: var(--quiet); font: 400 15px/1.4 ui-sans-serif, system-ui, sans-serif; display: block; margin-top: 2px; }
+  .stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-top: 12px; }
+  .stats.three { grid-template-columns: repeat(3, 1fr); }
+  .stat { border: 1px solid var(--grid); border-radius: 10px; padding: 10px 12px; }
+  .stat .k { font-size: 13px; color: var(--quiet); }
+  .stat .v { font-size: 21px; font-weight: 650; font-variant-numeric: tabular-nums; }
+  .verdict { margin-top: 14px; padding: 12px 14px; border-radius: 10px; border-left: 4px solid var(--good);
+    background: color-mix(in srgb, var(--good) 10%, transparent); }
+  .verdict.warn { border-left-color: var(--warn); background: color-mix(in srgb, var(--warn) 12%, transparent); }
+  .verdict.bad { border-left-color: var(--bad); background: color-mix(in srgb, var(--bad) 10%, transparent); }
+  h2 { font-size: 19px; margin: 30px 0 10px; }
+  table { width: 100%; border-collapse: collapse; font-size: 15px; font-variant-numeric: tabular-nums; }
+  th, td { text-align: right; padding: 6px 10px; border-bottom: 1px solid var(--grid); }
+  th:first-child, td:first-child { text-align: left; }
+  th { color: var(--quiet); font-weight: 600; font-size: 13px; }
+  tr.cur td { background: color-mix(in srgb, var(--ball) 10%, transparent); font-weight: 600; }
+  .note { color: var(--quiet); font-size: 14px; margin-top: 10px; }
+  .key { display: flex; gap: 16px; flex-wrap: wrap; font-size: 13px; color: var(--quiet); margin: 6px 0 0; }
+  .key span::before { content: ""; display: inline-block; width: 18px; height: 3px; border-radius: 2px; vertical-align: middle; margin-right: 6px; background: var(--c); }
+  .key span.dot::before { width: 9px; height: 9px; border-radius: 50%; }
+  .back { font-size: 14px; margin: 0 0 14px; }
+  .back a { color: var(--curve); text-decoration: none; }
+  @media (max-width: 640px) { .two { grid-template-columns: 1fr; } .ctrl { grid-template-columns: 1fr 70px; } .ctrl label { grid-column: 1 / -1; } .presets { margin-left: 0; } .stats, .stats.three { grid-template-columns: 1fr 1fr; } }
+</style>
+</head>
+<body>
+<main>
+  <h1>Batch normalization: resetting the scale at every layer</h1>
+  <p class="lead">Deep in a network, the numbers arriving at a layer can drift far from zero or spread very wide, and they keep moving as the earlier layers train. Batch normalization takes each minibatch, subtracts its average, divides by its spread, and then lets the network choose a new scale and shift. Move the sliders to make the incoming values awkward, and watch the layer put them back.</p>
+
+  <div class="panel">
+    <p class="cap">One unit, one minibatch. Each dot is one example's value at this unit. The ringed dot is the same example every time.</p>
+    <svg id="strips" role="img" aria-label="Minibatch values before normalization, after standardizing, and after scale and shift"></svg>
+    <p class="note" style="margin:2px 0 6px">Shaded: beyond ±4, where the sigmoid is nearly flat. Dashed line: the average. Bar on the baseline: one spread either side of it.</p>
+    <div class="key"><span class="dot" style="--c:var(--axis)">Arriving values x</span><span class="dot" style="--c:var(--curve)">After subtracting the mean and dividing by the spread</span><span class="dot" style="--c:var(--ball)">After scale γ and shift β</span></div>
+
+    <div class="ctrl"><label for="mu">Incoming average</label><input id="mu" type="range" min="-6" max="6" step="0.5" value="5"><span class="val" id="muOut"></span></div>
+    <div class="ctrl"><label for="sd">Incoming spread</label><input id="sd" type="range" min="0.2" max="4" step="0.1" value="2.5"><span class="val" id="sdOut"></span></div>
+    <div class="ctrl"><label for="bs">Minibatch size</label><input id="bs" type="range" min="0" max="7" step="1" value="5"><span class="val" id="bsOut"></span></div>
+    <div class="ctrl"><label for="ga">Scale γ (learned)</label><input id="ga" type="range" min="0.2" max="3" step="0.1" value="1"><span class="val" id="gaOut"></span></div>
+    <div class="ctrl"><label for="be">Shift β (learned)</label><input id="be" type="range" min="-3" max="3" step="0.1" value="0"><span class="val" id="beOut"></span></div>
+    <div class="presets" role="group" aria-label="Mode">
+      <button class="chip on" id="modeTrain">Training: use this minibatch's statistics</button>
+      <button class="chip" id="modeTest">Prediction: use the running averages</button>
+    </div>
+    <div class="buttons">
+      <button id="play" class="primary">Play</button>
+      <button id="stepBtn">One minibatch</button>
+      <button id="many">Draw 500 at once</button>
+      <button id="reset">Reset</button>
+    </div>
+
+    <div class="update" id="update"></div>
+
+    <div class="stats">
+      <div class="stat"><div class="k">This minibatch: average, spread</div><div class="v" id="sBatch"></div></div>
+      <div class="stat"><div class="k">Running averages kept for prediction</div><div class="v" id="sRun"></div></div>
+      <div class="stat"><div class="k">In sigmoid's flat zone: before, after</div><div class="v" id="sSat"></div></div>
+      <div class="stat"><div class="k">Ringed example's output wobble</div><div class="v" id="sWob"></div></div>
+    </div>
+    <div class="verdict" id="verdict"></div>
+  </div>
+
+  <h2>The same example, different company</h2>
+  <div class="panel">
+    <p class="cap">Output of the ringed example on each minibatch so far. Its own value never changes. Only the other examples in its minibatch do.</p>
+    <svg id="trace" role="img" aria-label="Output of one fixed example across minibatches"></svg>
+    <p class="note">During training, an example's output depends on which other examples happened to land in its minibatch, because they set the average and the spread. That wobble is noise, and like dropout it acts as a mild regularizer. Small minibatches wobble a lot, large ones hardly at all.</p>
+  </div>
+
+  <h2>What to take from this</h2>
+  <p class="note" style="font-size:15px;color:var(--ink)">The formula is BN(x) = γ × (x − μ) / σ + β, where μ and σ are the average and spread of the current minibatch, computed separately for every unit (or for every channel in a convolutional layer). After the subtraction and division, the values always have average 0 and spread 1, whatever arrived. γ and β are ordinary learned parameters, so the network is free to pick whatever scale and position works best. The difference is that it now picks them directly, in two numbers, and they no longer shift every time an earlier layer changes.</p>
+  <p class="note" style="font-size:15px;color:var(--ink)">At prediction time there may be only one example, so there is no minibatch to measure. The layer uses running averages of μ and σ that it collected during training. That is why a batch normalization layer behaves differently in training mode and prediction mode, the same way dropout does.</p>
+  <p class="note">From Section 8.5 of <i>Dive into Deep Learning</i>. The book places batch normalization after the linear or convolutional step and before the activation function, and notes that a minibatch of size 1 teaches nothing: after subtracting its own average, every value is zero. Batch normalization lets deep networks train with larger learning rates and converge faster. Why it works so well is still argued about. The original explanation, called internal covariate shift, is disputed, and the book says so plainly. The flat zone shown here is where the sigmoid's slope is close to zero, the vanishing-gradient problem from the <a href="sigmoid.html" style="color:var(--curve)">sigmoid page</a>.</p>
+</main>
+
+<script>
+(function () {
+  const $ = id => document.getElementById(id);
+  const css = n => getComputedStyle(document.documentElement).getPropertyValue(n).trim();
+  const el = (tag, attrs, text) => { const e = document.createElementNS('http://www.w3.org/2000/svg', tag); for (const k in attrs) e.setAttribute(k, attrs[k]); if (text !== undefined) e.textContent = text; return e; };
+  const minus = s => String(s).replace(/-/g, '−');
+  const fx = (v, d) => { const t = Math.abs(v) >= 1e5 ? v.toExponential(2) : v.toFixed(d === undefined ? 3 : d); return minus(/^-0(\.0+)?$/.test(t) ? t.slice(1) : t); };
+  const sci = v => { if (v === 0) return '0'; const a = Math.abs(v); return minus(a >= 0.001 && a < 1000 ? v.toPrecision(3) : v.toExponential(1)); };
+  // Small seeded random generator so a run can be replayed exactly.
+  function rng(seed) {
+    let a = seed >>> 0, spare = null;
+    const u = () => { a |= 0; a = a + 0x6D2B79F5 | 0; let t = Math.imul(a ^ a >>> 15, 1 | a); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; };
+    const g = () => { if (spare !== null) { const s = spare; spare = null; return s; } let x, y, r; do { x = 2 * u() - 1; y = 2 * u() - 1; r = x * x + y * y; } while (r >= 1 || r === 0); const m = Math.sqrt(-2 * Math.log(r) / r); spare = y * m; return x * m; };
+    return { u, g };
+  }
+  // Draws axes into an svg and returns the coordinate mappers. o.logY plots log10(y).
+  function axes(svg, o) {
+    const W = o.W, H = o.H, l = o.l === undefined ? 52 : o.l, r = o.r === undefined ? 16 : o.r, t = o.t === undefined ? 14 : o.t, b = o.b === undefined ? 38 : o.b;
+    svg.setAttribute('viewBox', '0 0 ' + W + ' ' + H); svg.replaceChildren();
+    const grid = css('--grid'), quiet = css('--quiet'), axis = css('--axis');
+    const ty = v => o.logY ? Math.log10(v) : v;
+    const y0 = ty(o.y0), y1 = ty(o.y1);
+    const X = x => l + (x - o.x0) / (o.x1 - o.x0) * (W - l - r);
+    const Y = y => t + (y1 - ty(y)) / (y1 - y0) * (H - t - b);
+    (o.yt || []).forEach(v => {
+      svg.append(el('line', { x1: l, x2: W - r, y1: Y(v), y2: Y(v), stroke: grid }));
+      svg.append(el('text', { x: l - 7, y: Y(v) + 4, 'text-anchor': 'end', 'font-size': 12, fill: quiet }, o.yf ? o.yf(v) : minus(v)));
+    });
+    (o.xt || []).forEach(v => svg.append(el('text', { x: X(v), y: H - b + 17, 'text-anchor': 'middle', 'font-size': 12, fill: quiet }, o.xf ? o.xf(v) : minus(v))));
+    svg.append(el('line', { x1: l, x2: W - r, y1: H - b, y2: H - b, stroke: axis }));
+    if (o.xl) svg.append(el('text', { x: (l + W - r) / 2, y: H - 4, 'text-anchor': 'middle', 'font-size': 12, fill: quiet }, o.xl));
+    if (o.yl) svg.append(el('text', { x: l, y: t - 3, 'text-anchor': 'start', 'font-size': 12, fill: quiet }, o.yl));
+    const id = 'clip' + Math.random().toString(36).slice(2, 8);
+    const defs = el('defs'), cp = el('clipPath', { id }); cp.append(el('rect', { x: l, y: t, width: W - l - r, height: H - t - b })); defs.append(cp); svg.append(defs);
+    const g = el('g', { 'clip-path': 'url(#' + id + ')' }); svg.append(g);
+    return { X, Y, g, l, r, t, b, W, H };
+  }
+  const pathOf = (pts, X, Y) => pts.map((p, i) => (i ? 'L' : 'M') + X(p[0]).toFixed(1) + ' ' + Y(p[1]).toFixed(1)).join('');
+  // Elliptical contours of a*x^2 + b*y^2 for the given levels.
+  function ellipses(ax, a, b, levels) {
+    const sx = Math.abs(ax.X(1) - ax.X(0)), sy = Math.abs(ax.Y(1) - ax.Y(0));
+    levels.forEach(L => ax.g.append(el('ellipse', { cx: ax.X(0), cy: ax.Y(0), rx: Math.sqrt(L / a) * sx, ry: Math.sqrt(L / b) * sy, fill: 'none', stroke: css('--grid'), 'stroke-width': 1.4 })));
+    ax.g.append(el('circle', { cx: ax.X(0), cy: ax.Y(0), r: 3.5, fill: css('--good') }));
+  }
+  const onTheme = fn => { if (window.matchMedia) window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', fn); };
+
+
+  const SIZES = [1, 2, 4, 8, 16, 32, 64, 128], EPS = 1e-5, MOM = 0.1, FLAT = 4, LIM = 12;
+  let mu = 5, sd = 2.5, bi = 5, gamma = 1, beta = 0, training = true, seed = 7, R, xs, jit, count, runM, runV, starZ, timer = null;
+  const B = () => SIZES[bi];
+  const star = () => mu + sd;                      // the ringed example: always one spread above the incoming average
+  function batchStats(a) { const m = a.reduce((s, v) => s + v, 0) / a.length; const v = a.reduce((s, x) => s + (x - m) * (x - m), 0) / a.length; return { m, v }; }
+  function newBatch() { xs = [star()]; for (let i = 1; i < B(); i++) xs.push(mu + sd * R.g()); }
+  function init() { R = rng(seed); count = 0; runM = 0; runV = 1; starZ = []; jit = []; const J = rng(99); for (let i = 0; i < 128; i++) jit.push(J.u() * 2 - 1); newBatch(); }
+  function draw1() {
+    newBatch(); const s = batchStats(xs); count++;
+    runM = (1 - MOM) * runM + MOM * s.m; runV = (1 - MOM) * runV + MOM * s.v;
+    starZ.push((star() - s.m) / Math.sqrt(s.v + EPS)); if (starZ.length > 600) starZ.shift();
+  }
+  function used() { if (training) return batchStats(xs); return { m: runM, v: runV }; }
+  const sdOf = a => { if (a.length < 2) return 0; const s = batchStats(a); return Math.sqrt(s.v); };
+
+  function drawStrips() {
+    const svg = $('strips'), W = 760, H = 312, l = 150, r = 16; svg.setAttribute('viewBox', '0 0 ' + W + ' ' + H); svg.replaceChildren();
+    const X = v => l + (Math.max(-LIM, Math.min(LIM, v)) + LIM) / (2 * LIM) * (W - l - r);
+    const quiet = css('--quiet'), grid = css('--grid'), axis = css('--axis'), ink = css('--ink'), warn = css('--warn');
+    const st = used(), s = Math.sqrt(st.v + EPS);
+    const z = xs.map(x => (x - st.m) / s), y = z.map(v => gamma * v + beta);
+    const rows = [['Arriving', 'x', xs, axis], ['Standardized', '(x − μ) / σ', z, css('--curve')], ['Output', 'γ × that + β', y, css('--ball')]];
+    rows.forEach((row, k) => {
+      const cy = 52 + k * 96, h = 64;
+      svg.append(el('rect', { x: l, y: cy - h / 2, width: X(-FLAT) - l, height: h, fill: warn, 'fill-opacity': 0.10 }));
+      svg.append(el('rect', { x: X(FLAT), y: cy - h / 2, width: W - r - X(FLAT), height: h, fill: warn, 'fill-opacity': 0.10 }));
+      svg.append(el('line', { x1: l, x2: W - r, y1: cy + h / 2, y2: cy + h / 2, stroke: axis }));
+      svg.append(el('line', { x1: X(0), x2: X(0), y1: cy - h / 2, y2: cy + h / 2, stroke: grid, 'stroke-width': 2 }));
+      svg.append(el('text', { x: 8, y: cy - 4, 'font-size': 14, 'font-weight': 600, fill: ink }, row[0]));
+      svg.append(el('text', { x: 8, y: cy + 14, 'font-size': 12, fill: quiet }, row[1]));
+      const a = row[2], bs = batchStats(a), bsd = Math.sqrt(bs.v);
+      svg.append(el('rect', { x: X(bs.m - bsd), y: cy + h / 2 - 5, width: Math.max(1, X(bs.m + bsd) - X(bs.m - bsd)), height: 5, fill: row[3], 'fill-opacity': 0.55 }));
+      svg.append(el('line', { x1: X(bs.m), x2: X(bs.m), y1: cy - h / 2 + 2, y2: cy + h / 2, stroke: row[3], 'stroke-width': 2, 'stroke-dasharray': '4 3' }));
+      for (let i = a.length - 1; i >= 0; i--) {
+        const out = Math.abs(a[i]) > LIM;
+        svg.append(el('circle', { cx: X(a[i]), cy: cy - 4 + jit[i] * (h / 2 - 12), r: i === 0 ? 6.5 : 4.2, fill: row[3], 'fill-opacity': i === 0 ? 1 : (out ? 0.35 : 0.8), stroke: i === 0 ? ink : 'none', 'stroke-width': 2.2 }));
+      }
+    });
+    [-12, -8, -4, 0, 4, 8, 12].forEach(v => svg.append(el('text', { x: X(v), y: H - 8, 'text-anchor': 'middle', 'font-size': 12, fill: quiet }, minus(v))));
+  }
+  function drawTrace() {
+    const n = Math.max(40, starZ.length), ys = starZ.map(v => gamma * v + beta);
+    const lo = Math.min(-3, beta - 3 * gamma), hi = Math.max(3, beta + 3 * gamma), span = hi - lo;
+    const yt = [lo, lo + span / 4, lo + span / 2, lo + 3 * span / 4, hi];
+    const ax = axes($('trace'), { W: 760, H: 220, x0: 0, x1: n, y0: lo, y1: hi, yt, yf: v => fx(v, 1), xt: [0, Math.round(n / 2), n], xl: starZ.length >= 600 ? 'the 600 most recent minibatches' : 'minibatch number', yl: 'output for the ringed example' });
+    const target = gamma * 1 + beta;
+    ax.g.append(el('line', { x1: ax.X(0), x2: ax.X(n), y1: ax.Y(target), y2: ax.Y(target), stroke: css('--good'), 'stroke-width': 1.5, 'stroke-dasharray': '5 4' }));
+    if (ys.length) {
+      ax.g.append(el('path', { d: pathOf(ys.map((v, i) => [i + 0.5, Math.max(lo, Math.min(hi, v))]), ax.X, ax.Y), fill: 'none', stroke: css('--ball'), 'stroke-width': 1.3, 'stroke-opacity': 0.55 }));
+      ys.forEach((v, i) => ax.g.append(el('circle', { cx: ax.X(i + 0.5), cy: ax.Y(Math.max(lo, Math.min(hi, v))), r: ys.length > 150 ? 1.6 : 2.8, fill: css('--ball') })));
+    } else ax.g.append(el('text', { x: ax.X(n / 2), y: ax.Y((lo + hi) / 2) - 8, 'text-anchor': 'middle', 'font-size': 14, fill: css('--quiet') }, 'Press Play to draw minibatches.'));
+  }
+  function render() {
+    $('muOut').textContent = fx(mu, 1); $('sdOut').textContent = fx(sd, 1); $('bsOut').textContent = B(); $('gaOut').textContent = fx(gamma, 1); $('beOut').textContent = fx(beta, 1);
+    const bsx = batchStats(xs), st = used(), s = Math.sqrt(st.v + EPS);
+    const y = xs.map(x => gamma * (x - st.m) / s + beta);
+    const frac = a => Math.round(a.filter(v => Math.abs(v) > FLAT).length / a.length * 100);
+    $('sBatch').textContent = fx(bsx.m, 2) + ', ' + fx(Math.sqrt(bsx.v), 2);
+    $('sRun').textContent = fx(runM, 2) + ', ' + fx(Math.sqrt(runV), 2);
+    $('sSat').textContent = frac(xs) + '% → ' + frac(y) + '%';
+    const wob = gamma * sdOf(starZ);
+    $('sWob').textContent = !training ? '0' : (starZ.length < 2 ? 'n/a' : '± ' + fx(wob, 2));
+    $('update').innerHTML = '<span class="sym">y</span> = <span class="sym">γ</span> × (<span class="sym">x</span> − <span class="hi">' + fx(st.m, 2) + '</span>) / <span class="hi">' + fx(s, 2) + '</span> + <span class="sym">β</span>' +
+      '<span class="sub">' + (training ? 'Training: the two highlighted numbers are the average and spread of the ' + B() + ' value' + (B() === 1 ? '' : 's') + ' in this minibatch. They change with every minibatch.' : 'Prediction: the two highlighted numbers are the running averages saved during training. They no longer change, so one example gives the same answer whatever else is in the batch.') + '</span>';
+    let cls = '', msg;
+    const yb = batchStats(y);
+    if (!training && count === 0) { cls = 'warn'; msg = 'Prediction mode before any training: the running averages are still at their starting values (average 0, spread 1), so nothing is corrected and the output is just γ × x + β. Switch to training and press Play to let the layer collect its statistics.'; }
+    else if (!training && count < 25) { cls = 'warn'; msg = 'Prediction mode after only ' + count + ' minibatch' + (count === 1 ? '' : 'es') + '. The running averages (' + fx(runM, 2) + ', ' + fx(Math.sqrt(runV), 2) + ') have not yet caught up with the true incoming values (' + fx(mu, 1) + ', ' + fx(sd, 1) + '), so the output is off-centre. Each minibatch moves them a tenth of the way. Train longer.'; }
+    else if (!training) msg = 'Prediction mode: the layer subtracts ' + fx(runM, 2) + ' and divides by ' + fx(Math.sqrt(runV), 2) + ', the running averages from ' + count.toLocaleString('en-US') + ' training minibatches. Nothing depends on the other examples now, so the ringed example gets the same output every time.';
+    else if (B() === 1) { cls = 'bad'; msg = 'Minibatch of 1: the average of one value is the value itself, so after subtracting it everything is exactly zero and the output is just β = ' + fx(beta, 1) + ', whatever arrived. The layer has thrown away all the information. This is the book\'s warning: batch normalization needs more than one example per minibatch.'; }
+    else if (B() <= 4) { cls = 'warn'; msg = 'With only ' + B() + ' examples, the average and spread are rough guesses that jump around from one minibatch to the next' + (starZ.length > 5 ? ' (the ringed example\'s output wobbles by about ± ' + fx(wob, 2) + ')' : '') + '. A little of this noise helps, the way dropout does. This much makes training erratic.'; }
+    else if (frac(xs) >= 30 && frac(y) < 10) msg = frac(xs) + '% of the arriving values sat in the sigmoid\'s flat zone, where almost no gradient gets through. After batch normalization ' + frac(y) + '% do. The output has average ' + fx(yb.m, 2) + ' and spread ' + fx(Math.sqrt(yb.v), 2) + ', which is simply β and γ, no matter what the incoming average and spread were.';
+    else if (frac(y) >= 30) { cls = 'warn'; msg = 'γ and β now push ' + frac(y) + '% of the output into the flat zone. Nothing forbids that: γ and β are learned, and the network may choose any scale and shift. The point is that the choice is now made by two numbers at this layer, not by everything upstream.'; }
+    else msg = 'Whatever average and spread you send in, the output of this minibatch has average ' + fx(yb.m, 2) + ' and spread ' + fx(Math.sqrt(yb.v), 2) + ': exactly β and γ. Try dragging the incoming average and spread. The top row moves and the bottom row stays put.';
+    $('verdict').className = 'verdict' + (cls ? ' ' + cls : ''); $('verdict').textContent = msg;
+    drawStrips(); drawTrace();
+  }
+  function stop() { clearInterval(timer); timer = null; $('play').textContent = 'Play'; }
+  function reset() { stop(); init(); render(); }
+  function setMode(t) { training = t; $('modeTrain').classList.toggle('on', t); $('modeTest').classList.toggle('on', !t); if (!t) stop(); render(); }
+  $('play').addEventListener('click', () => {
+    if (timer) { stop(); return; }
+    if (!training) setMode(true);
+    $('play').textContent = 'Pause'; draw1(); render();
+    timer = setInterval(() => { draw1(); render(); }, 550);
+  });
+  $('stepBtn').addEventListener('click', () => { stop(); if (!training) setMode(true); draw1(); render(); });
+  $('many').addEventListener('click', () => { stop(); if (!training) setMode(true); for (let i = 0; i < 500; i++) draw1(); render(); });
+  $('reset').addEventListener('click', reset);
+  $('modeTrain').addEventListener('click', () => setMode(true));
+  $('modeTest').addEventListener('click', () => setMode(false));
+  $('mu').addEventListener('input', e => { mu = parseFloat(e.target.value); reset(); });
+  $('sd').addEventListener('input', e => { sd = parseFloat(e.target.value); reset(); });
+  $('bs').addEventListener('input', e => { bi = parseInt(e.target.value, 10); reset(); });
+  $('ga').addEventListener('input', e => { gamma = parseFloat(e.target.value); render(); });
+  $('be').addEventListener('input', e => { beta = parseFloat(e.target.value); render(); });
+  onTheme(render);
+  init(); render();
+})();
+</script>
+</body>
+</html>
