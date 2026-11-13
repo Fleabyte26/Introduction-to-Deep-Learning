@@ -17,7 +17,7 @@ Small, visual explainers for the core ideas in *Dive into Deep Learning* (d2l.ai
 | [Minibatch size: noise against speed](https://fleabyte26.github.io/Introduction-to-Deep-Learning/minibatch-sgd.html) | See the scatter of minibatch gradients shrink like 1/√b, then race batch sizes 1, 10, 100 and 1,500 on the same data | 12.5 |
 | [Momentum: a heavy ball that remembers](https://fleabyte26.github.io/Introduction-to-Deep-Learning/momentum.html) | The book's narrow valley 0.1x₁² + 2x₂²: plain gradient descent crawls or blows up, momentum fixes both. Includes the book's four settings | 12.6 |
 
-Video walkthroughs on BrokenLabsFix: [Episode 1, covering the first three pages](https://www.youtube.com/watch?v=YQF4lMUv9d4) and [Episode 2, covering the six newer pages](https://www.youtube.com/watch?v=_69pXSvmCOY). The [video script](VIDEO_SCRIPT.md) has Episode 1 (the first three pages), Episode 2 (the six after that) and Episode 3 (batch normalization, not yet recorded).
+Video walkthroughs on BrokenLabsFix: [Episode 1, covering the first three pages](https://www.youtube.com/watch?v=YQF4lMUv9d4), [Episode 2, covering the six newer pages](https://www.youtube.com/watch?v=_69pXSvmCOY) and [Episode 3, on batch normalization](https://www.youtube.com/watch?v=r_NqjxmXD8g). The [video script](VIDEO_SCRIPT.md) has Episode 1 (the first three pages), Episode 2 (the six after that) and Episode 3 (batch normalization).
 
 ## How to use
 
