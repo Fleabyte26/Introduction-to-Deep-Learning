@@ -4,7 +4,7 @@ BrokenLabsFix · Kris Hornung · November 2026
 
 Watch the recorded video: https://www.youtube.com/watch?v=YQF4lMUv9d4
 
-This file holds two scripts. Episode 1, below, covers the first three pages. [Episode 2](#episode-2-how-models-stop-memorizing-and-learn-faster) covers the six newer pages: weight decay, early stopping, dropout, SGD, minibatch size and momentum.
+This file holds three scripts. Episode 1, below, covers the first three pages. [Episode 2](#episode-2-how-models-stop-memorizing-and-learn-faster) covers the six newer pages: weight decay, early stopping, dropout, SGD, minibatch size and momentum. [Episode 3](#episode-3-batch-normalization-you-can-drag) covers the batch normalization page.
 
 ## At a glance
 
@@ -376,3 +376,168 @@ Based on Dive into Deep Learning (d2l.ai), sections 3.7, 5.5, 5.6, 12.4, 12.5 an
 ## Episode 2 tags
 
 deep learning, machine learning, overfitting, weight decay, L2 regularization, early stopping, dropout, stochastic gradient descent, SGD, minibatch, batch size, momentum, learning rate schedule, neural networks, d2l, dive into deep learning, AI for beginners
+
+# Episode 3: Batch Normalization You Can Drag
+
+BrokenLabsFix · Kris Hornung · November 2026
+
+Earlier episodes: [Episode 1](https://www.youtube.com/watch?v=YQF4lMUv9d4) · [Episode 2](https://www.youtube.com/watch?v=_69pXSvmCOY)
+
+## Episode 3 at a glance
+
+A 9-minute screen-recorded walkthrough of one page: batch normalization, from Section 8.5 of *Dive into Deep Learning*. The story: deep inside a network the numbers drift to bad places, and one small layer puts them back, every minibatch.
+
+| Part | Time | What happens |
+| --- | --- | --- |
+| Hook and intro | 0:00–0:45 | The numbers arrive in the wrong place |
+| Part 1: The problem | 0:45–2:00 | Values in the sigmoid's flat zone |
+| Part 2: Subtract and divide | 2:00–3:30 | Any input becomes average 0, spread 1 |
+| Part 3: γ and β | 3:30–4:45 | The network picks its own scale and shift |
+| Part 4: The same example, different company | 4:45–7:00 | Minibatch size, noise, and why size 1 fails |
+| Part 5: Training and prediction | 7:00–8:30 | Running averages |
+| Wrap-up | 8:30–9:15 | The formula, read aloud in plain words |
+
+Page: [batch-norm.html](https://fleabyte26.github.io/Introduction-to-Deep-Learning/batch-norm.html)
+
+How to read the script: same as before. The left column is what to do on screen, the right column is what to say. The lines are short and plain on purpose, for YouTube auto-dubbing into Hindi and Bahasa. Say them in your own words; the numbers are what matter.
+
+About the numbers: the page uses a fixed random seed, so every number below appears exactly as written, as long as you follow the clicks in order. Moving the average, spread or minibatch size slider restarts the page from zero. Moving γ or β does not. Use "Draw 500 at once" where the script says so, not Play, because Play gives different numbers depending on when you pause.
+
+## Episode 3 hook and intro (0:00–0:45)
+
+| Show | Say |
+| --- | --- |
+| The batch norm page as it loads: average 5, spread 2.5, minibatch 32. Top row of dots sits far right, in the shaded zone | "Look at the top row. Each dot is one number arriving at a layer, deep inside a network. Most of them are in the shaded zone. That is a bad place to be." |
+| Point at the bottom row, centred on zero | "Now look at the bottom row. The same numbers, after one small layer. All of them are back in the middle." |
+| Same | "That layer is called batch normalization. Almost every deep network for images uses it. Today we open it and see how it works." |
+| Same | "This is Section 8.5 of the book Dive into Deep Learning. One page, five sliders, no code. The link is in the description." |
+
+## Part 1: The problem (0:45–2:00)
+
+Goal: the viewer sees why badly placed numbers stop learning. This connects to the sigmoid page from Episode 1.
+
+| Show | Say |
+| --- | --- |
+| Point at the top row, then at the first two sliders (5.0 and 2.5) | "The top row is what arrives. These values have an average of 5 and a spread of 2.5. Nobody chose that. It is just what the earlier layers produced." |
+| Point at the shaded areas beyond −4 and +4 | "The shaded areas are beyond plus 4 and minus 4. In Episode 1 we saw the sigmoid curve. Out here the curve is flat. The slope is almost zero." |
+| Point at the stat box "In sigmoid's flat zone: before, after" showing 66% → 0% | "A flat slope means a tiny step. A tiny step means no learning. Here, 66 percent of the values are in the flat zone." |
+| Same | "And it gets worse. The earlier layers are still training. So these numbers keep moving. The layer is aiming at a target that never stands still." |
+| Point at the ringed dot in the top row, at 7.5 | "One dot has a ring. That is one example, and we will follow it for the whole video. It arrives at 7.5." |
+
+## Part 2: Subtract and divide (2:00–3:30)
+
+Goal: the viewer sees that the middle row is always average 0, spread 1, whatever arrives.
+
+| Show | Say |
+| --- | --- |
+| Point at the formula line: y = γ × (x − 4.93) / 2.53 + β | "Here is the formula, with real numbers inside. Two highlighted numbers: 4.93 and 2.53." |
+| Point at the stat box "This minibatch: average, spread" showing 4.93, 2.53 | "They are the average and the spread of these 32 values. The layer measures them itself, from this minibatch." |
+| Point at the middle row (blue dots) | "Step one: subtract the average. Now the values are centred on zero. Step two: divide by the spread. Now they have a spread of 1." |
+| Point at the ringed dot, top row then middle row | "Our ringed example was 7.5. Minus 4.93, divided by 2.53. It lands at about 1." |
+| Drag Incoming average slowly from 5 to −6 | "Now I make the input worse. I move the average to minus 6. The top row slides to the left. 81 percent in the flat zone." |
+| Point at the middle and bottom rows, which did not move | "The other two rows did not move. The layer subtracted the new average, and the result is the same." |
+| Drag Incoming spread down to 0.2 | "Now a very narrow spread, 0.2. All the values are squeezed together. 100 percent in the flat zone. After the layer, zero percent." |
+| Drag the average back to 5 and the spread back to 2.5 | "This is the first idea. Whatever arrives, after subtract and divide, the average is 0 and the spread is 1." |
+
+## Part 3: γ and β (3:30–4:45)
+
+Goal: the viewer understands that the layer does not force 0 and 1 forever. It hands the choice to two learned numbers.
+
+| Show | Say |
+| --- | --- |
+| Point at the bottom row (orange dots) and the two sliders γ and β | "But maybe average 0 and spread 1 is not what the network needs. So there is a third row, and two more numbers. Gamma and beta." |
+| Drag Scale γ from 1 to 2 | "Gamma is the scale. I set it to 2, and the bottom row gets wider. The output spread is now exactly 2." |
+| Drag Shift β from 0 to 3, then γ to 3 | "Beta is the shift. I set it to 3, and the row moves to the right. Now gamma 3, beta 3. The output has average 3 and spread 3." |
+| Point at the yellow verdict box: 34% of the output in the flat zone | "Look at the message. 34 percent of the output is in the flat zone again. Nothing forbids that." |
+| Same | "So what did we gain? Before, the scale was decided by every layer upstream, all changing at once. Now it is decided by two numbers, right here." |
+| Same | "And in a real network, nobody drags these sliders. Gamma and beta are learned by gradient descent, like any other weight." |
+| Drag γ back to 1.0 and β back to 0.0 | "I put them back to 1 and 0." |
+
+## Part 4: The same example, different company (4:45–7:00)
+
+Goal: the viewer sees that an example's output depends on the other examples in its minibatch, and that minibatch size controls how much. Scroll so the strips and the lower chart are both visible if you can.
+
+| Show | Say |
+| --- | --- |
+| Click One minibatch. The dots change, the ringed dot stays at 7.5 on top | "Now a new minibatch. 31 new examples, plus our ringed one. Its own value did not change. Still 7.5." |
+| Point at the formula line: now 5.11 and 1.92 | "But the average and the spread changed, because the other examples changed. Now 5.11 and 1.92." |
+| Click One minibatch two more times. Point at the ringed dot in the bottom row each time | "So its output changes too. 1.25. Then 0.52. Then 0.89. Same example, three different answers." |
+| Scroll to the chart "The same example, different company" | "This chart follows only the ringed example. Each point is its output on one minibatch. The dashed line is where it would sit with perfect statistics." |
+| Click Draw 500 at once | "Here are 500 minibatches. The points wobble around the line. The wobble is about plus or minus 0.21." |
+| Same | "This wobble is noise. Remember dropout from Episode 2? Random noise during training made the model more robust. This does a little of the same, for free." |
+| Drag Minibatch size to 128, click Draw 500 at once | "A bigger minibatch, 128. The statistics are more stable. The wobble drops to 0.11." |
+| Drag Minibatch size to 4, click Draw 500 at once | "Now only 4 examples. The wobble is 0.51. The average of 4 numbers is a rough guess, and it jumps around." |
+| Drag Minibatch size to 2, click Draw 500 at once | "With 2 examples, something strange. The output is only ever plus 1 or minus 1. With two values, one is always above the average and one is below." |
+| Drag Minibatch size to 1. Point at the red verdict box | "And a minibatch of 1. The average of one number is the number itself. Subtract it, and you get zero. Every time." |
+| Point at the bottom row: a single dot at 0 | "The output is just beta, whatever arrived. The layer threw away all the information. The book gives this warning: batch normalization needs more than one example per minibatch." |
+
+## Part 5: Training and prediction (7:00–8:30)
+
+Goal: the viewer understands why the layer has two modes, and what the running averages are for.
+
+| Show | Say |
+| --- | --- |
+| Drag Minibatch size back to 32 | "This creates a problem. When the model is finished, a user may send one single image. There is no minibatch to measure." |
+| Point at the stat box "Running averages kept for prediction", showing 0.00, 1.00 | "The answer is in this box. During training, the layer keeps a running average of the averages and the spreads it sees. It starts at 0 and 1." |
+| Click "Prediction: use the running averages". Point at the yellow verdict and 66% → 66% | "I switch to prediction mode now, before any training. The layer subtracts 0 and divides by 1. So it does nothing. 66 percent in, 66 percent out." |
+| Click Draw 500 at once (the page goes back to training mode by itself) | "So we train. 500 minibatches. Each one moves the running averages one tenth of the way." |
+| Point at the running averages box: 5.15, 2.42 | "Now they are 5.15 and 2.42. Close to the true values, 5 and 2.5." |
+| Click "Prediction: use the running averages". Point at the formula line: 5.15 and 2.42 | "Prediction mode again. The formula now uses the saved numbers. They are fixed. They do not change with the minibatch." |
+| Point at the stat box "Ringed example's output wobble", showing 0 | "So the wobble is zero. One example gives the same answer every time, whatever else is in the batch. That is what you want from a finished model." |
+| Same | "This is the practical lesson. A batch normalization layer acts differently in training and in prediction, the same as dropout. If you forget to switch your model to prediction mode, your results will be wrong." |
+
+## Episode 3 wrap-up and call to action (8:30–9:15)
+
+| Show | Say |
+| --- | --- |
+| Scroll to "What to take from this". Point at the formula BN(x) = γ × (x − μ) / σ + β | "Here is the formula from the book. Now you can read it. Take x. Subtract the minibatch average. Divide by the minibatch spread. Then scale by gamma and shift by beta." |
+| Same | "Three things to remember. One: whatever arrives, the layer resets it to average 0 and spread 1, then lets the network choose the scale." |
+| Same | "Two: in training it uses the current minibatch, so small minibatches are noisy, and a minibatch of 1 does not work." |
+| Same | "Three: in prediction it uses running averages saved during training." |
+| Point at the last note on the page | "With this layer, deep networks train faster and accept bigger learning rates. Why it works so well is still argued about. The book says so plainly, and I like that honesty." |
+| The GitHub repo README | "The link is in the description. Open it, drag the sliders, try a minibatch of 1. Tell me in the comments which topic you want next." |
+
+## Episode 3 recording checklist
+
+- [ ] Check that the live link opens: https://fleabyte26.github.io/Introduction-to-Deep-Learning/batch-norm.html
+- [ ] Reload the page before recording so it starts at average 5, spread 2.5, minibatch 32, γ 1, β 0, training mode
+- [ ] Browser zoom at 125% so the numbers are readable on a phone
+- [ ] Light mode for recording (higher contrast on video)
+- [ ] Bookmarks bar hidden, notifications off
+- [ ] Do one dry run of Part 4. It has the most clicks, and each minibatch size change restarts the page
+- [ ] In Parts 4 and 5 use "Draw 500 at once", not Play, so the numbers match the script
+- [ ] Publishing on BrokenLabsFix (Hindi/Bahasa audience, auto-dubbing on)
+
+## Episode 3 title options
+
+1. Batch Normalization You Can Drag: No Formulas
+2. Batch Normalization Explained With Sliders (Dive into Deep Learning 8.5)
+3. Why Deep Networks Need Batch Normalization: See It Happen
+
+## Episode 3 description
+
+```
+One free interactive page that shows how batch normalization works, with sliders instead of formulas. No install, no code.
+
+Batch normalization: resetting the scale at every layer
+https://fleabyte26.github.io/Introduction-to-Deep-Learning/batch-norm.html
+
+All pages and source: https://github.com/Fleabyte26/Introduction-to-Deep-Learning
+
+Episode 1 (linear regression, gradient descent, sigmoid): https://www.youtube.com/watch?v=YQF4lMUv9d4
+Episode 2 (weight decay, early stopping, dropout, SGD, minibatch size, momentum): https://www.youtube.com/watch?v=_69pXSvmCOY
+
+Based on Dive into Deep Learning (d2l.ai), Chapter 8: Modern CNNs, Section 8.5: Batch Normalization.
+
+0:00 Numbers in the wrong place
+0:45 The problem: the flat zone
+2:00 Subtract the average, divide by the spread
+3:30 Gamma and beta
+4:45 Minibatch size and noise
+7:00 Training mode and prediction mode
+8:30 The formula in plain words
+```
+
+## Episode 3 tags
+
+batch normalization, batch norm, deep learning, dive into deep learning, d2l, modern CNNs, vanishing gradient, minibatch, running average, training vs inference, model.eval, neural networks, machine learning tutorial, interactive explainer
