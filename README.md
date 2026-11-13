@@ -16,8 +16,9 @@ Small, visual explainers for the core ideas in *Dive into Deep Learning* (d2l.ai
 | [Stochastic gradient descent: a noisy walk downhill](https://fleabyte26.github.io/Introduction-to-Deep-Learning/sgd.html) | The book's noisy path on x₁² + 2x₂² under constant, exponential and polynomial learning rates, plus why sampling with replacement misses about 37% of the data | 12.4 |
 | [Minibatch size: noise against speed](https://fleabyte26.github.io/Introduction-to-Deep-Learning/minibatch-sgd.html) | See the scatter of minibatch gradients shrink like 1/√b, then race batch sizes 1, 10, 100 and 1,500 on the same data | 12.5 |
 | [Momentum: a heavy ball that remembers](https://fleabyte26.github.io/Introduction-to-Deep-Learning/momentum.html) | The book's narrow valley 0.1x₁² + 2x₂²: plain gradient descent crawls or blows up, momentum fixes both. Includes the book's four settings | 12.6 |
+| [Four ways to close the overfitting gap](https://fleabyte26.github.io/Introduction-to-Deep-Learning/regularization-compared.html) | Four regularization techniques on one network, side by side: pick L2, dropout, early stopping or batch normalization and see where it attaches in the Keras code while the real training curves and the gap between them redraw | 3.7, 5.5, 5.6, 8.5 |
 
-Video walkthroughs on BrokenLabsFix: [Episode 1, covering the first three pages](https://www.youtube.com/watch?v=YQF4lMUv9d4), [Episode 2, covering the six newer pages](https://www.youtube.com/watch?v=_69pXSvmCOY) and [Episode 3, on batch normalization](https://www.youtube.com/watch?v=r_NqjxmXD8g). The [video script](VIDEO_SCRIPT.md) has Episode 1 (the first three pages), Episode 2 (the six after that) and Episode 3 (batch normalization).
+Video walkthroughs on BrokenLabsFix: [Episode 1, covering the first three pages](https://www.youtube.com/watch?v=YQF4lMUv9d4), [Episode 2, covering the six newer pages](https://www.youtube.com/watch?v=_69pXSvmCOY), [Episode 3, on batch normalization](https://www.youtube.com/watch?v=r_NqjxmXD8g) and Episode 4, comparing the four regularization techniques (not yet recorded). The [video script](VIDEO_SCRIPT.md) has a script for each episode.
 
 ## How to use
 
