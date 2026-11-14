@@ -4,7 +4,7 @@ BrokenLabsFix · Kris Hornung · November 2026
 
 Watch the recorded video: https://www.youtube.com/watch?v=YQF4lMUv9d4
 
-This file holds four scripts. Episode 1, below, covers the first three pages. [Episode 2](#episode-2-how-models-stop-memorizing-and-learn-faster) covers the six newer pages: weight decay, early stopping, dropout, SGD, minibatch size and momentum. [Episode 3](#episode-3-batch-normalization-you-can-drag) covers the batch normalization page. [Episode 4](#episode-4-four-ways-to-close-the-overfitting-gap) covers the regularization comparison page.
+This file holds five scripts. Episode 1, below, covers the first three pages. [Episode 2](#episode-2-how-models-stop-memorizing-and-learn-faster) covers the six newer pages: weight decay, early stopping, dropout, SGD, minibatch size and momentum. [Episode 3](#episode-3-batch-normalization-you-can-drag) covers the batch normalization page. [Episode 4](#episode-4-four-ways-to-close-the-overfitting-gap) covers the regularization comparison page. [Episode 5](#episode-5-convolutions-channels-and-the-arrow) covers the three convolution pages.
 
 ## At a glance
 
@@ -709,3 +709,168 @@ Based on Dive into Deep Learning (d2l.ai), sections 3.7, 5.5, 5.6 and 8.5. Train
 ## Episode 4 tags
 
 overfitting, regularization, dropout, L2 regularization, weight decay, early stopping, batch normalization, deep learning, neural networks, fashion mnist, keras, tensorflow, d2l, dive into deep learning, machine learning tutorial, validation accuracy, interactive explainer
+
+# Episode 5: Convolutions, Channels and the Arrow
+
+BrokenLabsFix · Kris Hornung · November 2026
+
+Earlier episodes: [Episode 1](https://www.youtube.com/watch?v=YQF4lMUv9d4) · [Episode 2](https://www.youtube.com/watch?v=_69pXSvmCOY) · [Episode 3](https://www.youtube.com/watch?v=r_NqjxmXD8g) · [Episode 4](https://www.youtube.com/watch?v=b4tLpx3_934)
+
+## Episode 5 at a glance
+
+An 11-minute walkthrough of three pages, in reading order. The thread running through all of them: a convolution layer has only three things to decide, and each page answers one of them. How big is the output, how many channels come out, and how many of these can we stack.
+
+| Part | Time | Page | What happens |
+| --- | --- | --- | --- |
+| Hook | 0:00–0:50 | — | Three questions |
+| Part 1 | 0:50–4:00 | padding-stride | How big is the output |
+| Part 2 | 4:00–7:30 | channels | Where sixty-four channels come from |
+| Part 3 | 7:30–10:15 | residual | Why we can stack a hundred |
+| Wrap-up | 10:15–11:00 | — | The three numbers |
+
+Pages:
+- [padding-stride.html](https://fleabyte26.github.io/Introduction-to-Deep-Learning/padding-stride.html)
+- [channels.html](https://fleabyte26.github.io/Introduction-to-Deep-Learning/channels.html)
+- [residual.html](https://fleabyte26.github.io/Introduction-to-Deep-Learning/residual.html)
+
+Same format: left column is what to do on screen, right column is what to say. Short sentences for the Hindi and Bahasa auto-dub.
+
+Every number below is printed on the pages, so reload each one fresh before recording and follow the clicks in order.
+
+## Hook (0:00–0:50)
+
+| Show | Say |
+| --- | --- |
+| The padding and stride page, on the default view | "A convolution layer looks simple. A small window slides over an image. But when you write one, the library asks you three questions." |
+| Point at the sliders | "How big is the output. How many channels come out. And the one nobody asks out loud: how many of these can I stack before it stops working." |
+| Same | "Three pages today, one for each question. All three are free, all three run in your browser. Links in the description." |
+| Same | "This is chapter 7 and chapter 8 of Dive into Deep Learning. No formulas to memorize. Let us go." |
+
+## Part 1: How big is the output (0:50–4:00)
+
+Page: padding-stride.html. Reload it first so it opens on input 8, kernel 3, padding 0, stride 1.
+
+| Show | Say |
+| --- | --- |
+| Point at the input grid, then the output grid | "On the left, an 8 by 8 image. On the right, the output. It is 6 by 6. The image got smaller, and nobody asked it to." |
+| Press Play, watch the window step across | "Here is why. The window is 3 by 3. It has to fit inside the image. So it can only sit in 6 positions across, and 6 down." |
+| Point at the formula panel | "The page writes it out. Room is 5. Steps is 5. Output is 6. That is the whole formula." |
+| Same | "Room is how much space the window has to move in. Steps is how many moves fit. Output is steps plus one, because the first position counts too." |
+| Click "Same size" | "Now watch this. I add one ring of padding. Zeros around the edge." |
+| Point at the purple cells, then the output | "The image is now 10 by 10 with the zeros. The output is 8 by 8. Same as the original image." |
+| Same | "This is why you see 3 by 3 with padding 1 everywhere in real networks. It is the pair that keeps the size." |
+| Click "Big kernel 5x5" | "And it generalizes. A 5 by 5 kernel with padding 2. Output is still 8 by 8." |
+| Click "Halve it" | "Now stride. The window jumps 2 instead of 1. Output is 4 by 4. Half the size, on purpose." |
+| Same | "This is how a network goes from a 224 pixel photo down to a 7 by 7 feature map. Not by shrinking slowly. By halving, a few times." |
+| Click "Cells get dropped" | "One warning before we move on. Stride 3 here." |
+| Point at the red cells | "The red cells are never visited. The window jumped past them. Those are real pixels, and the network never sees them." |
+| Point at the verdict box | "Nothing warns you about this. No error, no message. The page is telling you because your code will not." |
+
+## Part 2: Where sixty-four channels come from (4:00–7:30)
+
+Page: channels.html. Reload so it opens on 3 input channels, 4 output channels, 3 by 3.
+
+| Show | Say |
+| --- | --- |
+| Point at the three colored squares on the left | "A color photo has three channels. Red, green, blue. Three layers of numbers." |
+| Point at the output square | "The first layer of a real network turns that into sixty-four channels. So two questions. Where do sixty-four come from, and what happened to the three?" |
+| Point at the three kernel squares in the middle | "Here is the answer, and most diagrams get it wrong. The kernel is not a square. It is a stack. One 3 by 3 slice for every input channel." |
+| Trace the three curves converging | "Each slice slides over its own channel. Then the three results are added together. Added, pixel by pixel." |
+| Point at the single output square | "Three channels went in. One plane came out. That is rule one: input channels are summed away." |
+| Click "Next output channel" twice | "So where does the second output channel come from? A second stack, with its own weights. And a third. And a fourth." |
+| Point at the strip of four squares | "Four output channels means four complete stacks. Sixty-four means sixty-four. That is rule two: output channels are a choice you make." |
+| Same | "The input count is not a choice. The previous layer decided it. The output count is the dial you turn." |
+| Point at the formula panel | "Now the cost. Kernel shape is 3, 3, 3, 4. Multiply them: 108 weights, plus 4 biases. 112 numbers." |
+| Click "1x1 channel mixer" | "One special case worth knowing. A 1 by 1 kernel." |
+| Point at the verdict | "There is no sliding. No neighborhood. Each output pixel is just a mix of the channels at that same spot. It changes the channel count, and nothing else." |
+| Scroll to the parameter table | "And here is why this matters. Real numbers from real networks." |
+| Point at row 1 | "First layer of VGG: 3 channels in, 64 out. 1,792 parameters. Small." |
+| Point at row 2 | "A deep layer of VGG: 512 in, 512 out. Two point three million parameters. In one layer." |
+| Same | "Both channel counts are in the multiplication. Double them both and the layer gets four times bigger. That is the whole story of why deep networks got expensive." |
+| Point at row 3 | "And that is why the 1 by 1 trick matters. 64 to 256 channels for sixteen thousand parameters. Cheap. Remember it for the next part." |
+
+## Part 3: Why we can stack a hundred (7:30–10:15)
+
+Page: residual.html.
+
+| Show | Say |
+| --- | --- |
+| The page, reading the opening line | "2015. Someone trained a 56 layer network and a 20 layer network. The deep one was worse on the training data." |
+| Same | "Not overfitting. Worse at the data it was looking at. And that should be impossible, because a deep network can always copy a shallow one and do nothing with the extra layers." |
+| Click "Plain block" | "Here is a normal block. Two convolutions, two batch norms, activations. The input goes in the left, comes out the right." |
+| Point at the line under the diagram | "Now ask it to do nothing. To pass the input through unchanged. Look what it needs: f of x equals x. Every weight exactly right, to copy the input." |
+| Same | "That is a hard thing to learn. And a block that gets it almost right damages the signal a little. Stack 36 of those and it adds up." |
+| Click "Residual block" | "Now the fix. One arrow." |
+| Trace the green arrow | "The input skips over the whole block and gets added to the output at the end. That is it. That is the entire idea." |
+| Point at the line under the diagram | "Now ask it to do nothing again. It needs f of x equals zero. Push the weights toward zero." |
+| Same | "Gradient descent is very good at pushing weights toward zero. It is the easiest thing it does. So the extra blocks can sit out quietly until they find something useful to add." |
+| Scroll to the gradient chart | "There is a second reason, and you can watch it." |
+| Point at the red line | "When the network learns, the signal travels backwards from the output to the first layer. Every block multiplies it. This slider says each block multiplies by 0.8." |
+| Drag Depth to 60 | "Sixty blocks. Point eight, multiplied by itself, sixty times." |
+| Point at the two stat boxes | "Through the layers: 1.9 times ten to the minus six. That is a millionth. The first block has stopped learning." |
+| Point at the green line | "Through the skip connections: one. Exactly one. Because the arrow multiplies by one, every single time." |
+| Drag Depth back and forth | "Watch the red line move as I change the depth. The green line never moves. That is what the arrow buys you." |
+| Scroll to "The practical details" | "Two details for when you write one. If the block changes the channel count, the arrow needs a 1 by 1 convolution to match the shapes. That is the cheap trick from the last page." |
+| Same | "And ResNet-152 was eight times deeper than VGG, with fewer parameters. The same arrow is in almost every architecture since. Transformers too." |
+
+## Wrap-up (10:15–11:00)
+
+| Show | Say |
+| --- | --- |
+| The padding page briefly | "Three questions, three answers." |
+| Same | "How big is the output? Room, steps, plus one. Padding keeps the size, stride cuts it." |
+| The channels page briefly | "How many channels? Input channels get summed away. Output channels are a stack each, and both counts multiply into the parameter cost." |
+| The residual page briefly | "How deep can we go? As deep as you like, if every block has an arrow around it." |
+| The repo README | "All three pages are in the description. Open them, drag everything, break them. That is what they are for." |
+| Same | "Tell me in the comments what you want next. See you in the next one." |
+
+## Episode 5 recording checklist
+
+- [ ] Check all three links open before recording
+- [ ] Reload each page as you reach it, so it starts at its default values
+- [ ] Browser zoom at 125% so the numbers are readable on a phone
+- [ ] Light mode, bookmarks bar hidden, notifications off
+- [ ] Have the three pages in three tabs, in order, so the switches are clean
+- [ ] Dry run Part 1: it has the most clicks, and each preset resets the animation
+- [ ] On the residual page, drag the depth slider slowly at the end; the contrast between the moving red line and the flat green line is the shot that matters
+- [ ] Publishing on BrokenLabsFix (Hindi/Bahasa audience, auto-dubbing on)
+
+## Episode 5 title options
+
+1. How Convolutions Actually Work: Size, Channels, and Depth
+2. The Three Questions Every Convolution Layer Asks
+3. Why One Arrow Let Neural Networks Go 150 Layers Deep
+
+## Episode 5 description
+
+```
+Three free interactive pages covering how a convolution layer works: output size, channels, and residual connections. No install, no code.
+
+Padding and stride you can drag
+https://fleabyte26.github.io/Introduction-to-Deep-Learning/padding-stride.html
+
+Where the channels go
+https://fleabyte26.github.io/Introduction-to-Deep-Learning/channels.html
+
+The arrow that made networks deep
+https://fleabyte26.github.io/Introduction-to-Deep-Learning/residual.html
+
+All pages and source: https://github.com/Fleabyte26/Introduction-to-Deep-Learning
+
+Episode 1 (linear regression, gradient descent, sigmoid): https://www.youtube.com/watch?v=YQF4lMUv9d4
+Episode 2 (weight decay, early stopping, dropout, SGD, minibatch size, momentum): https://www.youtube.com/watch?v=_69pXSvmCOY
+Episode 3 (batch normalization): https://www.youtube.com/watch?v=r_NqjxmXD8g
+Episode 4 (comparing four regularization techniques): https://www.youtube.com/watch?v=b4tLpx3_934
+
+Based on Dive into Deep Learning (d2l.ai), sections 7.1 to 7.4 and 8.6.
+
+0:00 Three questions
+0:50 How big is the output
+4:00 Where sixty-four channels come from
+7:30 Why we can stack a hundred
+10:15 The three answers
+```
+
+## Episode 5 tags
+
+convolution, convolutional neural network, CNN, padding, stride, kernel size, channels, feature maps, 1x1 convolution, residual connection, skip connection, ResNet, VGG, vanishing gradient, deep learning, d2l, dive into deep learning, keras, machine learning tutorial, interactive explainer
