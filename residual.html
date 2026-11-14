@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>The Arrow That Made Networks Deep</title>
+<style>
+  :root {
+    --bg:#fbfaf7; --ink:#1d1d1b; --quiet:#6b6a65; --grid:#e4e2dc; --axis:#9a978f; --card:#fff;
+    --curve:#2f6fb3; --ball:#c2410c; --good:#2e7d4f; --warn:#b7791f; --bad:#b42318; --pad:#7a4fb5; --teal:#1f8a8a;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root { --bg:#1b1b1a; --ink:#ecebe7; --quiet:#a3a19b; --grid:#34332f; --axis:#6f6d67; --card:#242422;
+      --curve:#6aa6e8; --ball:#f08a4b; --good:#5fbf86; --warn:#e0b04f; --bad:#f2786d; --pad:#b497e6; --teal:#5cc4c4; }
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.5 ui-sans-serif,system-ui,-apple-system,"Segoe UI",sans-serif}
+  main{max-width:900px;margin:0 auto;padding:32px 20px 48px}
+  h1{font-size:26px;margin:0 0 6px;letter-spacing:-.01em}
+  h2{font-size:19px;margin:30px 0 10px}
+  .lead{color:var(--quiet);margin:0 0 22px}
+  .panel{background:var(--card);border:1px solid var(--grid);border-radius:12px;padding:16px}
+  svg{width:100%;height:auto;display:block}
+  .cap{font-size:13px;color:var(--quiet);margin:0 0 8px;font-weight:600}
+  button{font:inherit;padding:6px 14px;border-radius:8px;border:1px solid var(--grid);background:var(--card);color:var(--ink);cursor:pointer}
+  button.primary{background:var(--curve);color:#fff;border-color:var(--curve);font-weight:600}
+  button.chip{font-size:14px;padding:5px 12px}
+  button.chip.on{border-color:var(--curve);box-shadow:inset 0 0 0 1px var(--curve);font-weight:600}
+  .chips{display:flex;gap:8px;flex-wrap:wrap;margin:0 0 14px}
+  .ctrls{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin:4px 0 14px}
+  .ctrl label{display:block;font-size:12.5px;color:var(--quiet);margin-bottom:2px}
+  .ctrl .val{font-weight:650;color:var(--ink);font-variant-numeric:tabular-nums}
+  input[type=range]{width:100%;accent-color:var(--curve)}
+  .stats{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:12px}
+  .stat{border:1px solid var(--grid);border-radius:10px;padding:10px 12px}
+  .stat .k{font-size:12px;color:var(--quiet)}
+  .stat .v{font-size:19px;font-weight:650;font-variant-numeric:tabular-nums}
+  .verdict{margin-top:14px;padding:12px 14px;border-radius:10px;border-left:4px solid var(--good);
+    background:color-mix(in srgb,var(--good) 10%,transparent)}
+  .verdict.bad{border-left-color:var(--bad);background:color-mix(in srgb,var(--bad) 10%,transparent)}
+  .key{display:flex;gap:16px;flex-wrap:wrap;font-size:13px;color:var(--quiet);margin:8px 0 0}
+  .key span::before{content:"";display:inline-block;width:18px;height:3px;border-radius:2px;vertical-align:middle;margin-right:6px;background:var(--c)}
+  .note{color:var(--quiet);font-size:14px;margin-top:12px}
+  p.body{font-size:15px;margin:10px 0}
+  code{font:13.5px ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;background:var(--bg);padding:1px 5px;border-radius:4px;border:1px solid var(--grid)}
+  @media (max-width:720px){ .ctrls{grid-template-columns:1fr} }
+</style>
+</head>
+<body>
+<main>
+  <h1>The arrow that made networks deep</h1>
+  <p class="lead">In 2015 a 56-layer network scored worse than a 20-layer one on the <i>training</i> set. Not overfitting, the opposite: the deeper network could not even fit the data it was shown. A deeper model contains every shallower model as a special case, so this should have been impossible. The fix was one arrow, and it is why networks went from twenty layers to a hundred and fifty.</p>
+
+  <div class="panel">
+    <p class="cap">One block, with and without the arrow</p>
+    <div class="chips" id="mode" role="group" aria-label="Block type"></div>
+    <svg id="block" role="img" aria-label="A block of two convolutions, with or without a skip connection around it"></svg>
+    <div class="verdict" id="bverdict"></div>
+  </div>
+
+  <h2>Why the arrow makes depth safe</h2>
+  <div class="panel">
+    <p class="body">Ask either block to leave its input alone, which is what the extra layers of a too-deep network ought to do. The plain block has to learn <code>f(x) = x</code> with its own weights: every filter, exactly right, to copy the input through untouched. That is a hard target to hit by gradient descent, and a block that misses it damages the signal.</p>
+    <p class="body">The residual block only has to learn <code>f(x) = 0</code>, because the arrow already carries x forward. Pushing weights toward zero is the easiest thing gradient descent does. So the extra blocks of a deep residual network can sit out harmlessly until they find something useful to add, and adding depth can no longer make training worse.</p>
+    <p class="body">That is the argument in the book, and it is about what the network can represent. There is a second, mechanical reason, and you can watch it below.</p>
+  </div>
+
+  <div class="panel">
+    <p class="cap">How much gradient survives the trip back to block 1</p>
+    <div class="ctrls">
+      <div class="ctrl"><label>Depth <span class="val" id="vL"></span></label><input id="L" type="range" min="2" max="60" value="30"></div>
+      <div class="ctrl"><label>What one block does to the gradient <span class="val" id="vs"></span></label><input id="s" type="range" min="50" max="110" value="80"></div>
+    </div>
+    <svg id="chart" role="img" aria-label="Gradient strength by block depth, through layers and through skip connections"></svg>
+    <div class="key">
+      <span style="--c:var(--bad)">Through the layers</span>
+      <span style="--c:var(--good)">Through the skip connections</span>
+    </div>
+    <div class="stats">
+      <div class="stat"><div class="k">Reaching block 1 through the layers</div><div class="v" id="sPlain"></div></div>
+      <div class="stat"><div class="k">Reaching block 1 through the skips</div><div class="v" id="sRes"></div></div>
+    </div>
+    <div class="verdict" id="gverdict"></div>
+    <p class="note">Backpropagation multiplies, block by block. If each block scales the gradient by 0.8, then after thirty blocks what arrives is 0.8 multiplied by itself thirty times. The skip connections add a second route in which the gradient is multiplied by 1 every time, so something always arrives, however deep the network is. This is a deliberately simple model of a real backward pass, where the factor differs per block and the two routes are summed, not separate. It gets the shape of the problem right, not the exact numbers.</p>
+  </div>
+
+  <h2>The practical details</h2>
+  <div class="panel">
+    <p class="body"><b>When the shapes do not match.</b> The arrow adds x to the block's output, so the two have to be the same shape. When a block changes the channel count or uses stride 2, the skip gets a 1&times;1 convolution to match it, which is the cheap channel-changing trick from the channels page. Keras calls this the projection shortcut.</p>
+    <p class="body"><b>Where the addition goes.</b> The arrow joins after the block's last batch normalization and before the final activation, so the sum passes through one ReLU on the way out. Plenty of diagrams get this wrong.</p>
+    <p class="body"><b>What it bought.</b> ResNet-152 was eight times deeper than VGG-19 and still had fewer parameters, because it leaned on depth and 1&times;1 bottlenecks rather than wide fully connected layers. The same arrow is in nearly every architecture since, transformers included.</p>
+    <p class="note">From section 8.6 of <i>Dive into Deep Learning</i>, with 8.1 and 8.2 for the AlexNet and VGG comparison.</p>
+  </div>
+</main>
+
+<script>
+(function () {
+  const $ = id => document.getElementById(id);
+  const css = v => getComputedStyle(document.documentElement).getPropertyValue(v).trim();
+  const el = (t,a,x) => { const e=document.createElementNS('http://www.w3.org/2000/svg',t);
+    for(const q in a) e.setAttribute(q,a[q]); if(x!==undefined) e.textContent=x; return e; };
+  const sci = v => v >= 0.01 ? v.toFixed(3) : v.toExponential(1).replace('e-', 'e−').replace('e+', 'e');
+  const SUP = {'0':'⁰','1':'¹','2':'²','3':'³','4':'⁴','5':'⁵',
+               '6':'⁶','7':'⁷','8':'⁸','9':'⁹','-':'⁻'};
+  const sup = e => e === 0 ? '1' : '10' + String(e).split('').map(c => SUP[c] || c).join('');
+
+  let res = true;
+  [['Plain block',false],['Residual block',true]].forEach(([lab,v]) => {
+    const b=document.createElement('button'); b.className='chip'+(v===res?' on':'');
+    b.textContent=lab; b.onclick=()=>{ res=v;
+      [...$('mode').children].forEach((x,i)=>x.classList.toggle('on', (i===1)===res)); drawBlock(); };
+    $('mode').append(b);
+  });
+
+  function drawBlock() {
+    const svg=$('block'), W=930, H=190; svg.setAttribute('viewBox','0 0 '+W+' '+H); svg.replaceChildren();
+    const q=css('--quiet'), g=css('--grid'), line=css('--axis'), y=104, bh=46;
+    const boxes=[['conv 3×3',110],['batch norm',96],['ReLU',70],['conv 3×3',110],['batch norm',96]];
+    let x=104;
+    svg.append(el('text',{x:24,y:y+5,'font-size':14,fill:css('--curve'),'font-weight':650},'x'));
+    svg.append(el('path',{d:'M40 '+y+'H'+(x-10),stroke:line,'stroke-width':1.5,fill:'none'}));
+    const xs=[];
+    boxes.forEach(([lab,w])=>{
+      svg.append(el('rect',{x:x,y:y-bh/2,width:w,height:bh,rx:7,fill:css('--curve'),'fill-opacity':.14,stroke:css('--curve'),'stroke-width':1.3}));
+      svg.append(el('text',{x:x+w/2,y:y+5,'text-anchor':'middle','font-size':12.5,fill:css('--ink')},lab));
+      xs.push([x,w]); x+=w+22;
+      if (x<700) svg.append(el('path',{d:'M'+(x-22)+' '+y+'h12',stroke:line,'stroke-width':1.5,fill:'none'}));
+    });
+    const xPlus=x+6, xOut=xPlus+58;
+    if (res) {
+      svg.append(el('circle',{cx:xPlus,cy:y,r:13,fill:css('--good'),'fill-opacity':.16,stroke:css('--good'),'stroke-width':1.6}));
+      svg.append(el('text',{x:xPlus,y:y+5,'text-anchor':'middle','font-size':15,fill:css('--good'),'font-weight':700},'+'));
+      svg.append(el('path',{d:'M'+(x-22)+' '+y+'H'+(xPlus-13),stroke:line,'stroke-width':1.5,fill:'none'}));
+      svg.append(el('path',{d:'M70 '+y+'V46H'+xPlus+'V'+(y-13),stroke:css('--good'),'stroke-width':2.2,fill:'none'}));
+      svg.append(el('path',{d:'M'+(xPlus-5)+' '+(y-22)+'l5 9l5-9',stroke:css('--good'),'stroke-width':2.2,fill:'none'}));
+      svg.append(el('circle',{cx:70,cy:y,r:3.5,fill:css('--good')}));
+      svg.append(el('text',{x:(70+xPlus)/2,y:36,'text-anchor':'middle','font-size':12.5,fill:css('--good'),'font-weight':600},'the arrow: carry x forward unchanged'));
+      svg.append(el('path',{d:'M'+(xPlus+13)+' '+y+'H'+(xOut-4),stroke:line,'stroke-width':1.5,fill:'none'}));
+    } else {
+      svg.append(el('path',{d:'M'+(x-22)+' '+y+'H'+(xOut-4),stroke:line,'stroke-width':1.5,fill:'none'}));
+    }
+    svg.append(el('rect',{x:xOut,y:y-bh/2,width:62,height:bh,rx:7,fill:css('--curve'),'fill-opacity':.14,stroke:css('--curve'),'stroke-width':1.3}));
+    svg.append(el('text',{x:xOut+31,y:y+5,'text-anchor':'middle','font-size':12.5,fill:css('--ink')},'ReLU'));
+    svg.append(el('text',{x:W-10,y:y+5,'text-anchor':'end','font-size':13.5,fill:css('--teal'),'font-weight':650}, res?'f(x) + x':'f(x)'));
+    svg.append(el('text',{x:24,y:H-12,'font-size':12.5,fill:q},
+      res ? 'to leave the input alone, this block only has to make f(x) = 0'
+          : 'to leave the input alone, this block has to learn f(x) = x exactly'));
+    const bv=$('bverdict');
+    bv.className='verdict'+(res?'':' bad');
+    bv.textContent = res
+      ? 'The output is what the block computed, plus the untouched input. Stack a hundred of these and the extra ones can learn to add nothing, which costs them no accuracy. Depth stops being a risk.'
+      : 'Everything the next layer sees has passed through all five stages. Nothing of the original input survives except what these weights chose to pass on, and every extra block is one more chance to lose it.';
+  }
+
+  function drawChart() {
+    const L=+$('L').value, s=+$('s').value/100;
+    $('vL').textContent=L+' blocks'; $('vs').textContent='×'+s.toFixed(2);
+    const svg=$('chart'), W=860, H=260, l=74, r=16, t=16, b=38;
+    svg.setAttribute('viewBox','0 0 '+W+' '+H); svg.replaceChildren();
+    const q=css('--quiet'), g=css('--grid');
+    const lo=-12, hi=1;
+    const X=i=>l+(L<=1?0:(i)/(L-1))*(W-l-r);
+    const Y=v=>{ const e=Math.max(lo,Math.min(hi,Math.log10(Math.max(v,1e-300)))); return t+(hi-e)/(hi-lo)*(H-t-b); };
+    for(let e=hi;e>=lo;e-=2){
+      svg.append(el('line',{x1:l,x2:W-r,y1:Y(Math.pow(10,e)),y2:Y(Math.pow(10,e)),stroke:g}));
+      svg.append(el('text',{x:l-8,y:Y(Math.pow(10,e))+4,'text-anchor':'end','font-size':11,fill:q}, sup(e)));
+    }
+    [0,Math.floor((L-1)/2),L-1].forEach(i=>svg.append(el('text',{x:X(i),y:H-b+16,'text-anchor':'middle','font-size':11,fill:q},i+1)));
+    svg.append(el('text',{x:(l+W-r)/2,y:H-6,'text-anchor':'middle','font-size':11,fill:q},'block number (1 is nearest the input)'));
+    svg.append(el('text',{x:16,y:t+10,'font-size':11,fill:q,transform:'rotate(-90 16 '+(t+10)+')'},''));
+    const plain=[],skip=[];
+    for(let i=0;i<L;i++){ plain.push(Math.pow(s,L-1-i)); skip.push(1); }
+    const path=a=>a.map((v,i)=>(i?'L':'M')+X(i).toFixed(1)+' '+Y(v).toFixed(1)).join('');
+    svg.append(el('path',{d:path(skip),fill:'none',stroke:css('--good'),'stroke-width':2.5}));
+    svg.append(el('path',{d:path(plain),fill:'none',stroke:css('--bad'),'stroke-width':2.5}));
+    svg.append(el('circle',{cx:X(0),cy:Y(plain[0]),r:4,fill:css('--bad')}));
+    svg.append(el('circle',{cx:X(0),cy:Y(1),r:4,fill:css('--good')}));
+    $('sPlain').textContent=sci(plain[0]);
+    $('sRes').textContent='1.000';
+    const v=$('gverdict'), ratio=plain[0];
+    if (ratio < 1e-4) { v.className='verdict bad';
+      v.textContent='After '+L+' blocks the gradient arriving at block 1 through the layers is '+sci(ratio)+
+        ' of what left the output. In practice that block has stopped learning: the updates are lost in rounding. The skip route still delivers 1.'; }
+    else if (s >= 1) { v.className='verdict';
+      v.textContent='With a factor of '+s.toFixed(2)+' nothing vanishes, and above 1 the opposite problem appears: gradients grow with depth and training explodes. Real networks sit near this knife edge, which is what batch normalization helps hold.'; }
+    else { v.className='verdict';
+      v.textContent='At this depth the layer route still delivers '+sci(ratio)+', so training works without help. Drag the depth up and watch where it stops working.'; }
+  }
+
+  ['L','s'].forEach(q=>$(q).addEventListener('input',drawChart));
+  if (window.matchMedia) window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change',()=>{drawBlock();drawChart();});
+  drawBlock(); drawChart();
+})();
+</script>
+</body>
+</html>
