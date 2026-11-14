@@ -548,6 +548,8 @@ batch normalization, batch norm, deep learning, dive into deep learning, d2l, mo
 
 BrokenLabsFix · Kris Hornung · November 2026
 
+Watch the recorded video: https://www.youtube.com/watch?v=b4tLpx3_934
+
 Earlier episodes: [Episode 1](https://www.youtube.com/watch?v=YQF4lMUv9d4) · [Episode 2](https://www.youtube.com/watch?v=_69pXSvmCOY) · [Episode 3](https://www.youtube.com/watch?v=r_NqjxmXD8g)
 
 ## Episode 4 at a glance
