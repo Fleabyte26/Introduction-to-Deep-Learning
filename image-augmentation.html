@@ -1,0 +1,305 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Image Augmentation: One Picture Becomes Many</title>
+<style>
+  :root {
+    --bg:#fbfaf7; --ink:#1d1d1b; --quiet:#6b6a65; --grid:#e4e2dc; --axis:#9a978f; --card:#fff;
+    --curve:#2f6fb3; --ball:#c2410c; --good:#2e7d4f; --warn:#b7791f; --bad:#b42318; --pad:#7a4fb5; --teal:#1f8a8a;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root { --bg:#1b1b1a; --ink:#ecebe7; --quiet:#a3a19b; --grid:#34332f; --axis:#6f6d67; --card:#242422;
+      --curve:#6aa6e8; --ball:#f08a4b; --good:#5fbf86; --warn:#e0b04f; --bad:#f2786d; --pad:#b497e6; --teal:#5cc4c4; }
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.5 ui-sans-serif,system-ui,-apple-system,"Segoe UI",sans-serif}
+  main{max-width:900px;margin:0 auto;padding:32px 20px 48px}
+  h1{font-size:26px;margin:0 0 6px;letter-spacing:-.01em}
+  h2{font-size:19px;margin:30px 0 10px}
+  .lead{color:var(--quiet);margin:0 0 22px}
+  .panel{background:var(--card);border:1px solid var(--grid);border-radius:12px;padding:16px}
+  .cap{font-size:13px;color:var(--quiet);margin:0 0 8px;font-weight:600}
+  button{font:inherit;padding:6px 14px;border-radius:8px;border:1px solid var(--grid);background:var(--card);color:var(--ink);cursor:pointer}
+  button.primary{background:var(--curve);color:#fff;border-color:var(--curve);font-weight:600}
+  button.chip{font-size:14px;padding:5px 12px}
+  button.chip.on{border-color:var(--curve);color:var(--curve);font-weight:600;box-shadow:inset 0 0 0 1px var(--curve)}
+  .chips{display:flex;gap:8px;flex-wrap:wrap;margin:0 0 14px}
+  .buttons{display:flex;gap:8px;margin-top:12px;flex-wrap:wrap;align-items:center}
+  .ctrls{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin:14px 0 4px}
+  .ctrl label{display:block;font-size:12.5px;color:var(--quiet);margin-bottom:2px}
+  .ctrl .val{font-weight:650;color:var(--ink);font-variant-numeric:tabular-nums}
+  input[type=range]{width:100%;accent-color:var(--curve)}
+  .pair{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+  .pair canvas,.grid8 canvas,.trio canvas{width:100%;height:auto;display:block;border-radius:8px;border:1px solid var(--grid)}
+  .grid8{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}
+  .trio{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}
+  .trio .lab{font-size:13px;color:var(--quiet);margin-top:6px}
+  .trio .ans{font-weight:650;font-size:15px}
+  .ans.ok{color:var(--good)} .ans.no{color:var(--bad)} .ans.odd{color:var(--warn)}
+  .formula{margin-top:14px;padding:12px 14px;border:1px solid var(--grid);border-radius:10px;background:var(--bg);
+    font:14.5px/1.9 ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;overflow-x:auto;white-space:pre}
+  .formula b{color:var(--curve);font-weight:700}
+  .verdict{margin-top:14px;padding:12px 14px;border-radius:10px;border-left:4px solid var(--good);
+    background:color-mix(in srgb,var(--good) 10%,transparent)}
+  .verdict.warn{border-left-color:var(--warn);background:color-mix(in srgb,var(--warn) 12%,transparent)}
+  .verdict.bad{border-left-color:var(--bad);background:color-mix(in srgb,var(--bad) 10%,transparent)}
+  table{width:100%;border-collapse:collapse;font-size:14.5px;margin-top:4px}
+  th,td{text-align:left;padding:7px 10px;border-bottom:1px solid var(--grid)}
+  th{color:var(--quiet);font-weight:600;font-size:13px}
+  td.num,th.num{text-align:right;font-variant-numeric:tabular-nums}
+  tr.on td{background:color-mix(in srgb,var(--curve) 9%,transparent);font-weight:600}
+  .bars{display:grid;grid-template-columns:150px 1fr 64px;gap:8px 12px;align-items:center;margin:14px 0 4px;font-size:14.5px}
+  .bar{height:22px;border-radius:5px;background:var(--grid);overflow:hidden}
+  .bar i{display:block;height:100%;border-radius:5px;transition:width .5s}
+  .bars .n{text-align:right;font-weight:650;font-variant-numeric:tabular-nums}
+  .tiny{display:flex;gap:10px;flex-wrap:wrap;margin:6px 0 2px;align-items:flex-end}
+  .tiny figure{margin:0;text-align:center;font-size:12.5px;color:var(--quiet)}
+  .tiny canvas{width:84px;height:84px;image-rendering:pixelated;border-radius:6px;border:1px solid var(--grid);display:block;margin-bottom:3px}
+  .note{color:var(--quiet);font-size:14px;margin-top:12px}
+  p.body{font-size:15px;margin:10px 0}
+  code{font:13.5px ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;background:var(--bg);border:1px solid var(--grid);border-radius:5px;padding:1px 5px}
+  @media (max-width:720px){ .ctrls{grid-template-columns:1fr 1fr} .grid8,.trio{grid-template-columns:repeat(2,1fr)} .bars{grid-template-columns:110px 1fr 56px} }
+</style>
+</head>
+<body>
+<main>
+  <h1>Image augmentation: one picture becomes many</h1>
+  <p class="lead">A network learns from the pictures you give it, and it learns everything about them, including things you did not mean to teach. If every boot in the training set points left, &ldquo;points left&rdquo; becomes part of what a boot is. Image augmentation is the fix: change each training picture a little, at random, every time the network sees it. The label stays the same; the accidents do not. Try each change on one picture, then see what it did to a real network.</p>
+
+  <div class="panel">
+    <div class="chips" id="presets" role="group" aria-label="Presets"></div>
+    <div class="pair">
+      <div><p class="cap">The picture in the dataset</p><canvas id="orig" width="330" height="330" aria-label="Original drawing of a boot pointing left"></canvas></div>
+      <div><p class="cap">What the network is shown this time</p><canvas id="out" width="330" height="330" aria-label="The same boot after augmentation"></canvas></div>
+    </div>
+    <div class="ctrls">
+      <div class="ctrl"><label>Crop keeps <span class="val" id="vs"></span> of the area</label><input id="scale" type="range" min="10" max="100" value="100"></div>
+      <div class="ctrl"><label>Crop shape (width : height) <span class="val" id="vr"></span></label><input id="ratio" type="range" min="-100" max="100" value="0"></div>
+      <div class="ctrl"><label>Brightness <span class="val" id="vb"></span></label><input id="bright" type="range" min="50" max="150" value="100"></div>
+      <div class="ctrl"><label>Hue shift <span class="val" id="vh"></span></label><input id="hue" type="range" min="-180" max="180" value="0"></div>
+    </div>
+    <div class="buttons">
+      <button id="roll" class="primary">Roll the dice</button>
+      <button id="fl" class="chip">Flip left-right</button>
+      <button id="fu" class="chip">Flip up-down</button>
+      <button id="reset">Reset</button>
+    </div>
+    <div class="formula" id="formula"></div>
+    <div class="verdict" id="verdict"></div>
+  </div>
+
+  <h2>One image, a new version every epoch</h2>
+  <div class="panel">
+    <p class="body">Augmentation does not make a bigger dataset on disk. The changes are drawn fresh each time a picture is loaded, so the network sees the same boot in every epoch and never the same pixels twice. Here are eight draws from the book&rsquo;s recipe: a random left-right flip, a random crop of 10% to 100% of the area, and random brightness and hue.</p>
+    <div class="grid8" id="grid8"></div>
+    <div class="buttons">
+      <button id="epoch" class="primary">Next epoch</button>
+      <span class="note" style="margin:0" id="epochNote"></span>
+    </div>
+  </div>
+
+  <h2>The one rule: the label must survive</h2>
+  <div class="panel">
+    <p class="body">An augmentation is only allowed if the answer is still the same afterwards. That depends on the subject, not on the operation. Pick a subject and look at the four flips.</p>
+    <div class="chips" id="subjects" role="group" aria-label="Subject"></div>
+    <div class="trio" id="trio"></div>
+    <div class="verdict" id="ruleVerdict"></div>
+  </div>
+
+  <h2>What it does to a real network</h2>
+  <div class="panel">
+    <p class="body">A small convolutional network, trained on 1,000 pictures from Fashion-MNIST (100 per class), four times. The only thing that changes is the augmentation. Then each network is tested three ways: on normal test pictures, on the same pictures mirrored, and on the same pictures moved two pixels right and two pixels down. In the dataset, every shoe points left and every item sits in the centre.</p>
+    <div class="tiny" id="tiny"></div>
+    <div class="chips" id="recipes" role="group" aria-label="Training recipe" style="margin-top:14px"></div>
+    <div class="bars" id="bars"></div>
+    <div class="verdict" id="expVerdict"></div>
+    <table style="margin-top:16px">
+      <thead><tr><th>Trained with</th><th class="num">Training pictures</th><th class="num">Normal test</th><th class="num">Mirrored test</th><th class="num">Shifted test</th></tr></thead>
+      <tbody id="expTable"></tbody>
+    </table>
+    <p class="note" id="expNote"></p>
+  </div>
+
+  <h2>Two details the code depends on</h2>
+  <div class="panel">
+    <p class="body"><b>Training only.</b> The random changes are for learning. At test time you want one definite answer per picture, so the test pipeline has no randomness in it. In the book&rsquo;s CIFAR-10 example the training transform is a random left-right flip, and the test transform does nothing but convert the image to numbers.</p>
+    <p class="body"><b>Free, and applied on the fly.</b> No new photos are taken and nothing extra is stored. The cost is a little computation each time a picture is loaded. The book says augmentation was probably indispensable to the success of AlexNet, the 2012 network that started the modern era of computer vision.</p>
+    <p class="body"><b>The book&rsquo;s numbers.</b> Random crop: 10% to 100% of the area, width-to-height between 1:2 and 2:1, then resized back to a fixed size. Colour: brightness, contrast, saturation and hue each changed at random, by up to 50% in the book&rsquo;s example. In PyTorch these are <code>RandomHorizontalFlip</code>, <code>RandomResizedCrop</code> and <code>ColorJitter</code>, chained with <code>Compose</code>.</p>
+    <p class="note">From section 14.1 of <i>Dive into Deep Learning</i>. The boot is a drawing made for this page. The experiment is one real run of this page&rsquo;s own small network, averaged over three random seeds; the numbers describe that network, not networks in general. Fashion-MNIST is by Zalando Research, MIT licence.</p>
+  </div>
+</main>
+
+<script>
+(function () {
+  const $ = id => document.getElementById(id);
+  const S = 330;
+
+  /* ---------- seeded random numbers, so every reload shows the same draws ---------- */
+  function rng(seed){ let a=seed>>>0; return ()=>{ a|=0; a=a+0x6D2B79F5|0; let t=Math.imul(a^a>>>15,1|a); t=t+Math.imul(t^t>>>7,61|t)^t; return ((t^t>>>14)>>>0)/4294967296; }; }
+
+  /* ---------- the subject: a boot pointing left, drawn on a 220-unit grid ---------- */
+  function boot(c, s){
+    const k=s/220; c.save(); c.scale(k,k);
+    const wall=c.createLinearGradient(0,0,0,150); wall.addColorStop(0,'#dfe9ee'); wall.addColorStop(1,'#f3ede0');
+    c.fillStyle=wall; c.fillRect(0,0,220,220);
+    c.fillStyle='#fff7d6'; c.fillRect(14,14,52,44); c.strokeStyle='#8d9aa3'; c.lineWidth=3; c.strokeRect(14,14,52,44);
+    c.beginPath(); c.moveTo(40,14); c.lineTo(40,58); c.moveTo(14,36); c.lineTo(66,36); c.stroke();
+    c.fillStyle='#b99c7a'; c.fillRect(0,172,220,48); c.fillStyle='#a58a69'; c.fillRect(0,172,220,4);
+    c.fillStyle='rgba(60,40,20,.25)'; c.beginPath(); c.ellipse(112,184,78,7,0,0,Math.PI*2); c.fill();
+    c.fillStyle='#c2410c'; c.beginPath();
+    c.moveTo(118,40); c.lineTo(172,40); c.lineTo(174,150); c.quadraticCurveTo(174,162,162,162);
+    c.lineTo(58,162); c.quadraticCurveTo(36,162,39,142); c.quadraticCurveTo(44,121,82,115); c.lineTo(116,102); c.closePath(); c.fill();
+    c.fillStyle='#9a3209'; c.beginPath(); c.moveTo(39,142); c.quadraticCurveTo(44,121,82,115); c.quadraticCurveTo(70,140,64,162); c.lineTo(58,162); c.quadraticCurveTo(36,162,39,142); c.fill();
+    c.fillStyle='#3b2a20'; c.fillRect(36,162,140,10); c.fillRect(146,172,30,10);
+    c.fillStyle='#7a2a08'; c.fillRect(118,40,54,9);
+    c.strokeStyle='#f6d860'; c.lineWidth=4; c.lineCap='round';
+    [[60,0],[74,0],[88,0],[101,3]].forEach(([y,d])=>{ c.beginPath(); c.moveTo(114-d,y); c.lineTo(136,y+5); c.stroke(); });
+    c.fillStyle='#f6d860'; c.beginPath(); c.arc(156,72,7,0,Math.PI*2); c.fill();
+    c.restore();
+  }
+  function glyph(ch){ return (c,s)=>{ c.fillStyle='#f6f3ea'; c.fillRect(0,0,s,s); c.fillStyle='#1d1d1b';
+    c.font='700 '+Math.round(s*.78)+'px ui-sans-serif,system-ui,Arial,sans-serif'; c.textAlign='center'; c.textBaseline='middle'; c.fillText(ch,s/2,s*.53); }; }
+
+  const src=document.createElement('canvas'); src.width=src.height=S; boot(src.getContext('2d'),S);
+
+  /* ---------- one augmentation: flips, crop, then brightness and hue ---------- */
+  function cropBox(p){ // p.scale = share of area, p.ratio = width/height, p.cx,p.cy in 0..1
+    let w=Math.sqrt(p.scale*p.ratio), h=Math.sqrt(p.scale/p.ratio);
+    w=Math.min(w,1); h=Math.min(h,1);
+    return { w, h, x:(1-w)*p.cx, y:(1-h)*p.cy };
+  }
+  function apply(dst, source, p){
+    const c=dst.getContext('2d'), n=dst.width, b=cropBox(p), m=source.width;
+    c.save(); c.clearRect(0,0,n,n);
+    c.translate(p.fl?n:0, p.fu?n:0); c.scale(p.fl?-1:1, p.fu?-1:1);
+    c.imageSmoothingEnabled=true;
+    c.drawImage(source, b.x*m, b.y*m, b.w*m, b.h*m, 0,0,n,n);
+    c.restore();
+    if (p.bright!==1 || p.hue!==0) {
+      const im=c.getImageData(0,0,n,n), d=im.data, a=p.hue*Math.PI/180, co=Math.cos(a), si=Math.sin(a);
+      const M=[.213+co*.787-si*.213,.715-co*.715-si*.715,.072-co*.072+si*.928,
+               .213-co*.213+si*.143,.715+co*.285+si*.140,.072-co*.072-si*.283,
+               .213-co*.213-si*.787,.715-co*.715+si*.715,.072+co*.928+si*.072];
+      for(let i=0;i<d.length;i+=4){ const r=d[i],g=d[i+1],bl=d[i+2];
+        d[i]=(M[0]*r+M[1]*g+M[2]*bl)*p.bright; d[i+1]=(M[3]*r+M[4]*g+M[5]*bl)*p.bright; d[i+2]=(M[6]*r+M[7]*g+M[8]*bl)*p.bright; }
+      c.putImageData(im,0,0);
+    }
+  }
+  function draw(rand){ // the book's recipe
+    return { fl:rand()<.5, fu:false, scale:.1+.9*rand(), ratio:Math.exp((rand()*2-1)*Math.log(2)), cx:rand(), cy:rand(),
+             bright:.5+rand(), hue:Math.round((rand()*2-1)*180) };
+  }
+
+  /* ---------- panel 1: the playground ---------- */
+  const st={ fl:false, fu:false, scale:1, ratio:1, cx:.5, cy:.5, bright:1, hue:0 };
+  let dice=rng(7), rolls=0;
+  const ratioTxt=r=> r>=1 ? r.toFixed(2)+' : 1' : '1 : '+(1/r).toFixed(2);
+  function sync(){ $('scale').value=Math.round(st.scale*100); $('ratio').value=Math.round(Math.log(st.ratio)/Math.log(2)*100);
+    $('bright').value=Math.round(st.bright*100); $('hue').value=st.hue; }
+  function render(){
+    apply($('out'), src, st);
+    const oc=$('orig').getContext('2d'); oc.drawImage(src,0,0);
+    const b=cropBox(st);
+    if (b.w<.999||b.h<.999){ oc.strokeStyle='#fff'; oc.lineWidth=4; oc.strokeRect(b.x*S,b.y*S,b.w*S,b.h*S);
+      oc.strokeStyle='#2f6fb3'; oc.lineWidth=2; oc.setLineDash([7,5]); oc.strokeRect(b.x*S,b.y*S,b.w*S,b.h*S); oc.setLineDash([]); }
+    $('vs').textContent=Math.round(st.scale*100)+'%'; $('vr').textContent=ratioTxt(st.ratio);
+    $('vb').textContent='× '+st.bright.toFixed(2); $('vh').textContent=(st.hue>0?'+':'')+st.hue+'°';
+    $('fl').classList.toggle('on',st.fl); $('fu').classList.toggle('on',st.fu);
+    const kept=Math.round(b.w*b.h*100);
+    $('formula').innerHTML =
+      'flip left-right = <b>'+(st.fl?'yes':'no')+'</b>     flip up-down = <b>'+(st.fu?'yes':'no')+'</b>\n'+
+      'crop            = <b>'+kept+'%</b> of the area, shape '+ratioTxt(st.ratio)+', then resized back to full size\n'+
+      'brightness      = every pixel × <b>'+st.bright.toFixed(2)+'</b>     hue = <b>'+(st.hue>0?'+':'')+st.hue+'°</b> around the colour wheel\n'+
+      'label           = <b>boot</b>';
+    const v=$('verdict'); let cls='verdict', t;
+    const changed = st.fl||st.fu||kept<100||st.bright!==1||st.hue!==0;
+    if (!changed) t='Nothing is changed yet. This is the only version a network sees without augmentation: the same pixels, every epoch.';
+    else if (st.fu) { cls='verdict warn'; t='Still a boot, but upside down. No camera will ever send the network a boot like this, so the book calls up-down flips much less common than left-right flips. An augmentation should produce pictures that could really turn up.'; }
+    else if (kept<=25) { cls='verdict warn'; t='Only '+kept+'% of the picture is left. Is it still clearly a boot? At the small end of the crop range the subject can fall out of the frame, and the label starts to be a guess. That is the price of an aggressive crop.'; }
+    else { const bits=[]; if(st.fl) bits.push('the toe now points right'); if(kept<100) bits.push('the boot sits somewhere else and at a different size');
+      if(st.bright!==1) bits.push('the light is '+(st.bright>1?'brighter':'dimmer')); if(st.hue!==0) bits.push('the colours have moved');
+      t='Still a boot. But '+bits.join(', ')+'. Every pixel is different from the original and the label has not changed. That is the whole idea.'; }
+    v.className=cls; v.textContent=t;
+  }
+  const PRESETS=[
+    ['Original',        {}],
+    ['Flip left-right', {fl:true}],
+    ['Flip up-down',    {fu:true}],
+    ['Crop',            {scale:.4,ratio:1.25,cx:.3,cy:.75}],
+    ['Brightness',      {bright:1.4}],
+    ['Hue',             {hue:120}],
+    ['All together',    {fl:true,scale:.55,ratio:.8,cx:.6,cy:.7,bright:.75,hue:-60}],
+  ];
+  const base=()=>({fl:false,fu:false,scale:1,ratio:1,cx:.5,cy:.5,bright:1,hue:0});
+  PRESETS.forEach(([lab,cfg])=>{ const b=document.createElement('button'); b.className='chip'; b.textContent=lab;
+    b.onclick=()=>{ Object.assign(st,base(),cfg); sync(); render(); }; $('presets').append(b); });
+  $('scale').oninput=e=>{ st.scale=e.target.value/100; render(); };
+  $('ratio').oninput=e=>{ st.ratio=Math.pow(2,e.target.value/100); render(); };
+  $('bright').oninput=e=>{ st.bright=e.target.value/100; render(); };
+  $('hue').oninput=e=>{ st.hue=+e.target.value; render(); };
+  $('fl').onclick=()=>{ st.fl=!st.fl; render(); };
+  $('fu').onclick=()=>{ st.fu=!st.fu; render(); };
+  $('reset').onclick=()=>{ Object.assign(st,base()); dice=rng(7); rolls=0; sync(); render(); };
+  $('roll').onclick=()=>{ const d=draw(dice); rolls++; d.bright=Math.round(d.bright*100)/100; d.scale=Math.round(d.scale*100)/100; Object.assign(st,d); sync(); render(); };
+
+  /* ---------- panel 2: eight views per epoch ---------- */
+  let ep=1; const cells=[];
+  for(let i=0;i<8;i++){ const c=document.createElement('canvas'); c.width=c.height=200; $('grid8').append(c); cells.push(c); }
+  function epoch(){ const r=rng(1000+ep*17); cells.forEach(c=>apply(c,src,draw(r)));
+    $('epochNote').textContent='Epoch '+ep+'. Eight loads of the same picture, eight different inputs. After '+ep+' epoch'+(ep>1?'s':'')+
+      ' the network has seen this boot '+ep+' time'+(ep>1?'s':'')+' and has never seen the same pixels twice.'; }
+  $('epoch').onclick=()=>{ ep++; epoch(); };
+
+  /* ---------- panel 3: does the label survive ---------- */
+  const SUBJ={
+    boot:{lab:'A boot', draw:boot, name:'boot', res:[['boot','ok'],['boot','ok'],['boot, upside down','odd'],['boot, upside down','odd']],
+      verdict:['','Left-right flips are safe for a boot: a boot pointing right is still a boot, and real photos contain both. Up-down flips keep the label too, but they make pictures that never occur, so they teach the network nothing it will need.']},
+    b:{lab:'The letter b', draw:glyph('b'), name:'b', res:[['b','ok'],['d','no'],['p','no'],['q','no']],
+      verdict:['bad','Every flip turns the letter b into a different letter. If you augment handwriting with flips, you hand the network a d and tell it the answer is b. The operation is the same one that was harmless for the boot.']},
+    six:{lab:'The digit 6', draw:glyph('6'), name:'6', res:[['6','ok'],['not a digit','no'],['not a digit','no'],['9','no']],
+      verdict:['bad','Flip a 6 both ways and it is a 9. One flip alone gives a shape that is not a digit at all. For digits, small shifts and small rotations are safe; flips are not.']},
+  };
+  const FL=[['Original',false,false],['Flip left-right',true,false],['Flip up-down',false,true],['Both flips',true,true]];
+  function subject(key){ const s=SUBJ[key], o=document.createElement('canvas'); o.width=o.height=200; s.draw(o.getContext('2d'),200);
+    $('trio').replaceChildren();
+    FL.forEach(([lab,fl,fu],i)=>{ const d=document.createElement('div'), c=document.createElement('canvas'); c.width=c.height=200;
+      apply(c,o,Object.assign(base(),{fl,fu}));
+      const l=document.createElement('div'); l.className='lab'; l.textContent=lab;
+      const a=document.createElement('div'); a.className='ans '+s.res[i][1]; a.textContent=(i?'now reads: ':'label: ')+s.res[i][0];
+      d.append(c,l,a); $('trio').append(d); });
+    $('ruleVerdict').className='verdict '+s.verdict[0]; $('ruleVerdict').textContent=s.verdict[1];
+    [...$('subjects').children].forEach(b=>b.classList.toggle('on',b.dataset.k===key)); }
+  Object.keys(SUBJ).forEach(k=>{ const b=document.createElement('button'); b.className='chip'; b.dataset.k=k; b.textContent=SUBJ[k].lab; b.onclick=()=>subject(k); $('subjects').append(b); });
+
+  /* ---------- panel 4: the experiment ---------- */
+  const DATA = {"runs":{"none":{"orig":0.834,"mirror":0.6,"shift":0.57,"train":1.0,"label":"No augmentation","cls":"bad","text":"Perfect on its own training pictures, 83.4% on normal test pictures. Mirror the test pictures and it falls to 60.0%. Move them two pixels and it falls to 57.0%. Ankle boots: 92% recognised normally, 0% when mirrored. It did not learn what a boot is. It learned where the toe goes."},"flip":{"orig":0.826,"mirror":0.827,"shift":0.514,"train":0.996,"label":"Random left-right flip","cls":"warn","text":"One line of code. Mirrored pictures are now no harder than normal ones: 82.7%. Mirrored ankle boots go from 0% to 92%. But the two-pixel shift still breaks it, at 51.4%. A flip teaches nothing about position."},"crop":{"orig":0.83,"mirror":0.607,"shift":0.781,"train":0.93,"label":"Random shift (crop)","cls":"warn","text":"The opposite result. Shifted pictures recover to 78.1%, and mirrored pictures stay broken at 60.7%. Each augmentation buys exactly the kind of robustness it shows the network, and nothing else."},"both":{"orig":0.823,"mirror":0.821,"shift":0.789,"train":0.913,"label":"Flip and shift together","cls":"","text":"Chain the two and both weaknesses close: 82.1% mirrored, 78.9% shifted. Look at the cost: the normal test score barely moves (82.3% against 83.4%), and training accuracy drops from 100% to 91.3%, because the network can no longer memorise pictures that keep changing."}},"sample":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,3,1,0,0,7,0,37,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,2,0,27,84,11,0,0,0,0,0,0,119,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,0,88,143,110,0,0,0,0,22,93,106,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,4,0,53,129,120,147,175,157,166,135,154,168,140,0,0,0,0,0,0,0,0,0,0,0,0,0,0,2,0,11,137,130,128,160,176,159,167,178,149,151,144,0,0,0,0,0,0,0,0,1,0,2,1,0,3,0,0,115,114,106,137,168,153,156,165,167,143,157,158,11,0,0,0,0,0,1,0,0,0,0,0,3,0,0,89,139,90,94,153,149,131,151,169,172,143,159,169,48,0,0,0,0,0,0,0,2,4,1,0,0,0,98,136,110,109,110,162,135,144,149,159,167,144,158,169,119,0,0,0,2,2,1,2,0,0,0,0,26,108,117,99,111,117,136,156,134,154,154,156,160,141,147,156,178,0,3,0,0,0,0,0,0,21,53,92,117,111,103,115,129,134,143,154,165,170,154,151,154,143,138,150,165,43,0,0,23,54,65,76,85,118,128,123,111,113,118,127,125,139,133,136,160,140,155,161,144,155,172,161,189,62,0,68,94,90,111,114,111,114,115,127,135,136,143,126,127,151,154,143,148,125,162,162,144,138,153,162,196,58,70,169,129,104,98,100,94,97,98,102,108,106,119,120,129,149,156,167,190,190,196,198,198,187,197,189,184,36,16,126,171,188,188,184,171,153,135,120,126,127,146,185,195,209,208,255,209,177,245,252,251,251,247,220,206,49,0,0,0,12,67,106,164,185,199,210,211,210,208,190,150,82,8,0,0,0,178,208,188,175,162,158,151,11,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"note":"Fashion-MNIST, 1,000 training pictures, 3,000 test pictures, 40 epochs. Two convolution layers and one dense layer, Adam, learning rate 0.001. The shift augmentation moves each training picture by up to 10% of its width in each direction. Average of three runs with different random seeds."};
+  const css = v => getComputedStyle(document.documentElement).getPropertyValue(v).trim();
+  const pc = x => (x*100).toFixed(1)+'%';
+  const SETS=[['orig','Normal test','--curve'],['mirror','Mirrored test','--pad'],['shift','Shifted test','--teal']];
+  function tiny(){ if(!DATA) return; const px=DATA.sample;
+    [['Normal',0],['Mirrored',1],['Shifted',2]].forEach(([lab,mode])=>{ const f=document.createElement('figure'), c=document.createElement('canvas'); c.width=c.height=28;
+      const x=c.getContext('2d'), im=x.createImageData(28,28);
+      for(let r=0;r<28;r++)for(let q=0;q<28;q++){ let sr=r,sq=q; if(mode===1) sq=27-q; if(mode===2){ sr=r-2; sq=q-2; }
+        const v=(sr<0||sq<0)?0:px[sr*28+sq], i=(r*28+q)*4; im.data[i]=im.data[i+1]=im.data[i+2]=v; im.data[i+3]=255; }
+      x.putImageData(im,0,0); f.append(c,document.createTextNode(lab)); $('tiny').append(f); }); }
+  function recipe(key){ if(!DATA) return; const r=DATA.runs[key];
+    $('bars').replaceChildren();
+    [['train','Training pictures','--axis']].concat(SETS).forEach(([k,lab,col])=>{ const a=document.createElement('div'); a.textContent=lab;
+      const b=document.createElement('div'); b.className='bar'; const i=document.createElement('i'); i.style.width=(r[k]*100)+'%'; i.style.background=css(col); b.append(i);
+      const n=document.createElement('div'); n.className='n'; n.textContent=pc(r[k]); $('bars').append(a,b,n); });
+    $('expVerdict').className='verdict '+(r.cls||''); $('expVerdict').textContent=r.text;
+    [...$('recipes').children].forEach(b=>b.classList.toggle('on',b.dataset.k===key));
+    [...$('expTable').children].forEach(t=>t.classList.toggle('on',t.dataset.k===key)); }
+  if (DATA) { Object.keys(DATA.runs).forEach(k=>{ const r=DATA.runs[k];
+      const b=document.createElement('button'); b.className='chip'; b.dataset.k=k; b.textContent=r.label; b.onclick=()=>recipe(k); $('recipes').append(b);
+      const t=document.createElement('tr'); t.dataset.k=k; t.innerHTML='<td>'+r.label+'</td><td class="num">'+pc(r.train)+'</td><td class="num">'+pc(r.orig)+'</td><td class="num">'+pc(r.mirror)+'</td><td class="num">'+pc(r.shift)+'</td>'; $('expTable').append(t); });
+    $('expNote').textContent=DATA.note; tiny(); recipe('none'); }
+
+  if (window.matchMedia) window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', ()=>{ const on=document.querySelector('#recipes .on'); if(on) recipe(on.dataset.k); });
+  sync(); render(); epoch(); subject('boot');
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,242 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Fine-Tuning: Borrow a Network, Replace Its Last Layer</title>
+<style>
+  :root {
+    --bg:#fbfaf7; --ink:#1d1d1b; --quiet:#6b6a65; --grid:#e4e2dc; --axis:#9a978f; --card:#fff;
+    --curve:#2f6fb3; --ball:#c2410c; --good:#2e7d4f; --warn:#b7791f; --bad:#b42318; --pad:#7a4fb5; --teal:#1f8a8a;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root { --bg:#1b1b1a; --ink:#ecebe7; --quiet:#a3a19b; --grid:#34332f; --axis:#6f6d67; --card:#242422;
+      --curve:#6aa6e8; --ball:#f08a4b; --good:#5fbf86; --warn:#e0b04f; --bad:#f2786d; --pad:#b497e6; --teal:#5cc4c4; }
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.5 ui-sans-serif,system-ui,-apple-system,"Segoe UI",sans-serif}
+  main{max-width:900px;margin:0 auto;padding:32px 20px 48px}
+  h1{font-size:26px;margin:0 0 6px;letter-spacing:-.01em}
+  h2{font-size:19px;margin:30px 0 10px}
+  .lead{color:var(--quiet);margin:0 0 22px}
+  .panel{background:var(--card);border:1px solid var(--grid);border-radius:12px;padding:16px}
+  svg{width:100%;height:auto;display:block}
+  .cap{font-size:13px;color:var(--quiet);margin:0 0 8px;font-weight:600}
+  button{font:inherit;padding:6px 14px;border-radius:8px;border:1px solid var(--grid);background:var(--card);color:var(--ink);cursor:pointer}
+  button.primary{background:var(--curve);color:#fff;border-color:var(--curve);font-weight:600}
+  button.chip{font-size:14px;padding:5px 12px}
+  button.chip.on{border-color:var(--curve);color:var(--curve);font-weight:600;box-shadow:inset 0 0 0 1px var(--curve)}
+  .chips{display:flex;gap:8px;flex-wrap:wrap;margin:0 0 14px}
+  .buttons{display:flex;gap:8px;margin-top:12px;flex-wrap:wrap;align-items:center}
+  .ctrls{display:grid;grid-template-columns:repeat(2,1fr);gap:14px;margin:4px 0 14px}
+  .ctrl label{display:block;font-size:12.5px;color:var(--quiet);margin-bottom:2px}
+  .ctrl .val{font-weight:650;color:var(--ink);font-variant-numeric:tabular-nums}
+  input[type=range]{width:100%;accent-color:var(--curve)}
+  .formula{margin-top:14px;padding:12px 14px;border:1px solid var(--grid);border-radius:10px;background:var(--bg);
+    font:14.5px/1.9 ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;overflow-x:auto;white-space:pre}
+  .formula b{color:var(--curve);font-weight:700}
+  .verdict{margin-top:14px;padding:12px 14px;border-radius:10px;border-left:4px solid var(--good);
+    background:color-mix(in srgb,var(--good) 10%,transparent)}
+  .verdict.warn{border-left-color:var(--warn);background:color-mix(in srgb,var(--warn) 12%,transparent)}
+  .verdict.bad{border-left-color:var(--bad);background:color-mix(in srgb,var(--bad) 10%,transparent)}
+  .stats{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:14px}
+  .stat{border:1px solid var(--grid);border-radius:10px;padding:10px 14px;background:var(--bg)}
+  .stat .k{font-size:12.5px;color:var(--quiet)} .stat .v{font-size:22px;font-weight:700;font-variant-numeric:tabular-nums}
+  .stat .s{font-size:13px;color:var(--quiet)}
+  table{width:100%;border-collapse:collapse;font-size:14.5px;margin-top:4px}
+  th,td{text-align:left;padding:7px 10px;border-bottom:1px solid var(--grid);vertical-align:top}
+  th{color:var(--quiet);font-weight:600;font-size:13px}
+  td.num,th.num{text-align:right;font-variant-numeric:tabular-nums}
+  .note{color:var(--quiet);font-size:14px;margin-top:12px}
+  p.body{font-size:15px;margin:10px 0}
+  code{font:13.5px ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;background:var(--bg);border:1px solid var(--grid);border-radius:5px;padding:1px 5px}
+  @media (max-width:720px){ .ctrls,.stats{grid-template-columns:1fr} }
+</style>
+</head>
+<body>
+<main>
+  <h1>Fine-tuning: borrow a network, replace its last layer</h1>
+  <p class="lead">You want a network that recognises hot dogs, and you have 2,000 photos. ImageNet has more than ten million. A network trained from nothing on 2,000 photos will mostly memorise them. But a network that has already seen ten million photos knows what edges, textures and shapes look like, and none of that is specific to ImageNet. Fine-tuning keeps all of that knowledge and replaces only the part that names the answer. It takes four steps. Press Play.</p>
+
+  <div class="panel">
+    <div class="chips" id="steps" role="group" aria-label="Steps"></div>
+    <svg id="viz" role="img" aria-label="A source model trained on ImageNet, and a target model that copies every layer except the output layer"></svg>
+    <div class="ctrls" style="margin-top:12px">
+      <div class="ctrl"><label>Classes in your own dataset <span class="val" id="vc"></span></label><input id="classes" type="range" min="2" max="100" value="2"></div>
+      <div class="ctrl" style="align-self:end"><div class="buttons" style="margin:0"><button id="play" class="primary">Play</button><button id="next">Next step</button><button id="reset">Reset</button></div></div>
+    </div>
+    <div class="formula" id="formula"></div>
+    <div class="verdict" id="verdict"></div>
+  </div>
+
+  <h2>Why two learning rates</h2>
+  <div class="panel">
+    <p class="body">After step 3 the model is in two very different states at once. The copied layers are already close to good: they need a nudge. The new output layer is random: it needs to learn everything. One learning rate cannot suit both. Below is a cartoon of that problem with just two numbers, one for the copied layers and one for the new layer. It is not a real network, but the arithmetic is real gradient descent. Try the three presets.</p>
+    <div class="chips" id="lrPresets" role="group" aria-label="Learning rate presets"></div>
+    <div class="ctrls">
+      <div class="ctrl"><label>Learning rate for the copied layers <span class="val" id="vlr"></span></label><input id="lr" type="range" min="0" max="1000" value="435"></div>
+      <div class="ctrl"><label>New output layer learns <span class="val" id="vm"></span> as fast</label><input id="mult" type="range" min="1" max="20" value="1"></div>
+    </div>
+    <svg id="chart" role="img" aria-label="Distance from the best value over thirty training steps, for the copied layers and for the new output layer"></svg>
+    <div class="stats">
+      <div class="stat"><div class="k">Copied layers after 30 steps</div><div class="v" id="sb"></div><div class="s" id="sbs"></div></div>
+      <div class="stat"><div class="k">New output layer after 30 steps</div><div class="v" id="sh"></div><div class="s" id="shs"></div></div>
+    </div>
+    <div class="verdict" id="lrVerdict"></div>
+  </div>
+
+  <h2>Three ways to use a pretrained network</h2>
+  <div class="panel">
+    <p class="body">The numbers are for ResNet-18, the network the book uses, with the class count from the slider at the top of the page.</p>
+    <table>
+      <thead><tr><th>Approach</th><th>What starts random</th><th class="num">Weights that start random</th><th class="num">Weights you train</th><th>Use it when</th></tr></thead>
+      <tbody id="ways"></tbody>
+    </table>
+    <p class="body">The middle row is fine-tuning as the book teaches it. The last row is the cheaper cousin: freeze the copied layers completely and train only the new layer. It is fast and hard to overfit, and it is the right first try when your dataset is very small.</p>
+  </div>
+
+  <h2>The book&rsquo;s experiment, and one detail that bites</h2>
+  <div class="panel">
+    <p class="body"><b>Hot dogs.</b> 1,400 photos with a hot dog and 1,400 photos of other food. 1,000 of each for training, the rest for testing. The source model is ResNet-18 pretrained on ImageNet. It is trained for 5 epochs with a learning rate of 0.00005 for the copied layers and ten times that for the new output layer. The same network trained from random weights, with a ten times larger learning rate everywhere, does worse over the same 5 epochs. The book&rsquo;s explanation is short: the fine-tuned model starts from better values.</p>
+    <p class="body"><b>The detail that bites.</b> The copied layers expect pictures prepared exactly the way ImageNet pictures were prepared when the source model was trained: the same size, and each colour channel shifted and scaled by the same three averages and three spreads. Feed them anything else and the borrowed knowledge does not line up with what it sees. This is why every fine-tuning script has those six odd-looking numbers at the top.</p>
+    <p class="body"><b>Where augmentation comes back.</b> The training pictures get a random crop resized to 224 by 224 and a random left-right flip. The test pictures get no randomness: resized to 256, then the centre 224 by 224 cut out. That is the rule from the <a href="image-augmentation.html">image augmentation page</a>: random for training, fixed for testing.</p>
+    <p class="note">From section 14.2 of <i>Dive into Deep Learning</i>. Parameter counts are for the standard ResNet-18: 11,689,512 in total, of which 513,000 are the 1,000-class output layer. The two-number cartoon uses a loss of 10&middot;b&sup2; + 0.5&middot;h&sup2;, with the copied layers starting 0.3 from their best value and the new layer starting 3.0 from its best value.</p>
+  </div>
+</main>
+
+<script>
+(function () {
+  const $ = id => document.getElementById(id);
+  const css = v => getComputedStyle(document.documentElement).getPropertyValue(v).trim();
+  const el = (t,a,x) => { const e=document.createElementNS('http://www.w3.org/2000/svg',t);
+    for(const q in a) e.setAttribute(q,a[q]); if(x!==undefined) e.textContent=x; return e; };
+  const fmt = n => n.toLocaleString('en-US');
+
+  /* ResNet-18: parameters in each part */
+  const LAYERS=[['First convolution',9536],['Stage 1',147968],['Stage 2',525568],['Stage 3',2099712],['Stage 4',8393728]];
+  const BODY=LAYERS.reduce((s,l)=>s+l[1],0), OLDHEAD=513000, FEAT=512;
+  const head = c => FEAT*c + c;
+
+  /* ---------- panel 1: the four steps ---------- */
+  const STEPS=['Start','1 · Pretrain','2 · Copy the layers','3 · New output layer','4 · Train on your data'];
+  let step=0, timer=null;
+  STEPS.forEach((s,i)=>{ const b=document.createElement('button'); b.className='chip'; b.textContent=s; b.onclick=()=>{ stop(); step=i; render(); }; $('steps').append(b); });
+
+  function draw(){
+    const svg=$('viz'), W=860, H=372, c=+$('classes').value; svg.setAttribute('viewBox','0 0 '+W+' '+H); svg.replaceChildren();
+    const q=css('--quiet'), g=css('--grid'), ink=css('--ink'), blue=css('--curve'), org=css('--ball'), bad=css('--bad'), card=css('--card');
+    const bw=250, bh=40, gap=8, xs=40, xt=W-40-bw, y0=62;
+    const box=(x,y,fill,stroke,op,dash)=>svg.append(el('rect',{x,y,width:bw,height:bh,rx:7,fill,'fill-opacity':op,stroke,'stroke-width':1.6,'stroke-dasharray':dash||''}));
+    const txt=(x,y,s,o)=>svg.append(el('text',Object.assign({x,y,'font-size':13.5,fill:ink},o||{}),s));
+
+    txt(xs,24,'Source model',{'font-weight':700,'font-size':15});
+    txt(xs,44, step>=1?'trained on ImageNet: over 10 million images, 1,000 classes':'ResNet-18, random weights, knows nothing',{fill:q,'font-size':12.5});
+    if (step>=2){ txt(xt,24,'Target model',{'font-weight':700,'font-size':15});
+      txt(xt,44, step>=4?'training on your dataset: '+c+' classes':'yours: '+c+' classes',{fill:q,'font-size':12.5}); }
+
+    // output layer sits at the top of each stack, features below (data flows upward)
+    const rows=[['Output layer: 1,000 classes',OLDHEAD,true]].concat(LAYERS.slice().reverse().map(l=>[l[0],l[1],false]));
+    rows.forEach(([name,n,isHead],i)=>{
+      const y=y0+i*(bh+gap), trained=step>=1;
+      box(xs,y, trained?blue:g, trained?blue:css('--axis'), trained?.2:.5);
+      txt(xs+12,y+25,name); txt(xs+bw-12,y+25,fmt(n),{'text-anchor':'end',fill:q,'font-size':12.5});
+      if (step>=2 && !isHead){
+        box(xt,y,blue,blue,.2); txt(xt+12,y+25,name);
+        txt(xt+bw-12,y+25, step>=4?'small rate':'copied',{'text-anchor':'end',fill:blue,'font-size':12.5,'font-weight':600});
+        svg.append(el('line',{x1:xs+bw+10,x2:xt-14,y1:y+bh/2,y2:y+bh/2,stroke:blue,'stroke-width':1.6,'stroke-opacity':.7}));
+        svg.append(el('path',{d:'M'+(xt-14)+' '+(y+bh/2-5)+'l9 5l-9 5z',fill:blue,'fill-opacity':.8}));
+      }
+      if (isHead && step>=2){
+        svg.append(el('line',{x1:xs+6,x2:xs+bw-6,y1:y+bh/2,y2:y+bh/2,stroke:bad,'stroke-width':2}));
+        txt(xs+bw+14,y+bh/2+5,'not copied',{fill:bad,'font-size':12.5,'font-weight':600});
+        if (step>=3){ box(xt,y,org,org,.22); txt(xt+12,y+25,'Output layer: '+c+' classes');
+          txt(xt+bw-12,y+25, step>=4?'10× rate':'random',{'text-anchor':'end',fill:org,'font-size':12.5,'font-weight':600}); }
+        else box(xt,y,card,css('--axis'),0,'5 4');
+      }
+    });
+    const yb=y0+rows.length*(bh+gap)+16;
+    txt(xs+bw/2,yb,'↑ picture goes in here',{'text-anchor':'middle',fill:q,'font-size':12.5});
+    if (step>=2) txt(xt+bw/2,yb,'↑ picture goes in here',{'text-anchor':'middle',fill:q,'font-size':12.5});
+  }
+
+  const TEXT=[
+    ['','Start with the source model, before anyone trains it. A ResNet-18 has 11,689,512 weights. Right now they are random numbers.'],
+    ['','Step 1. Someone trains the source model on ImageNet. This is the expensive part, days on many GPUs, and you do not do it. You download the result.'],
+    ['','Step 2. Build a new model with the same design and copy every layer across, except the output layer. The copied layers carry what the source model learned about edges, textures and shapes.'],
+    ['warn','Step 3. The old output layer answers a question you are not asking: which of 1,000 ImageNet classes is this? Throw it away and add a new one, sized for your classes, with random weights.'],
+    ['','Step 4. Train on your own pictures. The new output layer learns from nothing, so it gets a learning rate ten times larger. The copied layers are already good, so they get a small rate and are only nudged.'],
+  ];
+  function render(){
+    const c=+$('classes').value, h=head(c), total=BODY+h;
+    $('vc').textContent=c;
+    [...$('steps').children].forEach((b,i)=>b.classList.toggle('on',i===step));
+    draw();
+    $('formula').innerHTML =
+      'copied from the source model = <b>'+fmt(BODY)+'</b> weights\n'+
+      'old output layer, discarded  = 512 × 1,000 + 1,000 = '+fmt(OLDHEAD)+'\n'+
+      'new output layer, random     = 512 × '+c+' + '+c+' = <b>'+fmt(h)+'</b>\n'+
+      'share of your model that starts from nothing = '+fmt(h)+' ÷ '+fmt(total)+' = <b>'+(h/total*100).toFixed(c<10?3:2)+'%</b>';
+    $('verdict').className='verdict '+TEXT[step][0]; $('verdict').textContent=TEXT[step][1];
+    ways(c);
+  }
+  function stop(){ clearInterval(timer); timer=null; $('play').textContent='Play'; }
+  $('play').onclick=()=>{ if(timer){ stop(); return; } if(step>=4) step=0; render(); $('play').textContent='Pause';
+    timer=setInterval(()=>{ if(step>=4){ stop(); return; } step++; render(); if(step>=4) stop(); },1800); };
+  $('next').onclick=()=>{ stop(); step=Math.min(4,step+1); render(); };
+  $('reset').onclick=()=>{ stop(); step=0; $('classes').value=2; render(); };
+  $('classes').oninput=()=>{ if(step<3){ stop(); step=3; } render(); };
+
+  /* ---------- panel 3: three ways ---------- */
+  function ways(c){ const h=head(c), total=BODY+h;
+    const rows=[
+      ['Train from scratch','Everything',fmt(total),fmt(total),'You have a very large dataset, or pictures unlike anything the source model saw'],
+      ['Fine-tune','Only the output layer',fmt(h),fmt(total),'The usual case: a few hundred to a few thousand pictures per class'],
+      ['Freeze and train the output layer','Only the output layer',fmt(h),fmt(h),'A very small dataset, or no time: the copied layers are not touched at all'],
+    ];
+    $('ways').innerHTML=rows.map(r=>'<tr><td><b>'+r[0]+'</b></td><td>'+r[1]+'</td><td class="num">'+r[2]+'</td><td class="num">'+r[3]+'</td><td>'+r[4]+'</td></tr>').join(''); }
+
+  /* ---------- panel 2: two learning rates, a two-number cartoon ---------- */
+  const KB=20, KH=1, B0=0.3, H0=3, N=30;
+  const lrOf = v => Math.pow(10, -3 + v/1000*Math.log10(200));   // 0.001 .. 0.2
+  const vOf  = lr => Math.round((Math.log10(lr)+3)/Math.log10(200)*1000);
+  function sim(lr,m){ const b=[B0], h=[H0]; for(let i=0;i<N;i++){ b.push(b[i]*(1-lr*KB)); h.push(h[i]*(1-lr*m*KH)); } return {b,h}; }
+  function chart(){
+    const lr=lrOf(+$('lr').value), m=+$('mult').value, s=sim(lr,m);
+    $('vlr').textContent=lr.toFixed(lr<0.01?4:3); $('vm').textContent=m+'×';
+    const svg=$('chart'), W=860, H=280, L=52, R=18, T=18, B=40, YM=3.5; svg.setAttribute('viewBox','0 0 '+W+' '+H); svg.replaceChildren();
+    const q=css('--quiet'), g=css('--grid'), blue=css('--curve'), org=css('--ball');
+    const X=i=>L+i/N*(W-L-R), Y=v=>T+(1-Math.min(Math.abs(v),YM)/YM)*(H-T-B);
+    for(let v=0;v<=3;v++){ svg.append(el('line',{x1:L,x2:W-R,y1:Y(v),y2:Y(v),stroke:g}));
+      svg.append(el('text',{x:L-8,y:Y(v)+4,'text-anchor':'end','font-size':12,fill:q},v.toFixed(1))); }
+    for(let i=0;i<=N;i+=5) svg.append(el('text',{x:X(i),y:H-B+18,'text-anchor':'middle','font-size':12,fill:q},i));
+    svg.append(el('text',{x:(L+W-R)/2,y:H-6,'text-anchor':'middle','font-size':12.5,fill:q},'training step'));
+    svg.append(el('text',{x:14,y:(T+H-B)/2,'text-anchor':'middle','font-size':12.5,fill:q,transform:'rotate(-90 14 '+(T+H-B)/2+')'},'distance from best value'));
+    const path=a=>a.map((v,i)=>(i?'L':'M')+X(i).toFixed(1)+' '+Y(v).toFixed(1)).join('');
+    svg.append(el('path',{d:path(s.h),stroke:org,'stroke-width':2.6,fill:'none'}));
+    svg.append(el('path',{d:path(s.b),stroke:blue,'stroke-width':2.6,fill:'none'}));
+    svg.append(el('text',{x:X(1)+6,y:Y(H0)-7,'font-size':12.5,fill:org,'font-weight':600},'new output layer (starts random, far away)'));
+    svg.append(el('text',{x:X(1)+6,y:Y(B0)-9,'font-size':12.5,fill:blue,'font-weight':600},'copied layers (start close)'));
+    if (Math.max(...s.b.map(Math.abs))>YM) svg.append(el('text',{x:W-R-4,y:T+16,'text-anchor':'end','font-size':12.5,fill:blue,'font-weight':600},'copied layers: off the chart ↑'));
+    const bN=Math.abs(s.b[N]), hN=Math.abs(s.h[N]), peak=Math.max(...s.b.map(Math.abs));
+    const num=v=> v>=1000? v.toExponential(1) : v>=10? v.toFixed(0) : v>=0.01? v.toFixed(2) : v===0? '0' : v.toExponential(1);
+    const blew = peak>B0*1.001, learned = hN/H0 <= .1;
+    $('sb').textContent=num(bN)+' from best'; $('sb').style.color= blew?css('--bad'):css('--good');
+    $('sbs').textContent= blew ? 'started 0.3 away and ended further: the borrowed knowledge is gone' : 'started 0.3 away, never left the neighbourhood';
+    $('sh').textContent=Math.round((1-hN/H0)*100)+'% learned'; $('sh').style.color= learned?css('--good'):css('--warn');
+    $('shs').textContent='started 3.0 away, now '+num(hN)+' away';
+    const v=$('lrVerdict');
+    if (blew){ v.className='verdict bad'; v.textContent='The rate is too large for the copied layers. Each step throws them past their best value and further out the other side. The new layer learned, but what it sits on top of has been wrecked: you are now training from scratch with a worse start.'; }
+    else if (!learned){ v.className='verdict warn'; v.textContent='The copied layers are safe, but the new output layer has covered only '+Math.round((1-hN/H0)*100)+'% of the distance in 30 steps. A rate gentle enough for the copied layers is far too gentle for a layer that starts from nothing'+(m===1?'. Raise the multiplier.':'.'); }
+    else { v.className='verdict'; v.textContent='Both are satisfied. The copied layers get '+lr.toFixed(lr<0.01?4:3)+' and are nudged. The new output layer gets '+m+' times that and learns '+Math.round((1-hN/H0)*100)+'% of what it needs in the same 30 steps. This is the book’s recipe: a small rate, and ten times that for the new layer.'; }
+  }
+  const LRP=[['One small rate',0.01,1],['One big rate',0.11,1],['Small, and 10× for the new layer',0.01,10]];
+  LRP.forEach(([lab,lr,m])=>{ const b=document.createElement('button'); b.className='chip'; b.textContent=lab;
+    b.onclick=()=>{ $('lr').value=vOf(lr); $('mult').value=m; chart(); }; $('lrPresets').append(b); });
+  $('lr').oninput=chart; $('mult').oninput=chart;
+
+  if (window.matchMedia) window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', ()=>{ render(); chart(); });
+  $('lr').value=vOf(0.01); render(); chart();
+})();
+</script>
+</body>
+</html>

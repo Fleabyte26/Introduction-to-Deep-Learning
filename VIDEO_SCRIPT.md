@@ -4,7 +4,7 @@ BrokenLabsFix · Kris Hornung · November 2026
 
 Watch the recorded video: https://www.youtube.com/watch?v=YQF4lMUv9d4
 
-This file holds five scripts. Episode 1, below, covers the first three pages. [Episode 2](#episode-2-how-models-stop-memorizing-and-learn-faster) covers the six newer pages: weight decay, early stopping, dropout, SGD, minibatch size and momentum. [Episode 3](#episode-3-batch-normalization-you-can-drag) covers the batch normalization page. [Episode 4](#episode-4-four-ways-to-close-the-overfitting-gap) covers the regularization comparison page. [Episode 5](#episode-5-convolutions-channels-and-the-arrow) covers the three convolution pages.
+This file holds six scripts. Episode 1, below, covers the first three pages. [Episode 2](#episode-2-how-models-stop-memorizing-and-learn-faster) covers the six newer pages: weight decay, early stopping, dropout, SGD, minibatch size and momentum. [Episode 3](#episode-3-batch-normalization-you-can-drag) covers the batch normalization page. [Episode 4](#episode-4-four-ways-to-close-the-overfitting-gap) covers the regularization comparison page. [Episode 5](#episode-5-convolutions-channels-and-the-arrow) covers the three convolution pages. [Episode 6](#episode-6-image-augmentation-and-fine-tuning) covers the image augmentation and fine-tuning pages.
 
 ## At a glance
 
@@ -874,3 +874,204 @@ Based on Dive into Deep Learning (d2l.ai), sections 7.1 to 7.4 and 8.6.
 ## Episode 5 tags
 
 convolution, convolutional neural network, CNN, padding, stride, kernel size, channels, feature maps, 1x1 convolution, residual connection, skip connection, ResNet, VGG, vanishing gradient, deep learning, d2l, dive into deep learning, keras, machine learning tutorial, interactive explainer
+
+# Episode 6: Image Augmentation and Fine-Tuning
+
+BrokenLabsFix · Kris Hornung · November 2026
+
+Earlier episodes: [Episode 1](https://www.youtube.com/watch?v=YQF4lMUv9d4) · [Episode 2](https://www.youtube.com/watch?v=_69pXSvmCOY) · [Episode 3](https://www.youtube.com/watch?v=r_NqjxmXD8g) · [Episode 4](https://www.youtube.com/watch?v=b4tLpx3_934) · [Episode 5](https://www.youtube.com/watch?v=8Ab74b_z-Es)
+
+## Episode 6 at a glance
+
+A 9-minute walkthrough of two pages. The thread: a network learns whatever is in its pictures, including the accidents. Augmentation removes the accidents; fine-tuning lets you start from a network that has already seen ten million pictures.
+
+This episode was made in a different order from the first five: the pages first, then this script, then the video, which was rendered directly from the pages with a synthetic narration voice. The timings below are the rendered video's real timings. To re-record it in your own voice, follow the Show column as a click list.
+
+| Part | Time | Page | What happens |
+| --- | --- | --- | --- |
+| Hook | 0:00–0:51 | image-augmentation | Zero percent of mirrored boots |
+| Part 1 | 0:51–2:25 | image-augmentation | Flip, crop, brightness, hue |
+| Part 2 | 2:25–3:01 | image-augmentation | Never the same pixels twice |
+| Part 3 | 3:01–3:39 | image-augmentation | The label must survive |
+| Part 4 | 3:39–5:00 | image-augmentation | Each augmentation buys one kind of robustness |
+| Part 5 | 5:00–6:33 | fine-tuning | Copy everything except the last layer |
+| Part 6 | 6:33–7:27 | fine-tuning | One rate cannot suit both |
+| Part 7 | 7:27–8:22 | fine-tuning | Scratch, fine-tune, or freeze |
+| Wrap-up | 8:22–8:50 | — | Two ideas |
+
+Pages:
+- [image-augmentation.html](https://fleabyte26.github.io/Introduction-to-Deep-Learning/image-augmentation.html)
+- [fine-tuning.html](https://fleabyte26.github.io/Introduction-to-Deep-Learning/fine-tuning.html)
+
+Same format: left column is what to do on screen, right column is what to say. Short sentences for the Hindi and Bahasa auto-dub.
+
+Every number below is printed on the pages. The page draws its random numbers from a fixed seed, so after a reload (or the Reset button) the three "Roll the dice" presses and the "Next epoch" presses always give the same pictures.
+
+## Episode 6 hook (0:00–0:51)
+
+Page: image-augmentation.html.
+
+| Show | Say |
+| --- | --- |
+| The augmentation page, scrolled to "What it does to a real network", with "No augmentation" selected | "This is a real neural network. It was trained to recognise clothing. On normal test pictures, it gets 83 percent right." |
+| Point at the verdict box | "It recognises 92 percent of ankle boots. Now mirror the boots, so the toe points right instead of left. It recognises zero percent. Not one." |
+| Point at the three small boot pictures | "Same boots. Same network. The only change is the direction. So what did this network learn? Not what a boot is. It learned where the toe goes." |
+| Scroll to the top of the page | "Today, two pages. The first one fixes this problem with a few lines of code. It is called image augmentation. The second one shows how to borrow a network that someone else already trained. That is called fine-tuning." |
+| Same | "This is chapter 14 of Dive into Deep Learning, sections 14.1 and 14.2. Both pages are free, and they run in your browser. The links are in the description." |
+
+## Episode 6 Part 1: One picture, changed (0:51–2:25)
+
+Page: image-augmentation.html.
+
+| Show | Say |
+| --- | --- |
+| The first panel. Press Reset. Point at the left picture | "Here is one training picture. A boot, pointing left. Without augmentation, the network sees exactly these pixels, in every epoch." |
+| Click the "Flip left-right" preset | "First change. Flip it left to right. The toe now points right. Every pixel moved. But the label did not change. It is still a boot." |
+| Point at the verdict box | "This is the oldest trick in image augmentation, and the cheapest. In the code, it is one line." |
+| Click "Flip up-down" | "Now flip it upside down. It is still a boot. But no camera will ever send the network a picture like this. So the book says up-down flips are much less common." |
+| Click "Crop". Point at the dashed box, then the right picture | "Next, a random crop. The dashed box is the part we keep. Then it is stretched back to full size. The boot is now bigger, and it sits in a different place." |
+| Point at the numbers panel | "The page shows the numbers. This crop keeps 40 percent of the area. In the book, the crop is random: anywhere from 10 percent to 100 percent of the picture." |
+| Click "Brightness" | "Now colour. First, brightness. Every pixel is multiplied by 1.4. The room got brighter. The boot is still a boot." |
+| Click "Hue" | "And hue. The colours rotate around the colour wheel. The red boot is now a green boot. A red boot and a green boot are both boots, so the network should not care about the colour." |
+| Click "All together" | "In practice, you chain them. Flip, crop, brightness and hue, all at once." |
+| Press Reset, then "Roll the dice" | "And you do not choose the numbers. The computer does, at random. Press Roll the dice." |
+| Press "Roll the dice" again | "Again. A different crop, a different light, a different colour." |
+| Press it a third time. Point at the last line of the numbers panel | "And again. Every press is a new picture. And the last line never changes. Label: boot." |
+
+## Episode 6 Part 2: A new version every epoch (2:25–3:01)
+
+Page: image-augmentation.html.
+
+| Show | Say |
+| --- | --- |
+| Scroll to "One image, a new version every epoch" | "Here is what that means for training. Eight loads of the same picture. Eight different inputs." |
+| Same | "Notice that nothing new is saved on disk. The dataset is not bigger. The change happens each time a picture is loaded." |
+| Press "Next epoch" | "Next epoch. The same boot again, and eight new versions." |
+| Press "Next epoch" again. Point at the line under the button | "And again. After three epochs, the network has seen this boot three times, and it has never seen the same pixels twice. That is why it cannot simply memorise the picture." |
+| Point at the tightest crops in the grid | "One warning. Look at the tightest crops. In some of them, you can hardly tell it is a boot. A very aggressive crop can cut the subject out of the picture." |
+
+## Episode 6 Part 3: The one rule (3:01–3:39)
+
+Page: image-augmentation.html.
+
+| Show | Say |
+| --- | --- |
+| Scroll to "The one rule". "A boot" is selected | "Now, the one rule. An augmentation is only allowed if the answer is still the same afterwards. For a boot, a left-right flip is safe." |
+| Click "The letter b" | "Now the letter b. Flip it left to right, and it is a d. Flip it upside down, and it is a p. Both flips, and it is a q." |
+| Point at the verdict box | "If you augment handwriting with flips, you show the network a d, and tell it the answer is b. The same operation that was safe for the boot is now teaching mistakes." |
+| Click "The digit 6" | "Same with digits. Flip a 6 both ways, and it is a 9. So the rule is not about the operation. It is about the subject. Always ask: is the label still true?" |
+
+## Episode 6 Part 4: What it does to a real network (3:39–5:00)
+
+Page: image-augmentation.html.
+
+| Show | Say |
+| --- | --- |
+| Scroll to "What it does to a real network". Click "No augmentation" | "Back to the real network. One thousand training pictures from Fashion-MNIST. In this dataset, every shoe points left, and every item sits in the centre." |
+| Point at the four bars | "No augmentation. 100 percent on the training pictures. 83.4 on normal test pictures. But 60 percent when mirrored. And 57 percent when the picture moves just two pixels." |
+| Click "Random left-right flip" | "Now add one line: a random left-right flip. Mirrored pictures jump to 82.7 percent. Mirrored ankle boots go from zero to 92 percent." |
+| Point at the verdict box | "But look at the shifted test. Still broken, at 51 percent. A flip teaches nothing about position." |
+| Click "Random shift (crop)" | "Now the other one: a random shift. Shifted pictures recover to 78 percent. Mirrored pictures stay broken. Each augmentation buys exactly the robustness it shows the network, and nothing else." |
+| Click "Flip and shift together" | "So chain them. Flip and shift together. 82 percent mirrored. 79 percent shifted. Both holes are closed." |
+| Point at the table, first and last rows | "And look at the cost. The normal test score hardly moved. Training accuracy fell from 100 to 91 percent, because the network cannot memorise pictures that keep changing. A lower training score, and a more honest network." |
+| Scroll to "Two details the code depends on" | "One last rule before we move on. Augmentation is for training only. At test time there is no randomness. You want one clear answer for each picture." |
+
+## Episode 6 Part 5: Fine-tuning in four steps (5:00–6:33)
+
+Page: fine-tuning.html.
+
+| Show | Say |
+| --- | --- |
+| Open the fine-tuning page | "Second page. Fine-tuning. Here is the problem. You want to recognise hot dogs, and you have two thousand photos. That is not enough to train a big network from nothing." |
+| Same | "But ImageNet has more than ten million photos. And a network trained on ImageNet already knows edges, textures and shapes. Fine-tuning borrows that knowledge. It takes four steps." |
+| The first panel, on "Start" | "Start. This is ResNet 18. It has 11.7 million weights. Right now, they are random. The picture goes in at the bottom. The answer comes out at the top." |
+| Click "1 · Pretrain" (or press Next step) | "Step one. Someone trains it on ImageNet. This is the expensive part. You do not do it. You download the result." |
+| Click "2 · Copy the layers" | "Step two. Build a new model with the same design, and copy every layer across. Every layer except one. The output layer is not copied." |
+| Click "3 · New output layer" | "Step three. Why not? Because the old output layer answers the wrong question. It chooses between one thousand ImageNet classes. You have two: hot dog, or not hot dog. So you add a new output layer, with random weights." |
+| Point at the numbers panel | "Now the numbers. Copied: 11.1 million weights. New and random: 1,026 weights. That is nine thousandths of one percent of the model. Almost everything is borrowed." |
+| Drag "Classes in your own dataset" to 100 | "Even with one hundred classes, the new layer is 51,300 weights. Less than half of one percent." |
+| Drag it back to 2. Click "4 · Train on your data" | "Step four. Train on your own pictures. But with two different learning rates. A small rate for the copied layers. Ten times that for the new output layer." |
+
+## Episode 6 Part 6: Why two learning rates (6:33–7:27)
+
+Page: fine-tuning.html.
+
+| Show | Say |
+| --- | --- |
+| Scroll to "Why two learning rates". Click "One small rate" | "Why two rates? Here is a small cartoon with two numbers. The blue line is the copied layers. They start close to their best value. The orange line is the new layer. It starts far away." |
+| Point at the two result boxes | "First, one small learning rate for everything. The copied layers are fine. But after 30 steps, the new layer has learned only 26 percent. Too slow." |
+| Click "One big rate" | "So use one big rate. Now the new layer learns 97 percent. But look at the blue line. The copied layers were thrown out of their good position. They started 0.3 from their best value. They ended 68 away." |
+| Point at the red verdict box | "The borrowed knowledge is destroyed. This is the classic fine-tuning mistake: a learning rate that is too large." |
+| Click "Small, and 10× for the new layer" | "Now the book's recipe. A small rate, and ten times that for the new layer. The copied layers stay safe. The new layer learns 96 percent. Both are satisfied." |
+
+## Episode 6 Part 7: Three ways, and the book's experiment (7:27–8:22)
+
+Page: fine-tuning.html.
+
+| Show | Say |
+| --- | --- |
+| Scroll to "Three ways to use a pretrained network" | "So there are three ways to use a pretrained network. Train from scratch: everything starts random. Fine-tune: only the output layer starts random, and you train everything, gently." |
+| Point at the last row | "And the cheap option: freeze the copied layers, and train only the new layer. 1,026 weights. Try this first when your dataset is very small." |
+| Scroll to "The book's experiment" | "The book tests this on hot dogs. One thousand photos of each class for training. Five epochs. The fine-tuned network beats the same network trained from scratch, because it starts from better values." |
+| Point at "The detail that bites" | "One detail that bites. The copied layers expect pictures prepared exactly like ImageNet pictures: the same size, and the same colour scaling. That is why every fine-tuning script has six strange numbers at the top." |
+| Point at "Where augmentation comes back" | "And notice where augmentation comes back. Training pictures get a random crop and a random flip. Test pictures get no randomness. Random for training, fixed for testing." |
+
+## Episode 6 wrap-up (8:22–8:50)
+
+| Show | Say |
+| --- | --- |
+| The augmentation page, "All together" preset | "Two ideas today. Image augmentation: change every training picture a little, at random, so the network learns the object, and not the accident. But only in ways that keep the label true." |
+| The fine-tuning page, on step 4 | "Fine-tuning: copy a trained network, replace the last layer, and train gently, with a larger rate for the new layer." |
+| Same | "Both pages are in the description. Open them, press everything, break them. Tell me in the comments what you want next. See you in the next one." |
+
+## Episode 6 recording checklist
+
+- [ ] Check both live links open before recording
+- [ ] Reload each page as you reach it, so the dice and the epochs start from their fixed seed
+- [ ] Browser zoom at 125% so the numbers are readable on a phone
+- [ ] Light mode, bookmarks bar hidden, notifications off
+- [ ] On the augmentation page, press Reset before the three "Roll the dice" presses
+- [ ] On the fine-tuning page, drag the class slider back to 2 before clicking step 4
+- [ ] Publishing on BrokenLabsFix (Hindi/Bahasa audience, auto-dubbing on)
+
+## Episode 6 title options
+
+1. Image Augmentation and Fine-Tuning Explained | Deep Learning Without the Formula Wall Ep. 6
+2. Why This Network Scores 0% on Mirrored Boots | Deep Learning Without the Formula Wall Ep. 6
+3. Borrow a Trained Network: Fine-Tuning in Four Steps | Deep Learning Without the Formula Wall Ep. 6
+
+## Episode 6 description
+
+```
+Two free interactive pages on image augmentation and fine-tuning. See one picture become many, watch a real network fail on mirrored boots, and step through how a pretrained network is reused. No install, no code.
+
+Image augmentation: one picture becomes many
+https://fleabyte26.github.io/Introduction-to-Deep-Learning/image-augmentation.html
+
+Fine-tuning: borrow a network, replace its last layer
+https://fleabyte26.github.io/Introduction-to-Deep-Learning/fine-tuning.html
+
+All pages and source: https://github.com/Fleabyte26/Introduction-to-Deep-Learning
+
+Episode 1 (linear regression, gradient descent, sigmoid): https://www.youtube.com/watch?v=YQF4lMUv9d4
+Episode 2 (weight decay, early stopping, dropout, SGD, minibatch size, momentum): https://www.youtube.com/watch?v=_69pXSvmCOY
+Episode 3 (batch normalization): https://www.youtube.com/watch?v=r_NqjxmXD8g
+Episode 4 (comparing four regularization techniques): https://www.youtube.com/watch?v=b4tLpx3_934
+Episode 5 (convolutions, channels, residual connections): https://www.youtube.com/watch?v=8Ab74b_z-Es
+
+Based on Dive into Deep Learning (d2l.ai), sections 14.1 and 14.2. The experiment uses Fashion-MNIST: 1,000 training pictures, 3,000 test pictures, average of three runs.
+
+0:00 A network that cannot see mirrored boots
+0:51 Flip, crop, brightness, hue
+2:25 A new version every epoch
+3:01 The one rule: the label must survive
+3:39 What augmentation does to a real network
+5:00 Fine-tuning in four steps
+6:33 Why two learning rates
+7:27 Three ways to use a pretrained network
+8:22 Two ideas
+```
+
+## Episode 6 tags
+
+image augmentation, data augmentation, random crop, horizontal flip, color jitter, fine-tuning, transfer learning, pretrained model, ResNet-18, ImageNet, learning rate, Fashion-MNIST, computer vision, convolutional neural network, deep learning, d2l, dive into deep learning, machine learning tutorial, interactive explainer
