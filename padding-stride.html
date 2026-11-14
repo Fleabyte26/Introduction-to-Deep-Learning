@@ -1,0 +1,208 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Padding and Stride You Can Drag</title>
+<style>
+  :root {
+    --bg:#fbfaf7; --ink:#1d1d1b; --quiet:#6b6a65; --grid:#e4e2dc; --axis:#9a978f; --card:#fff;
+    --curve:#2f6fb3; --ball:#c2410c; --good:#2e7d4f; --warn:#b7791f; --bad:#b42318; --pad:#7a4fb5;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root { --bg:#1b1b1a; --ink:#ecebe7; --quiet:#a3a19b; --grid:#34332f; --axis:#6f6d67; --card:#242422;
+      --curve:#6aa6e8; --ball:#f08a4b; --good:#5fbf86; --warn:#e0b04f; --bad:#f2786d; --pad:#b497e6; }
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.5 ui-sans-serif,system-ui,-apple-system,"Segoe UI",sans-serif}
+  main{max-width:900px;margin:0 auto;padding:32px 20px 48px}
+  h1{font-size:26px;margin:0 0 6px;letter-spacing:-.01em}
+  h2{font-size:19px;margin:30px 0 10px}
+  .lead{color:var(--quiet);margin:0 0 22px}
+  .panel{background:var(--card);border:1px solid var(--grid);border-radius:12px;padding:16px}
+  svg{width:100%;height:auto;display:block}
+  .cap{font-size:13px;color:var(--quiet);margin:0 0 8px;font-weight:600}
+  button{font:inherit;padding:6px 14px;border-radius:8px;border:1px solid var(--grid);background:var(--card);color:var(--ink);cursor:pointer}
+  button.primary{background:var(--curve);color:#fff;border-color:var(--curve);font-weight:600}
+  button.chip{font-size:14px;padding:5px 12px}
+  .chips{display:flex;gap:8px;flex-wrap:wrap;margin:0 0 14px}
+  .buttons{display:flex;gap:8px;margin-top:12px;flex-wrap:wrap;align-items:center}
+  .ctrls{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin:4px 0 16px}
+  .ctrl label{display:block;font-size:12.5px;color:var(--quiet);margin-bottom:2px}
+  .ctrl .val{font-weight:650;color:var(--ink);font-variant-numeric:tabular-nums}
+  input[type=range]{width:100%;accent-color:var(--curve)}
+  .formula{margin-top:14px;padding:12px 14px;border:1px solid var(--grid);border-radius:10px;background:var(--bg);
+    font:14.5px/1.9 ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;overflow-x:auto;white-space:pre}
+  .formula b{color:var(--curve);font-weight:700}
+  .verdict{margin-top:14px;padding:12px 14px;border-radius:10px;border-left:4px solid var(--good);
+    background:color-mix(in srgb,var(--good) 10%,transparent)}
+  .verdict.warn{border-left-color:var(--warn);background:color-mix(in srgb,var(--warn) 12%,transparent)}
+  .verdict.bad{border-left-color:var(--bad);background:color-mix(in srgb,var(--bad) 10%,transparent)}
+  .key{display:flex;gap:16px;flex-wrap:wrap;font-size:13px;color:var(--quiet);margin:8px 0 0}
+  .key span::before{content:"";display:inline-block;width:12px;height:12px;border-radius:3px;vertical-align:-2px;margin-right:6px;background:var(--c);opacity:.75}
+  .note{color:var(--quiet);font-size:14px;margin-top:12px}
+  p.body{font-size:15px;margin:10px 0}
+  @media (max-width:720px){ .ctrls{grid-template-columns:1fr 1fr} }
+</style>
+</head>
+<body>
+<main>
+  <h1>Padding and stride you can drag</h1>
+  <p class="lead">A convolution slides a small window over an image and writes one number per position. How many positions there are, and therefore how big the output is, depends on three settings. The formula for it is the part of Chapter 7 that most people have to look up every time. Drag the four sliders and watch the output size follow.</p>
+
+  <div class="panel">
+    <div class="chips" id="presets" role="group" aria-label="Presets"></div>
+    <div class="ctrls">
+      <div class="ctrl"><label>Input size <span class="val" id="vn"></span></label><input id="n" type="range" min="3" max="12" value="8"></div>
+      <div class="ctrl"><label>Kernel size <span class="val" id="vk"></span></label><input id="k" type="range" min="1" max="7" step="2" value="3"></div>
+      <div class="ctrl"><label>Padding each side <span class="val" id="vp"></span></label><input id="p" type="range" min="0" max="3" value="0"></div>
+      <div class="ctrl"><label>Stride <span class="val" id="vs"></span></label><input id="s" type="range" min="1" max="4" value="1"></div>
+    </div>
+
+    <svg id="viz" role="img" aria-label="Input grid with kernel window and resulting output grid"></svg>
+    <div class="key">
+      <span style="--c:var(--pad)">Padding (zeros)</span>
+      <span style="--c:var(--curve)">Kernel window now</span>
+      <span style="--c:var(--ball)">Output cell being written</span>
+      <span style="--c:var(--bad)">Never visited</span>
+    </div>
+
+    <div class="formula" id="formula"></div>
+
+    <div class="buttons">
+      <button id="play" class="primary">Play</button>
+      <button id="step">Step</button>
+      <button id="reset">Reset</button>
+    </div>
+    <div class="verdict" id="verdict"></div>
+  </div>
+
+  <h2>The three jobs these settings do</h2>
+  <div class="panel">
+    <p class="body"><b>Padding keeps the size up.</b> With no padding, every convolution shrinks the image by k−1 pixels. Stack twenty 3×3 layers and you have lost 40 pixels, which is most of a small image. Set padding to (k−1)/2 and the output is the same size as the input, which is why 3×3 with padding 1 is the most common pair in modern networks. Try the "Same size" preset.</p>
+    <p class="body"><b>Stride brings the size down, on purpose.</b> A stride of 2 halves the height and width, and cuts the work for every layer that follows to a quarter. This is how a network goes from a 224×224 image to a 7×7 feature map without a thousand layers. Try "Halve it".</p>
+    <p class="body"><b>The corner case worth knowing.</b> When the stride does not divide the available space evenly, the last rows and columns are simply never visited. If the leftover is padding, nothing real is lost. If it reaches into the image, those pixels are discarded and nothing warns you. The red cells mark that second case: try the "Cells get dropped" preset.</p>
+  </div>
+
+  <h2>Reading the formula</h2>
+  <div class="panel">
+    <p class="body">The window starts at the left edge of the padded input and moves by s each time, so the number of positions is how many steps of size s fit into the room the window has, plus one for the starting position itself. That is the whole derivation:</p>
+    <p class="body" style="font-family:ui-monospace,Menlo,Consolas,monospace;font-size:15px">room = n + 2p − k &nbsp;→&nbsp; steps = ⌊room / s⌋ &nbsp;→&nbsp; output = steps + 1</p>
+    <p class="body">The floor is what throws away the leftover. Height and width are computed separately and do not have to match, and the same formula covers pooling layers, which are convolutions without weights.</p>
+    <p class="note">From sections 7.1 to 7.3 of <i>Dive into Deep Learning</i>. The book writes padding as the total across both sides; this page uses padding per side, which is what Keras and PyTorch take as an argument.</p>
+  </div>
+</main>
+
+<script>
+(function () {
+  const $ = id => document.getElementById(id);
+  const css = v => getComputedStyle(document.documentElement).getPropertyValue(v).trim();
+  const el = (t,a,x) => { const e=document.createElementNS('http://www.w3.org/2000/svg',t);
+    for(const q in a) e.setAttribute(q,a[q]); if(x!==undefined) e.textContent=x; return e; };
+
+  let pos = 0, timer = null;
+  const get = () => ({ n:+$('n').value, k:+$('k').value, p:+$('p').value, s:+$('s').value });
+  function out(c){ const room = c.n + 2*c.p - c.k; return room < 0 ? 0 : Math.floor(room/c.s) + 1; }
+
+  const PRESETS = [
+    ['No padding',        {n:8,k:3,p:0,s:1}],
+    ['Same size',         {n:8,k:3,p:1,s:1}],
+    ['Halve it',          {n:8,k:3,p:1,s:2}],
+    ['Big kernel 5×5', {n:8,k:5,p:2,s:1}],
+    ['Cells get dropped', {n:8,k:3,p:0,s:3}],
+  ];
+  PRESETS.forEach(([lab,cfg]) => {
+    const b=document.createElement('button'); b.className='chip'; b.textContent=lab;
+    b.onclick = () => { stop(); for(const q in cfg) $(q).value = cfg[q]; pos = 0; render(); };
+    $('presets').append(b);
+  });
+
+  function draw(c, o) {
+    const svg=$('viz'), W=860, pad=14, gapMid=74;
+    const tot = c.n + 2*c.p;
+    const cell = Math.min(34, Math.floor((W - gapMid - pad*2) / (tot + Math.max(o,1) + 1)));
+    const inW = tot*cell, ouW = Math.max(o,0)*cell;
+    const H = Math.max(inW, ouW) + 54;
+    svg.setAttribute('viewBox','0 0 '+W+' '+H); svg.replaceChildren();
+    const x0 = pad, y0 = 34, x1 = x0 + inW + gapMid, y1 = 34;
+    const q=css('--quiet'), g=css('--grid');
+
+    svg.append(el('text',{x:x0,y:20,'font-size':12.5,fill:q},'input '+c.n+'×'+c.n+(c.p?' + padding '+c.p:'')));
+    svg.append(el('text',{x:x1,y:20,'font-size':12.5,fill:q}, o>0 ? 'output '+o+'×'+o : 'no valid output'));
+
+    const r = o>0 ? Math.floor(pos/o) : 0, cl = o>0 ? pos%o : 0;
+    const top = r*c.s, left = cl*c.s;              // in padded coords
+    const reach = o>0 ? (o-1)*c.s + c.k : 0;       // padded cells ever covered
+
+    for (let i=0;i<tot;i++) for (let j=0;j<tot;j++) {
+      const isPad = i<c.p || j<c.p || i>=c.p+c.n || j>=c.p+c.n;
+      const inWin = o>0 && i>=top && i<top+c.k && j>=left && j<left+c.k;
+      const never = o>0 && (i>=reach || j>=reach) && !isPad;
+      let fill='transparent', op=1;
+      if (isPad) { fill=css('--pad'); op=.18; }
+      if (never) { fill=css('--bad'); op=.20; }
+      if (inWin) { fill=css('--curve'); op=isPad?.45:.60; }
+      svg.append(el('rect',{x:x0+j*cell,y:y0+i*cell,width:cell,height:cell,
+        fill:fill,'fill-opacity':op,stroke:g,'stroke-width':1}));
+      if (isPad && cell>=18) svg.append(el('text',{x:x0+j*cell+cell/2,y:y0+i*cell+cell/2+4,
+        'text-anchor':'middle','font-size':Math.min(11,cell*.42),fill:css('--pad'),'fill-opacity':.8},'0'));
+    }
+    if (o>0) svg.append(el('rect',{x:x0+left*cell,y:y0+top*cell,width:c.k*cell,height:c.k*cell,
+      fill:'none',stroke:css('--curve'),'stroke-width':2.5,rx:2}));
+
+    for (let i=0;i<o;i++) for (let j=0;j<o;j++) {
+      const done = i*o+j < pos, now = i*o+j === pos;
+      svg.append(el('rect',{x:x1+j*cell,y:y1+i*cell,width:cell,height:cell,
+        fill: now?css('--ball'):(done?css('--curve'):'transparent'),
+        'fill-opacity': now?.75:(done?.30:1), stroke:g,'stroke-width':1}));
+    }
+    if (o>0) {
+      const my=y0+Math.max(inW,ouW)/2;
+      svg.append(el('path',{d:'M'+(x0+inW+16)+' '+my+'h'+(gapMid-34),stroke:css('--axis'),'stroke-width':1.5,fill:'none'}));
+      svg.append(el('path',{d:'M'+(x1-14)+' '+(my-5)+'l6 5l-6 5',stroke:css('--axis'),'stroke-width':1.5,fill:'none'}));
+    }
+  }
+
+  function render() {
+    const c = get(), o = out(c);
+    $('vn').textContent=c.n+'×'+c.n; $('vk').textContent=c.k+'×'+c.k;
+    $('vp').textContent=c.p; $('vs').textContent=c.s;
+    const total = o*o; if (pos >= Math.max(total,1)) pos = 0;
+    const room = c.n + 2*c.p - c.k, steps = o>0 ? o-1 : 0;
+    const reach = o>0 ? steps*c.s + c.k : 0;
+    const lostReal = o>0 ? Math.max(0, (c.p + c.n) - Math.max(reach, c.p)) : 0;
+    const leftover = o>0 ? room - steps*c.s : 0;
+    $('formula').innerHTML =
+      'room   = n + 2p − k = ' + c.n + ' + 2×' + c.p + ' − ' + c.k + ' = <b>' + room + '</b>\n' +
+      'steps  = floor(room / s) = floor(' + room + ' / ' + c.s + ') = <b>' + steps + '</b>\n' +
+      'output = steps + 1 = <b>' + (o>0?o:0) + '</b>   →  ' + (o>0 ? o+'×'+o+' = '+total+' numbers' : 'kernel does not fit');
+    const v = $('verdict');
+    if (o <= 0) { v.className='verdict bad';
+      v.textContent = 'The kernel is larger than the padded input, so the window has nowhere to sit and there is no output. Make the kernel smaller, or add padding.'; }
+    else if (lostReal > 0) { v.className='verdict warn';
+      v.textContent = 'Output is ' + o + '×' + o + '. The stride of ' + c.s + ' does not divide the room evenly, so the last ' + lostReal +
+        ' row' + (lostReal>1?'s':'') + ' and column' + (lostReal>1?'s':'') + ' of real pixels are never visited. They are shown in red, and the network never sees them.'; }
+    else if (o === c.n) { v.className='verdict';
+      v.textContent = 'Output is ' + o + '×' + o + ', the same as the input. Padding of ' + c.p + ' exactly compensates for a ' + c.k + '×' + c.k +
+        ' kernel, which is why padding (k−1)/2 with stride 1 is the standard pairing.'; }
+    else { v.className='verdict';
+      v.textContent = 'Output is ' + o + '×' + o + ', down from ' + c.n + '×' + c.n + '. No real pixel is skipped' +
+        (leftover > 0 ? ' (the leftover is padding, not image)' : '') + '. The next layer has ' +
+        Math.round(total / (c.n*c.n) * 100) + ' percent as many positions to process as this one had.'; }
+    draw(c, o);
+  }
+
+  function stop(){ clearInterval(timer); timer=null; $('play').textContent='Play'; }
+  function advance(){ const o=out(get()); if(o<=0) return; pos = (pos+1) % (o*o); render(); }
+  $('play').onclick = () => { if(timer){stop();return;} $('play').textContent='Pause';
+    timer=setInterval(()=>{ const o=out(get()); if(o<=0){stop();return;}
+      if(pos >= o*o-1){ pos=0; render(); stop(); return; } advance(); },140); };
+  $('step').onclick = () => { stop(); advance(); };
+  $('reset').onclick = () => { stop(); pos=0; render(); };
+  ['n','k','p','s'].forEach(q => $(q).addEventListener('input', () => { stop(); pos=0; render(); }));
+  if (window.matchMedia) window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', render);
+  render();
+})();
+</script>
+</body>
+</html>
