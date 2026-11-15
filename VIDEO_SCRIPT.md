@@ -4,7 +4,7 @@ BrokenLabsFix · Kris Hornung · November 2026
 
 Watch the recorded video: https://www.youtube.com/watch?v=YQF4lMUv9d4
 
-This file holds nine scripts. Episode 1, below, covers the first three pages. [Episode 2](#episode-2-how-models-stop-memorizing-and-learn-faster) covers the six newer pages: weight decay, early stopping, dropout, SGD, minibatch size and momentum. [Episode 3](#episode-3-batch-normalization-you-can-drag) covers the batch normalization page. [Episode 4](#episode-4-four-ways-to-close-the-overfitting-gap) covers the regularization comparison page. [Episode 5](#episode-5-convolutions-channels-and-the-arrow) covers the three convolution pages. [Episode 6](#episode-6-image-augmentation-and-fine-tuning) covers the image augmentation and fine-tuning pages. [Episode 7](#episode-7-three-cnns-five-epochs) covers the three-CNN comparison page. [Episode 8](#episode-8-keras-in-five-moves-and-nine-ways-to-break-it) covers the Keras patterns page. [Episode 9](#episode-9-recurrent-neural-networks) covers the recurrent network page.
+This file holds ten scripts. Episode 1, below, covers the first three pages. [Episode 2](#episode-2-how-models-stop-memorizing-and-learn-faster) covers the six newer pages: weight decay, early stopping, dropout, SGD, minibatch size and momentum. [Episode 3](#episode-3-batch-normalization-you-can-drag) covers the batch normalization page. [Episode 4](#episode-4-four-ways-to-close-the-overfitting-gap) covers the regularization comparison page. [Episode 5](#episode-5-convolutions-channels-and-the-arrow) covers the three convolution pages. [Episode 6](#episode-6-image-augmentation-and-fine-tuning) covers the image augmentation and fine-tuning pages. [Episode 7](#episode-7-three-cnns-five-epochs) covers the three-CNN comparison page. [Episode 8](#episode-8-keras-in-five-moves-and-nine-ways-to-break-it) covers the Keras patterns page. [Episode 9](#episode-9-recurrent-neural-networks) covers the recurrent network page. [Episode 10](#episode-10-lstm-a-memory-with-gates) covers the LSTM page.
 
 ## At a glance
 
@@ -1480,3 +1480,126 @@ Based on Dive into Deep Learning (d2l.ai), sections 9.4 and 9.7. Next episode: L
 ## Episode 9 tags
 
 recurrent neural network, RNN, RNN explained, hidden state, backpropagation through time, BPTT, vanishing gradient, exploding gradient, gradient clipping, perplexity, language model, character-level RNN, LSTM, sequence models, deep learning, d2l, dive into deep learning, machine learning tutorial, interactive explainer
+
+# Episode 10: LSTM: A Memory With Gates
+
+BrokenLabsFix · Kris Hornung · November 2026
+
+## Episode 10 at a glance
+
+A 4-minute walkthrough of one page. A plain recurrent network and an LSTM, trained on the same sentences, are compared as the sentence gets longer. Then one memory cell with its three gates operated by hand, and the real trained LSTM stepped through a sentence while one cell holds the fact it has to remember.
+
+Second of three episodes on sequences: recurrent networks, LSTM, attention.
+
+Made the same way as Episodes 6 to 9: the page first, then this script, then the video rendered from the page with a synthetic narration voice.
+
+| Part | Time | What happens |
+| --- | --- | --- |
+| Hook | 0:00–0:29 | The plain network forgets |
+| Part 1 | 0:29–0:46 | Longer than anything in training |
+| Part 2 | 0:46–1:40 | Keep, write, show |
+| Part 3 | 1:40–2:43 | One cell holds the animal |
+| Part 4 | 2:43–3:14 | A multiplier held near one |
+| Part 5 | 3:14–3:25 | Four times the weights |
+| Wrap-up | 3:25–3:45 | And what comes next |
+
+Page: [lstm.html](https://fleabyte26.github.io/Introduction-to-Deep-Learning/lstm.html)
+
+Same format: left column is what to do on screen, right column is what to say. Every number is printed on the page.
+
+## Episode 10 hook (0:00–0:29)
+
+| Show | Say |
+| --- | --- |
+| The page, first panel, slider at 0 | "Last episode, a small network remembered an animal across fifteen letters. The cat sat on the mat." |
+| Drag "Extra words" slowly to 5 | "Now make the sentence longer. The cat, very really quite very really, sat on the mat. The same network design. The same task." |
+| Point at the three boxes | "The plain network is right 45 percent of the time. That is a coin flip. It has forgotten the animal. That is the orange line." |
+| Point at the blue line | "The blue line is an LSTM. One hundred percent. Today: what an LSTM does differently." |
+
+## Episode 10 Part 1: The comparison (0:29–0:46)
+
+| Show | Say |
+| --- | --- |
+| Drag the slider on to 14 | "And look at the right side. Neither network ever saw a sentence with more than eight extra words. The LSTM is still right at fourteen. It did not memorise lengths. It learned how to hold on to something." |
+| Point at "trained for 80 passes" and "trained for 12 passes" | "And this was not a fair fight. The plain network got nearly seven times more training." |
+
+## Episode 10 Part 2: One cell, three gates (0:46–1:40)
+
+| Show | Say |
+| --- | --- |
+| Scroll to "One memory cell, three gates". Click "Keep" | "So what is inside? A memory cell with three gates. A gate is just a number between zero and one. It multiplies something. Zero blocks it. One lets it through." |
+| Point at the numbers panel | "Here is the whole rule. New memory equals forget gate times old memory, plus input gate times new information." |
+| Point at the verdict box | "Preset one: keep. Forget gate at one. Input gate at zero. The old memory passes straight through, unchanged. This is the move a plain network does not have." |
+| Click "Overwrite" | "Overwrite. Forget gate zero, input gate one. The old memory is thrown away, and the new information takes its place." |
+| Click "Add to it" | "Add. Both gates open. The new information is added to the old." |
+| Click "Keep, but hide" | "And the third gate. Keep, but hide. The output gate is zero. The memory is still there, 0.8, but the rest of the network sees nothing. The cell can carry a fact silently, and show it only when it is needed." |
+
+## Episode 10 Part 3: Inside the trained LSTM (1:40–2:43)
+
+| Show | Say |
+| --- | --- |
+| Scroll to "Inside the trained LSTM". "5 extra words", Reset | "Now the real LSTM. It has 24 cells. Training picked one of them, cell 8, to hold the animal. Let's watch that one cell. Blue is the cat sentence. Orange is the dog sentence." |
+| Press Step four times | "The. Space. Both sentences are identical so far, so the two lines are on top of each other." |
+| Press Step four more times | "Now the animal. C-A-T, or D-O-G. And the lines split apart. The cell is being written." |
+| Press Play and pause at the end of the extra words | "Now the extra words. Thirty letters. The lines wobble, because this cell does other small jobs too. But they never cross. And look at the forget gate. Almost one, the whole way." |
+| Point at the output gate | "Watch the output gate as well. It opens and closes. The cell holds the animal the whole time, but only shows it at certain letters." |
+| Click "Jump to the end" | "And at the end, after 45 letters: plus seven for cat, minus ten for dog. The network reads the answer straight from that cell. M for mat. L for log." |
+| Click "12 extra words", then "Jump to the end" | "Twelve extra words. 87 letters. Longer than anything it was trained on. The lines are still apart." |
+
+## Episode 10 Part 4: Why it does not fade (2:43–3:14)
+
+| Show | Say |
+| --- | --- |
+| Scroll to "Why it does not fade". Point at the orange line | "Why does it not fade? Last episode, the training signal in the plain network was multiplied at every step. After 24 steps, less than 3 percent was left. That is the orange line." |
+| Point at the numbers panel | "In the LSTM cell, the path back through the memory is multiplied only by the forget gate. And that gate averages 0.994. After sixty steps, 70 percent of the signal is still there." |
+| Point at the verdict box | "That is the whole trick. A multiplier that training can hold close to one, for exactly the cells that need to remember." |
+
+## Episode 10 Part 5: What it costs (3:14–3:25)
+
+| Show | Say |
+| --- | --- |
+| Scroll to "What it costs" | "It is not free. Three gates, plus the new information: four small networks where there was one. Four times the weights in that layer, and four times the work at every step." |
+
+## Episode 10 wrap-up (3:25–3:45)
+
+| Show | Say |
+| --- | --- |
+| Back to the gates panel, "Keep" | "So. An LSTM is a memory with three gates. Forget, input, output. Keep, write, show." |
+| Same | "But even an LSTM squeezes the whole sentence into one small memory. The next idea is different. Do not squeeze at all. Just look back. That is attention, and it is the next episode." |
+
+## Episode 10 recording checklist
+
+- [ ] Check the live link opens
+- [ ] Browser zoom at 125%, light mode, bookmarks bar hidden, notifications off
+- [ ] Publishing on BrokenLabsFix (Hindi/Bahasa audience, auto-dubbing on)
+
+## Episode 10 title options
+
+1. LSTM Explained: A Memory With Three Gates | Deep Learning Without the Formula Wall Ep. 10
+2. Why LSTMs Remember and Plain RNNs Forget | Deep Learning Without the Formula Wall Ep. 10
+3. Forget Gate, Input Gate, Output Gate: LSTM Step by Step | Deep Learning Without the Formula Wall Ep. 10
+
+## Episode 10 description
+
+```
+One free interactive page with a real LSTM running in your browser. Compare it with a plain recurrent network as the sentence gets longer, work one memory cell's three gates by hand, and watch the trained network hold a fact in a single cell for 87 letters. No install, no code.
+
+LSTM: a memory with gates
+https://fleabyte26.github.io/Introduction-to-Deep-Learning/lstm.html
+
+All pages and source: https://github.com/Fleabyte26/Introduction-to-Deep-Learning
+
+Based on Dive into Deep Learning (d2l.ai), section 10.1. Previous episode: recurrent neural networks. Next episode: attention.
+
+0:00 The plain network forgets
+0:29 Longer than anything in training
+0:46 One cell, three gates
+1:40 Inside the trained LSTM
+2:43 Why it does not fade
+3:14 What it costs
+3:25 Wrap-up
+```
+
+## Episode 10 tags
+
+LSTM, LSTM explained, long short-term memory, forget gate, input gate, output gate, memory cell, cell state, vanishing gradient, recurrent neural network, RNN vs LSTM, sequence models, gated recurrent network, deep learning, d2l, dive into deep learning, machine learning tutorial, interactive explainer
