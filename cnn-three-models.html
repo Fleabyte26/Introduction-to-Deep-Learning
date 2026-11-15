@@ -1,0 +1,308 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Three CNNs, Five Epochs: Why the Plain One Won</title>
+<style>
+  :root {
+    --bg:#fbfaf7; --ink:#1d1d1b; --quiet:#6b6a65; --grid:#e4e2dc; --axis:#9a978f; --card:#fff;
+    --curve:#2f6fb3; --ball:#c2410c; --good:#2e7d4f; --warn:#b7791f; --bad:#b42318; --pad:#7a4fb5; --teal:#1f8a8a;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root { --bg:#1b1b1a; --ink:#ecebe7; --quiet:#a3a19b; --grid:#34332f; --axis:#6f6d67; --card:#242422;
+      --curve:#6aa6e8; --ball:#f08a4b; --good:#5fbf86; --warn:#e0b04f; --bad:#f2786d; --pad:#b497e6; --teal:#5cc4c4; }
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.5 ui-sans-serif,system-ui,-apple-system,"Segoe UI",sans-serif}
+  main{max-width:900px;margin:0 auto;padding:32px 20px 48px}
+  h1{font-size:26px;margin:0 0 6px;letter-spacing:-.01em}
+  h2{font-size:19px;margin:30px 0 10px}
+  .lead{color:var(--quiet);margin:0 0 22px}
+  .panel{background:var(--card);border:1px solid var(--grid);border-radius:12px;padding:16px}
+  svg{width:100%;height:auto;display:block}
+  button{font:inherit;padding:6px 14px;border-radius:8px;border:1px solid var(--grid);background:var(--card);color:var(--ink);cursor:pointer}
+  button.primary{background:var(--curve);color:#fff;border-color:var(--curve);font-weight:600}
+  button.chip{font-size:14px;padding:5px 12px}
+  button.chip.on{border-color:var(--curve);color:var(--curve);font-weight:600;box-shadow:inset 0 0 0 1px var(--curve)}
+  .chips{display:flex;gap:8px;flex-wrap:wrap;margin:0 0 14px}
+  .row{display:flex;gap:14px;align-items:center;flex-wrap:wrap;margin:10px 0 0}
+  .row label{font-size:13px;color:var(--quiet)} .row .val{font-weight:650;color:var(--ink)}
+  input[type=range]{accent-color:var(--curve);flex:1;min-width:180px}
+  .formula{margin-top:14px;padding:12px 14px;border:1px solid var(--grid);border-radius:10px;background:var(--bg);
+    font:14.5px/1.9 ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;overflow-x:auto;white-space:pre}
+  .formula b{color:var(--curve);font-weight:700}
+  .verdict{margin-top:14px;padding:12px 14px;border-radius:10px;border-left:4px solid var(--good);
+    background:color-mix(in srgb,var(--good) 10%,transparent)}
+  .verdict.warn{border-left-color:var(--warn);background:color-mix(in srgb,var(--warn) 12%,transparent)}
+  .verdict.bad{border-left-color:var(--bad);background:color-mix(in srgb,var(--bad) 10%,transparent)}
+  .stats{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-top:14px}
+  .stat{border:1px solid var(--grid);border-radius:10px;padding:10px 14px;background:var(--bg)}
+  .stat .k{font-size:12.5px;color:var(--quiet)} .stat .v{font-size:22px;font-weight:700;font-variant-numeric:tabular-nums}
+  .stat .s{font-size:13px;color:var(--quiet)}
+  table{width:100%;border-collapse:collapse;font-size:14.5px}
+  th,td{text-align:left;padding:6px 10px;border-bottom:1px solid var(--grid)}
+  th{color:var(--quiet);font-weight:600;font-size:13px}
+  td.num,th.num{text-align:right;font-variant-numeric:tabular-nums}
+  #layers tr{cursor:pointer} #layers tr.on td{background:color-mix(in srgb,var(--curve) 9%,transparent);font-weight:600}
+  #layers tr.extra td{color:var(--pad)}
+  .pbar{height:12px;border-radius:4px;background:var(--curve);min-width:1px}
+  .cmwrap{display:grid;grid-template-columns:auto 1fr;gap:18px;align-items:start}
+  #cm{border-collapse:separate;border-spacing:2px;width:auto;font-size:11.5px}
+  #cm td,#cm th{padding:0;border:0;text-align:center}
+  #cm td.c{width:38px;height:30px;border-radius:4px;cursor:pointer;font-variant-numeric:tabular-nums}
+  #cm td.c.on{outline:3px solid var(--ball);outline-offset:0}
+  #cm th{font-weight:500;color:var(--quiet);font-size:11.5px;padding:0 6px;white-space:nowrap}
+  #cm th.top{height:64px;vertical-align:bottom;padding:0 0 4px} #cm th.top span{display:inline-block;writing-mode:vertical-rl;transform:rotate(200deg)}
+  .bars{display:grid;grid-template-columns:190px 1fr 64px;gap:8px 12px;align-items:center;margin:8px 0 4px;font-size:14.5px}
+  .bar{height:22px;border-radius:5px;background:var(--grid);overflow:hidden} .bar i{display:block;height:100%;border-radius:5px}
+  .bars .n{text-align:right;font-weight:650;font-variant-numeric:tabular-nums}
+  .filters{display:grid;grid-template-columns:repeat(8,1fr);gap:10px}
+  .filt{display:grid;grid-template-columns:repeat(3,1fr);border-radius:6px;overflow:hidden;cursor:pointer;border:2px solid transparent;aspect-ratio:1}
+  .filt.on{border-color:var(--ball)} .filt i{display:block}
+  .note{color:var(--quiet);font-size:14px;margin-top:12px}
+  p.body{font-size:15px;margin:10px 0}
+  .sub{font-size:13px;color:var(--quiet);font-weight:600;margin:14px 0 4px}
+  @media (max-width:720px){ .stats{grid-template-columns:1fr} .cmwrap{grid-template-columns:1fr} .filters{grid-template-columns:repeat(4,1fr)} .bars{grid-template-columns:120px 1fr 56px} }
+</style>
+</head>
+<body>
+<main>
+  <h1>Three CNNs, five epochs: why the plain one won</h1>
+  <p class="lead">Three versions of one small convolutional network, each trained for five epochs on CIFAR-10: 60,000 small colour pictures in ten classes. The first is plain. The second trains on augmented pictures. The third adds batch normalization and dropout. The two with the improvements lost, by 12 and 16 points. Every number on this page comes from that one real run. Press Play and watch the race, then see why the result is honest, and why it would not last.</p>
+
+  <div class="panel">
+    <div class="chips" id="models" role="group" aria-label="Model"></div>
+    <svg id="race" role="img" aria-label="Training and validation accuracy for each model over five epochs"></svg>
+    <div class="row"><button id="play" class="primary">Play</button><label>Epoch <span class="val" id="vep"></span></label><input id="ep" type="range" min="1" max="5" value="5"></div>
+    <div class="stats" id="tiles"></div>
+    <div class="formula" id="formula"></div>
+    <div class="verdict" id="verdict"></div>
+  </div>
+
+  <h2>The plain network, left running by accident</h2>
+  <div class="panel">
+    <p class="body">Run a training cell twice in a notebook and it does not start again. It carries on. The plain network&rsquo;s cell was run three times in a row, by mistake, so the same network trained for 15 epochs instead of 5. (This was an earlier run, on 36,000 training pictures, so its first five epochs differ slightly from the race above.) That mistake recorded the part of the story the five-epoch race cannot show.</p>
+    <svg id="longAcc" role="img" aria-label="Training and validation accuracy of the plain network over fifteen epochs"></svg>
+    <svg id="longLoss" role="img" aria-label="Training and validation loss of the plain network over fifteen epochs"></svg>
+    <div class="row"><button id="play2" class="primary">Play</button><label>Epoch <span class="val" id="vep2"></span></label><input id="ep2" type="range" min="1" max="15" value="15"></div>
+    <div class="formula" id="formula2"></div>
+    <div class="verdict" id="verdict2"></div>
+  </div>
+
+  <h2>Where the 282,250 weights are</h2>
+  <div class="panel">
+    <p class="body">A picture goes in at the top as 32 by 32 pixels in 3 colours. Click any layer to see what it does to the shape and where its weights come from.</p>
+    <div class="chips" id="arch" role="group" aria-label="Architecture"></div>
+    <table><thead><tr><th>Layer</th><th>Output shape</th><th class="num">Weights</th><th style="width:34%">Share of the model</th></tr></thead><tbody id="layers"></tbody></table>
+    <div class="formula" id="formula3"></div>
+    <div class="verdict" id="verdict3"></div>
+  </div>
+
+  <h2>What the third network confuses</h2>
+  <div class="panel">
+    <p class="body">The batch normalization and dropout network, on 10,000 test pictures, 1,000 of each class. Each row is what the picture really was. Each column is what the network said. The diagonal is correct answers. Click any square.</p>
+    <div class="chips" id="cmPresets" role="group" aria-label="Examples"></div>
+    <div class="cmwrap">
+      <table id="cm" aria-label="Confusion matrix"></table>
+      <div>
+        <div class="formula" id="formula4" style="margin-top:0;white-space:pre-wrap"></div>
+        <div class="verdict" id="verdict4"></div>
+      </div>
+    </div>
+  </div>
+
+  <h2>The final test, and what it does not say</h2>
+  <div class="panel">
+    <div class="sub">Accuracy on 10,000 test pictures the networks never saw</div>
+    <div class="bars" id="testBars"></div>
+    <div class="sub">Training accuracy minus validation accuracy at epoch 5, in points. Above zero means memorising has begun</div>
+    <div class="bars" id="gainBars"></div>
+    <div class="verdict warn">The plain network is ahead, and that is a fair result for five epochs. But look at the second chart. The plain network already scores 2.4 points better on its own training pictures than on new ones: memorising has begun, and the 15-epoch run above shows where that leads. The augmented network scores no better on its training pictures than on new ones, and the dropout network scores 11.5 points worse. Neither has started to memorise at all. Augmentation and dropout make each step of learning harder, on purpose. Five epochs measures that cost and none of the benefit. A fair comparison would train all three until validation stops improving.</div>
+  </div>
+
+  <h2>What the first layer learned</h2>
+  <div class="panel">
+    <p class="body">The first eight of the plain network&rsquo;s 32 first-layer filters. Each is 3 pixels by 3 pixels, drawn in the colours it responds to. Click one.</p>
+    <div class="filters" id="filters"></div>
+    <div class="formula" id="formula5"></div>
+    <p class="note">Textbooks show crisp edge and stripe detectors. Those come from much larger first-layer filters trained for far longer. At 3 by 3 pixels after five epochs, most filters are a soft colour contrast: light on one side and dark on the other, or one tint against another. That is still an edge detector, just a very small one.</p>
+  </div>
+
+  <p class="note" style="margin-top:22px">Concepts from chapters 7, 8 and 14 of <i>Dive into Deep Learning</i>: convolutions and pooling, batch normalization, dropout, and image augmentation. The numbers are from one training run on CIFAR-10 (Krizhevsky, 2009): 30,000 training pictures, 10,000 validation, 10,000 test, batch size 64, Adam. A different random start would move each number by a point or two.</p>
+</main>
+
+<script>
+(function () {
+  const $ = id => document.getElementById(id);
+  const css = v => getComputedStyle(document.documentElement).getPropertyValue(v).trim();
+  const el = (t,a,x) => { const e=document.createElementNS('http://www.w3.org/2000/svg',t);
+    for(const q in a) e.setAttribute(q,a[q]); if(x!==undefined) e.textContent=x; return e; };
+  const pc = (x,d) => (x*100).toFixed(d===undefined?1:d)+'%';
+  const fmt = n => n.toLocaleString('en-US');
+
+  /* ---------- the real numbers ---------- */
+  const M = {
+    plain:{ name:'Plain', col:'--curve', tr:[.3784,.5053,.5565,.5945,.6238], va:[.4710,.5391,.5691,.5890,.5995], test:.596 },
+    aug:  { name:'Augmented', col:'--teal', tr:[.2696,.3623,.3970,.4205,.4375], va:[.3634,.4047,.4208,.3481,.4408], test:.440 },
+    deep: { name:'Batch norm + dropout', col:'--pad', tr:[.2003,.2695,.3074,.3338,.3605], va:[.2469,.3644,.4469,.4600,.4760], test:.477 },
+  };
+  const LONG = {
+    tr:[.3796,.5142,.5689,.6036,.6314,.6541,.6737,.6927,.7072,.7227,.7362,.7503,.7632,.7744,.7876],
+    va:[.4665,.5337,.5700,.5881,.6017,.6093,.6129,.6198,.6254,.6303,.6287,.6267,.6244,.6180,.6173],
+    trl:[1.7343,1.3787,1.2328,1.1369,1.0639,1.0007,.9466,.8971,.8522,.8091,.7684,.7306,.6947,.6619,.6284],
+    val:[1.5125,1.3438,1.2365,1.1778,1.1497,1.1329,1.1261,1.1187,1.1247,1.1295,1.1525,1.1818,1.2078,1.2499,1.2778] };
+  const CLASSES=['airplane','automobile','bird','cat','deer','dog','frog','horse','ship','truck'];
+  const CM = [[549,33,79,33,13,25,48,10,131,79],[29,413,4,20,1,4,65,10,38,416],[73,5,214,70,168,159,236,30,14,31],[16,6,26,227,23,312,328,14,4,44],[36,4,37,44,387,71,291,94,9,27],[8,5,34,183,36,484,193,30,1,26],[6,11,17,42,38,33,836,3,2,12],[18,5,9,60,109,134,96,505,6,58],[145,80,15,33,4,11,18,9,584,101],[32,227,2,51,0,10,68,12,29,569]];
+  const FILT = [["#2fcbba","#67e822","#1a834f","#2b0025","#23c446","#744b1c","#902e3c","#c5f2c4","#79d0ff"],["#4e517e","#0d4ada","#97a17f","#3ea6a9","#004288","#6dce7f","#56435a","#f2ff8f","#6df2e1"],["#69975c","#a3a252","#8f207b","#efff7d","#933a00","#0a2114","#69fcb0","#d641be","#689e76"],["#25a5ce","#61cb52","#4d57d9","#476700","#8a22e1","#d8ff69","#a26410","#0dadac","#b594cf"],["#32677b","#ffc2e6","#de6c91","#a64230","#002e08","#819cce","#b8aa24","#723d0e","#558616"],["#ffe3e3","#c670a6","#506940","#b9898e","#0f0082","#31906b","#7f6d64","#b14c83","#7eb49d"],["#e2ac00","#e916f6","#df24dc","#6d67c8","#a4f126","#36caba","#97b79d","#02b6fe","#9ed424"],["#5b525d","#f2ff91","#4821ad","#00b432","#eb8ef4","#ec5e08","#5c37a4","#36dbe8","#b78733"]];
+
+  /* ---------- a small line chart ---------- */
+  function chart(svg, o){ // o: n, upto, ymin, ymax, ticks, series:[{y,col,dash,label}], ylabel, mark
+    const W=860, H=o.h||300, L=54, R=o.right||150, T=16, B=38; svg.setAttribute('viewBox','0 0 '+W+' '+H); svg.replaceChildren();
+    const q=css('--quiet'), g=css('--grid');
+    const X=i=>L+(o.n===1?0:i/(o.n-1))*(W-L-R), Y=v=>T+(1-(v-o.ymin)/(o.ymax-o.ymin))*(H-T-B);
+    o.ticks.forEach(v=>{ svg.append(el('line',{x1:L,x2:W-R,y1:Y(v),y2:Y(v),stroke:g}));
+      svg.append(el('text',{x:L-8,y:Y(v)+4,'text-anchor':'end','font-size':12,fill:q}, o.pct? Math.round(v*100)+'%' : v.toFixed(1))); });
+    for(let i=0;i<o.n;i++) if(o.n<=6||i%2===0||i===o.n-1) svg.append(el('text',{x:X(i),y:H-B+18,'text-anchor':'middle','font-size':12,fill:q},i+1));
+    svg.append(el('text',{x:(L+W-R)/2,y:H-4,'text-anchor':'middle','font-size':12.5,fill:q},'epoch'));
+    svg.append(el('text',{x:14,y:(T+H-B)/2,'text-anchor':'middle','font-size':12.5,fill:q,transform:'rotate(-90 14 '+(T+H-B)/2+')'},o.ylabel));
+    if (o.mark && o.upto>=o.mark.i+1){ svg.append(el('line',{x1:X(o.mark.i),x2:X(o.mark.i),y1:T,y2:H-B,stroke:css('--good'),'stroke-width':1.5,'stroke-dasharray':'4 4'}));
+      svg.append(el('text',{x:X(o.mark.i)+6,y:T+12,'font-size':12,fill:css('--good'),'font-weight':600},o.mark.text)); }
+    const ends=[];
+    o.series.forEach(s=>{ const c=css(s.col), pts=s.y.slice(0,o.upto);
+      svg.append(el('path',{d:pts.map((v,i)=>(i?'L':'M')+X(i).toFixed(1)+' '+Y(v).toFixed(1)).join(''),stroke:c,'stroke-width':2.6,fill:'none','stroke-dasharray':s.dash?'6 5':''}));
+      pts.forEach((v,i)=>svg.append(el('circle',{cx:X(i),cy:Y(v),r:i===pts.length-1?4.5:2.5,fill:c})));
+      ends.push({y:Y(pts[pts.length-1]),x:X(pts.length-1),c,label:s.label,dash:s.dash}); });
+    ends.sort((a,b)=>a.y-b.y); for(let i=1;i<ends.length;i++) if(ends[i].y-ends[i-1].y<15) ends[i].y=ends[i-1].y+15;
+    ends.forEach(e=>svg.append(el('text',{x:e.x+10,y:e.y+4,'font-size':12.5,fill:e.c,'font-weight':e.dash?500:700},e.label)));
+  }
+
+  /* ---------- panel 1: the race ---------- */
+  let sel='all', timer=null;
+  [['all','All three'],['plain','Plain'],['aug','Augmented'],['deep','Batch norm + dropout']].forEach(([k,lab])=>{
+    const b=document.createElement('button'); b.className='chip'; b.dataset.k=k; b.textContent=lab; b.onclick=()=>{ sel=k; race(); }; $('models').append(b); });
+  const V1={
+    all:['','Solid lines are validation accuracy, on pictures the network is not trained on. After five epochs the plain network is at 60.0% and the other two are at 44.1% and 47.6%. Nothing went wrong. Pick one model to see its training line as well.'],
+    plain:['','The plain network learns fastest because nothing slows it down. Training accuracy (dashed) starts below validation and passes it at epoch 4. That crossing is the first sign of memorising: from here on it does a little better on pictures it has seen than on pictures it has not.'],
+    aug:['warn','Every training picture is rotated up to 15 degrees, shifted up to 10%, and sometimes mirrored, differently each time. The network is trained on these harder pictures and validated on clean ones, so it learns more slowly and cannot memorise what keeps changing. Now look at epoch 4: validation fell from 42.1% to 34.8%, then came back to 44.1%. Nothing broke. Validation is jumpier when the training pictures never repeat, and one epoch’s number should not be trusted on its own.'],
+    deep:['warn','Dropout switches off a quarter of each convolution block and half of the dense layer at random, but only during training. So the network trains with part of itself missing and is validated at full strength. That is why training accuracy is so far below validation: 36.0% against 47.6% at epoch 5. The first epoch is batch normalization settling in: validation was 24.7%, with a loss of 3.05, worse than guessing at random. One epoch later it was 36.4%.'] };
+  function race(){
+    const e=+$('ep').value; $('vep').textContent=e+' of 5';
+    [...$('models').children].forEach(b=>b.classList.toggle('on',b.dataset.k===sel));
+    const keys= sel==='all' ? ['plain','aug','deep'] : [sel], series=[];
+    keys.forEach(k=>{ const m=M[k]; series.push({y:m.va,col:m.col,label:(sel==='all'?m.name:'validation')+' '+pc(m.va[e-1])});
+      if(sel!=='all') series.push({y:m.tr,col:m.col,dash:true,label:'training '+pc(m.tr[e-1])}); });
+    chart($('race'),{n:5,upto:e,ymin:.15,ymax:.70,ticks:[.2,.3,.4,.5,.6,.7],pct:true,series,ylabel:'accuracy',right:sel==='all'?210:150});
+    $('tiles').innerHTML=['plain','aug','deep'].map(k=>'<div class="stat"><div class="k">'+M[k].name+', validation, epoch '+e+'</div><div class="v" style="color:'+css(M[k].col)+'">'+pc(M[k].va[e-1])+'</div><div class="s">training '+pc(M[k].tr[e-1])+'</div></div>').join('');
+    const rows=keys.map(k=>{ const m=M[k], gap=(m.tr[e-1]-m.va[e-1])*100, gain=e>1?(m.va[e-1]-m.va[e-2])*100:null;
+      return (m.name+'                      ').slice(0,22)+'training <b>'+pc(m.tr[e-1])+'</b>  validation <b>'+pc(m.va[e-1])+'</b>  gap '+(gap>=0?'+':'−')+Math.abs(gap).toFixed(1)+(gain===null?'':'  gained this epoch +'+gain.toFixed(1)); });
+    $('formula').innerHTML='epoch '+e+'\n'+rows.join('\n')+'\ngap = training − validation. Below zero: better on new pictures than on its own.';
+    $('verdict').className='verdict '+V1[sel][0]; $('verdict').textContent=V1[sel][1];
+  }
+  function run(btn,slider,max,draw,ms){ return ()=>{ if(btn._t){ clearInterval(btn._t); btn._t=null; btn.textContent='Play'; return; }
+      slider.value=1; draw(); btn.textContent='Pause';
+      btn._t=setInterval(()=>{ if(+slider.value>=max){ clearInterval(btn._t); btn._t=null; btn.textContent='Play'; return; } slider.value=+slider.value+1; draw(); },ms); }; }
+  $('play').onclick=run($('play'),$('ep'),5,race,900); $('ep').oninput=race;
+
+  /* ---------- panel 2: fifteen epochs ---------- */
+  function long(){
+    const e=+$('ep2').value; $('vep2').textContent=e+' of 15';
+    chart($('longAcc'),{n:15,upto:e,ymin:.35,ymax:.80,ticks:[.4,.5,.6,.7,.8],pct:true,ylabel:'accuracy',h:250,
+      series:[{y:LONG.va,col:'--curve',label:'validation '+pc(LONG.va[e-1])},{y:LONG.tr,col:'--curve',dash:true,label:'training '+pc(LONG.tr[e-1])}]});
+    chart($('longLoss'),{n:15,upto:e,ymin:.5,ymax:1.8,ticks:[.6,.9,1.2,1.5,1.8],ylabel:'loss',h:230,mark:{i:7,text:'lowest validation loss'},
+      series:[{y:LONG.val,col:'--ball',label:'validation '+LONG.val[e-1].toFixed(3)},{y:LONG.trl,col:'--ball',dash:true,label:'training '+LONG.trl[e-1].toFixed(3)}]});
+    const gap=(LONG.tr[e-1]-LONG.va[e-1])*100;
+    $('formula2').innerHTML='epoch '+e+'\ntraining accuracy   = <b>'+pc(LONG.tr[e-1])+'</b>     training loss   = '+LONG.trl[e-1].toFixed(4)+
+      '\nvalidation accuracy = <b>'+pc(LONG.va[e-1])+'</b>     validation loss = <b>'+LONG.val[e-1].toFixed(4)+'</b>\ngap = '+pc(LONG.tr[e-1])+' − '+pc(LONG.va[e-1])+' = <b>'+(gap>=0?'+':'−')+Math.abs(gap).toFixed(1)+' points</b>';
+    const v=$('verdict2');
+    if (e<=5){ v.className='verdict'; v.textContent='Epochs 1 to 5, the part the race measured. Both lines rise together and validation loss falls every epoch. The network is learning things that are true of pictures in general.'; }
+    else if (e<=8){ v.className='verdict warn'; v.textContent='The gap is opening. Training accuracy keeps climbing about two points an epoch, validation less than one. Validation loss is still falling, just barely. It reaches its lowest value, 1.1187, at epoch 8. Early stopping would end training here.'; }
+    else { v.className='verdict bad'; v.textContent='Past epoch 8, validation loss turns and climbs, from 1.1187 to '+LONG.val[e-1].toFixed(4)+', while training loss keeps falling. The network is now learning facts about its 36,000 training pictures that are not true of other pictures.'+(e>=15?' At epoch 15: 78.8% on its own pictures, 61.7% on new ones, a gap of 17 points. This is the wall that augmentation and dropout are built to move.':''); }
+  }
+  $('play2').onclick=run($('play2'),$('ep2'),15,long,550); $('ep2').oninput=long;
+
+  /* ---------- panel 3: layers ---------- */
+  const BASE=[
+    ['Input','32 × 32 × 3',0,'The picture: 32 × 32 pixels × 3 colours = 3,072 numbers. No weights.'],
+    ['Convolution, 32 filters of 3 × 3','32 × 32 × 32',896,'(3 × 3 × 3 + 1) × 32 = 896\nEach filter looks at 3 × 3 pixels in 3 colours: 27 weights and 1 bias. There are 32 filters.\nPadding keeps the size at 32 × 32. The depth becomes 32, one layer per filter.'],
+    ['Max pooling, 2 × 2','16 × 16 × 32',0,'Keeps the largest value in every 2 × 2 square. Height and width halve. No weights.'],
+    ['Convolution, 64 filters of 3 × 3','16 × 16 × 64',18496,'(3 × 3 × 32 + 1) × 64 = 18,496\nEach filter now looks at 3 × 3 positions in 32 layers: 288 weights and 1 bias. There are 64 filters.'],
+    ['Max pooling, 2 × 2','8 × 8 × 64',0,'Halves again: 16 × 16 becomes 8 × 8. No weights.'],
+    ['Flatten','4,096',0,'8 × 8 × 64 = 4,096 numbers laid out in one row. No weights.'],
+    ['Dense, 64 units','64',262208,'(4,096 + 1) × 64 = 262,208\nEvery one of the 4,096 numbers connects to every one of the 64 units. This single layer holds 93% of the model.'],
+    ['Output, 10 classes','10',650,'(64 + 1) × 10 = 650\nOne score per class. Softmax turns the ten scores into probabilities.'],
+  ];
+  const EXTRA={ 1:[['Batch normalization','32 × 32 × 32',128,'4 × 32 = 128\nFour numbers per filter: a learned scale and shift, and a tracked average and spread. Only the first two are trained.']],
+    2:[['Dropout, 25%','16 × 16 × 32',0,'Switches off a random quarter of the values on every training step. Does nothing at test time. No weights.']],
+    3:[['Batch normalization','16 × 16 × 64',256,'4 × 64 = 256\nThe same four numbers, for each of the 64 filters.']],
+    4:[['Dropout, 25%','8 × 8 × 64',0,'Another random quarter switched off during training. No weights.']],
+    6:[['Dropout, 50%','64',0,'Half of the 64 dense units are switched off on every training step. This is the strongest brake in the network. No weights.']] };
+  let reg=false, pick=6;
+  [['Plain',false],['With batch norm and dropout',true]].forEach(([lab,r])=>{ const b=document.createElement('button'); b.className='chip'; b.textContent=lab;
+    b.onclick=()=>{ reg=r; pick=r?1:6; layers(); }; b.dataset.r=r; $('arch').append(b); });
+  function layers(){
+    const rows=[]; BASE.forEach((l,i)=>{ rows.push(l.concat([false])); if(reg&&EXTRA[i]) EXTRA[i].forEach(x=>rows.push(x.concat([true]))); });
+    const total=rows.reduce((s,r)=>s+r[2],0); if(pick>=rows.length) pick=0;
+    [...$('arch').children].forEach(b=>b.classList.toggle('on',(b.dataset.r==='true')===reg));
+    $('layers').replaceChildren();
+    rows.forEach((r,i)=>{ const t=document.createElement('tr'); if(r[4]) t.className='extra'; if(i===pick) t.classList.add('on');
+      t.innerHTML='<td>'+r[0]+'</td><td>'+r[1]+'</td><td class="num">'+(r[2]?fmt(r[2]):'—')+'</td><td>'+(r[2]?'<div class="pbar" style="width:'+Math.max(.4,r[2]/total*100)+'%"></div>':'')+'</td>';
+      t.onclick=()=>{ pick=i; layers(); }; $('layers').append(t); });
+    const r=rows[pick];
+    $('formula3').innerHTML='<b>'+r[0]+'</b>  →  '+r[1]+'\n'+r[3]+(r[2]?'\nshare of the model = '+fmt(r[2])+' ÷ '+fmt(total)+' = <b>'+pc(r[2]/total)+'</b>':'');
+    $('verdict3').className='verdict'+(reg?' warn':'');
+    $('verdict3').textContent= reg
+      ? 'Total: '+fmt(total)+' weights. Batch normalization and dropout added 384 weights to a model of 282,250, about a tenth of one percent. The third network is not bigger or deeper than the plain one. It is the same network with brakes.'
+      : 'Total: '+fmt(total)+' weights. The two convolution layers, the part that makes this a CNN, hold 19,392 of them. The one dense layer after Flatten holds 262,208. Only pooling changes the picture size: 32, then 16, then 8.';
+  }
+
+  /* ---------- panel 4: confusion matrix ---------- */
+  let cell=[1,9];
+  const colSum=CM[0].map((_,c)=>CM.reduce((s,r)=>s+r[c],0)), cmMax=Math.max(...CM.flat());
+  function cm(){
+    const t=$('cm'); t.replaceChildren(); const blue=css('--curve'), ink=css('--ink');
+    const h=document.createElement('tr'); h.append(document.createElement('th')); CLASSES.forEach(c=>{ const th=document.createElement('th'); th.className='top'; th.innerHTML='<span>'+c+'</span>'; h.append(th); }); t.append(h);
+    CM.forEach((row,r)=>{ const tr=document.createElement('tr'), th=document.createElement('th'); th.textContent=CLASSES[r]; th.style.textAlign='right'; tr.append(th);
+      row.forEach((v,c)=>{ const td=document.createElement('td'); td.className='c'+(cell[0]===r&&cell[1]===c?' on':''); const a=Math.pow(v/cmMax,.8);
+        td.style.background='color-mix(in srgb,'+blue+' '+Math.round(a*100)+'%,transparent)'; td.style.color=a>.55?'#fff':ink; td.textContent=v>=100?v:''; td.title=CLASSES[r]+' called '+CLASSES[c]+': '+v;
+        td.onclick=()=>{ cell=[r,c]; cm(); }; tr.append(td); }); t.append(tr); });
+    const [r,c]=cell, v=CM[r][c], right=CM[r][r];
+    $('formula4').innerHTML = (r===c
+      ? 'Of 1,000 '+CLASSES[r]+' pictures, <b>'+fmt(v)+'</b> were called '+CLASSES[r]+'.\nThat is <b>'+pc(v/1200,0)+'</b> correct for this class.'
+      : 'Of 1,000 '+CLASSES[r]+' pictures, <b>'+fmt(v)+'</b> were called '+CLASSES[c]+'.\nThat is '+pc(v/1200,0)+' of them. '+fmt(right)+' were called '+CLASSES[r]+', correctly.')
+      +'\n\nThe network answered "'+CLASSES[c]+'" <b>'+fmt(colSum[c])+'</b> times in total. There are 1,000 '+CLASSES[c]+' pictures.';
+    const v4=$('verdict4'); let cls='verdict', txt;
+    if (r===1&&c===9){ cls='verdict bad'; txt='The biggest single mistake. More automobiles are called truck (416) than automobile (413). Both are boxes on wheels on a road, and at 32 by 32 pixels the difference is a few pixels of height. It runs the other way too: 227 trucks are called automobile.'; }
+    else if (c===6&&r!==6){ cls='verdict bad'; txt='Frog is this network’s fallback answer. It says "frog" '+fmt(colSum[6])+' times when there are 1,000 frogs: 328 cats, 291 deer, 236 birds and 193 dogs are all called frog. When it is unsure about a small animal, it answers frog.'; }
+    else if (r===3&&c===5){ cls='verdict warn'; txt='The classic one. A cat is called a dog (312) more often than it is called a cat (227). Every CIFAR-10 network finds these two the hardest pair: fur, four legs, and no room for detail.'; }
+    else if (r===2){ cls='verdict warn'; txt='Bird is the weakest class: 214 correct out of 1,000. More birds are called frog (236) than bird, and nearly as many are called deer (168) or dog (159). The network has barely formed the idea of a bird yet.'; }
+    else if (r===6&&c===6){ txt='The best score on the board, 836 out of 1,000. But it is partly an illusion: a network that answers "frog" '+fmt(colSum[6])+' times will catch most of the real frogs. High recall for one class can simply mean the network overuses that answer.'; }
+    else if (r===c){ txt= v>=800 ? 'A strong class. '+CLASSES[r][0].toUpperCase()+CLASSES[r].slice(1)+' pictures have a shape or a background that little else shares.' : 'A square on the diagonal is a correct answer. The darker the diagonal and the paler everything else, the better the network.'; }
+    else txt='Read any off-diagonal square as: the row is the truth, the column is what the network said.';
+    v4.className=cls; v4.textContent=txt;
+  }
+  [['Automobile called truck',1,9],['Cat called frog',3,6],['Cat called dog',3,5],['Bird',2,2],['Frog',6,6]].forEach(([lab,r,c])=>{
+    const b=document.createElement('button'); b.className='chip'; b.textContent=lab; b.onclick=()=>{ cell=[r,c]; cm(); }; $('cmPresets').append(b); });
+
+  /* ---------- panel 5: bars ---------- */
+  function bars(){
+    const mk=(id,vals,max,f)=>{ $(id).replaceChildren(); ['plain','aug','deep'].forEach((k,i)=>{ const a=document.createElement('div'); a.textContent=M[k].name;
+      const b=document.createElement('div'); b.className='bar'; const x=document.createElement('i'); x.style.width=(vals[i]/max*100)+'%'; x.style.background=css(M[k].col); b.append(x);
+      const n=document.createElement('div'); n.className='n'; n.textContent=f(vals[i],k); $(id).append(a,b,n); }); };
+    mk('testBars',['plain','aug','deep'].map(k=>M[k].test),.7,v=>pc(v));
+    mk('gainBars',['plain','aug','deep'].map(k=>Math.abs(M[k].tr[4]-M[k].va[4])*100),13,(v,k)=>((M[k].tr[4]-M[k].va[4])>=0?'+':'−')+v.toFixed(1));
+  }
+
+  /* ---------- panel 6: filters ---------- */
+  let fsel=0;
+  function filters(){ $('filters').replaceChildren();
+    FILT.forEach((f,i)=>{ const d=document.createElement('div'); d.className='filt'+(i===fsel?' on':''); d.title='Filter '+i;
+      f.forEach(c=>{ const s=document.createElement('i'); s.style.background=c; d.append(s); }); d.onclick=()=>{ fsel=i; filters(); }; $('filters').append(d); });
+    $('formula5').innerHTML='<b>Filter '+fsel+'</b> of 32\n3 × 3 positions × 3 colours = 27 weights, plus 1 bias = 28 numbers\n32 filters × 28 = <b>896</b>, the whole first layer\nEach square is one position. Its colour shows which mix of\nred, green and blue raises this filter’s output there.'; }
+
+  if (window.matchMedia) window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', ()=>{ race(); long(); layers(); cm(); bars(); });
+  race(); long(); layers(); cm(); bars(); filters();
+})();
+</script>
+</body>
+</html>
