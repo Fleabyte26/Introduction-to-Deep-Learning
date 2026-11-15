@@ -1235,6 +1235,8 @@ convolutional neural network, CNN, CIFAR-10, overfitting, training curves, valid
 
 BrokenLabsFix · Kris Hornung · November 2026
 
+Watch the recorded video: https://www.youtube.com/watch?v=75z6xEjq__Y
+
 ## Episode 8 at a glance
 
 A 4-minute walkthrough of one page about code, not results. First the pattern every Keras program follows: build, compile, fit, evaluate, predict. Then nine real bugs from one afternoon of typing code by hand, each with the exact message Python gives.
