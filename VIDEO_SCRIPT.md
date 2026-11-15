@@ -4,7 +4,7 @@ BrokenLabsFix · Kris Hornung · November 2026
 
 Watch the recorded video: https://www.youtube.com/watch?v=YQF4lMUv9d4
 
-This file holds eleven scripts. Episode 1, below, covers the first three pages. [Episode 2](#episode-2-how-models-stop-memorizing-and-learn-faster) covers the six newer pages: weight decay, early stopping, dropout, SGD, minibatch size and momentum. [Episode 3](#episode-3-batch-normalization-you-can-drag) covers the batch normalization page. [Episode 4](#episode-4-four-ways-to-close-the-overfitting-gap) covers the regularization comparison page. [Episode 5](#episode-5-convolutions-channels-and-the-arrow) covers the three convolution pages. [Episode 6](#episode-6-image-augmentation-and-fine-tuning) covers the image augmentation and fine-tuning pages. [Episode 7](#episode-7-three-cnns-five-epochs) covers the three-CNN comparison page. [Episode 8](#episode-8-keras-in-five-moves-and-nine-ways-to-break-it) covers the Keras patterns page. [Episode 9](#episode-9-recurrent-neural-networks) covers the recurrent network page. [Episode 10](#episode-10-lstm-a-memory-with-gates) covers the LSTM page. [Episode 11](#episode-11-attention-do-not-remember-look-back) covers the attention page.
+This file holds twelve scripts. Episode 1, below, covers the first three pages. [Episode 2](#episode-2-how-models-stop-memorizing-and-learn-faster) covers the six newer pages: weight decay, early stopping, dropout, SGD, minibatch size and momentum. [Episode 3](#episode-3-batch-normalization-you-can-drag) covers the batch normalization page. [Episode 4](#episode-4-four-ways-to-close-the-overfitting-gap) covers the regularization comparison page. [Episode 5](#episode-5-convolutions-channels-and-the-arrow) covers the three convolution pages. [Episode 6](#episode-6-image-augmentation-and-fine-tuning) covers the image augmentation and fine-tuning pages. [Episode 7](#episode-7-three-cnns-five-epochs) covers the three-CNN comparison page. [Episode 8](#episode-8-keras-in-five-moves-and-nine-ways-to-break-it) covers the Keras patterns page. [Episode 9](#episode-9-recurrent-neural-networks) covers the recurrent network page. [Episode 10](#episode-10-lstm-a-memory-with-gates) covers the LSTM page. [Episode 11](#episode-11-attention-do-not-remember-look-back) covers the attention page. [Episode 12](#episode-12-keras-for-text-from-words-to-a-model) covers the Keras-for-text page.
 
 ## At a glance
 
@@ -1715,3 +1715,124 @@ Based on Dive into Deep Learning (d2l.ai), sections 11.1 to 11.5. Previous episo
 ## Episode 11 tags
 
 attention mechanism, attention explained, queries keys values, self-attention, multi-head attention, scaled dot-product attention, softmax, Bahdanau attention, transformer, RNN vs LSTM vs attention, sequence models, large language models, deep learning, d2l, dive into deep learning, machine learning tutorial, interactive explainer
+
+# Episode 12: Keras for Text: From Words to a Model
+
+BrokenLabsFix · Kris Hornung · November 2026
+
+## Episode 12 at a glance
+
+A 5-minute walkthrough of one page. The Python behind sequence models, on a small example made for the page: a live tokenizer and padder with the same rules as Keras, the one line that turns a plain recurrent model into an LSTM, a two-direction LSTM or an attention model, stacking against wiring, and a spot-the-bug game built from eight real typing mistakes with their real error messages.
+
+A companion to Episodes 9 to 11, in the same way Episode 8 was a companion to the CNN episodes. It explains patterns and results only; it contains no assignment text and no assignment solutions.
+
+Made the same way as Episodes 6 to 9: the page first, then this script, then the video rendered from the page with a synthetic narration voice.
+
+| Part | Time | What happens |
+| --- | --- | --- |
+| Hook | 0:00–0:14 | A network cannot read |
+| Part 1 | 0:14–1:18 | Tokenize, then pad |
+| Part 2 | 1:18–2:22 | Same five lines |
+| Part 3 | 2:22–2:53 | Two ways to write a model |
+| Part 4 | 2:53–4:22 | Real mistakes, real messages |
+| Wrap-up | 4:22–4:42 | Three habits |
+
+Page: [keras-text.html](https://fleabyte26.github.io/Introduction-to-Deep-Learning/keras-text.html)
+
+Same format: left column is what to do on screen, right column is what to say. Every number is printed on the page.
+
+## Episode 12 hook (0:00–0:14)
+
+| Show | Say |
+| --- | --- |
+| The page, from the top | "A network cannot read. Before a model sees one sentence, Python has to turn the words into numbers. In this episode: the code that does it. The one line that changes the model. And eight real mistakes. Two of them give no error at all." |
+
+## Episode 12 Part 1: Words to numbers (0:14–1:18)
+
+| Show | Say |
+| --- | --- |
+| First panel. Type "a great story" | "The tokenizer reads the training sentences and gives every word a number. The most common word gets the lowest number." |
+| Point at step 1 | "Now a new sentence. A great story. It becomes two, three, seven." |
+| Point at step 2 | "Every sentence must have the same length. Here the length is six. So three zeros are added. Zero means padding. It is never a real word." |
+| Click "an astonishing movie" | "A word the tokenizer never saw becomes number one. That is the out of vocabulary marker. Two words here become number one. To the network, they are now the same word." |
+| Click the long sentence | "num_words is a limit. With ten, only numbers below ten are kept. The, was, and clever are known words. But they are cut off. Five of nine words turn into number one." |
+| Drag num_words up to 16 | "Raise the limit, and they come back." |
+| Point at step 2 | "Now the length. Nine words, and the limit is six. Three are thrown away, from the end. The word, great, is gone. In a review, the verdict is often at the end." |
+| Click truncating: pre | "Change truncating to pre, and the start is cut instead. Four lines of code. Each setting decides what the network is allowed to see." |
+
+## Episode 12 Part 2: One line changes the model (1:18–2:22)
+
+| Show | Say |
+| --- | --- |
+| Scroll to "One line changes the model" | "Now the model. Five lines. Input. Embedding. One layer that reads the sequence. One output. The highlighted line is a plain recurrent layer." |
+| Point at the four shape boxes | "The shapes. Eighty word numbers go in. The embedding turns each one into sixteen numbers. The recurrent layer squeezes all eighty words into one memory of sixteen." |
+| Click LSTM | "Change one word. LSTM. The shape is the same. The weights go from 528 to 2,112. Exactly four times." |
+| Click Bidirectional(LSTM) | "Wrap it in Bidirectional. Now there are two LSTMs. One reads forwards. One reads backwards. The output doubles to 32." |
+| Scroll down to the results table | "Here is what happened on real movie reviews. The plain network learned the training reviews, 97 percent. On new reviews it scored a coin flip. The other three scored near 80." |
+| Point at the last two columns | "I ran the notebook twice. The first time, the LSTM won. The second time, the two-direction LSTM won. One or two points between these three is luck. Thirty points to the first row is real." |
+
+## Episode 12 Part 3: Stack it, or wire it (2:22–2:53)
+
+| Show | Say |
+| --- | --- |
+| Scroll to "Two ways to write the same model" | "Keras has two ways to write a model. Stacking, with model dot add. And wiring, where each layer is called on the output of the one before. This is the same LSTM, both ways." |
+| Point at the wired code | "Read a wired line from the right. X goes in. LSTM is the layer. The name on the left is what comes out." |
+| Click Attention | "Attention needs wiring. Look at the end of the highlighted line. X, comma, X. The same word vectors go in twice. Once as the question. Once as the thing to look at. Stacking cannot say that." |
+
+## Episode 12 Part 4: Spot the bug (2:53–4:22)
+
+| Show | Say |
+| --- | --- |
+| Scroll to "Spot the bug", bug 1 | "Now the mistakes. All of them are real, from one afternoon of typing. Number one. Which line is wrong?" |
+| Click line 2 | "Line two. Tokenizer with a capital T is the blueprint. Lowercase is the one you built. Both names exist. So the message is a strange one, about a missing argument." |
+| Click bug 3 | "Number three. Every other lowercase layer name gives, name is not defined. This one does not." |
+| Click line 2 | "Because Python has its own function called input. It finds that one, and complains about how you called it. Keras layer names start with a capital letter." |
+| Click bug 5 | "Number five gives no error. This cell was copied from the plain recurrent model, and renamed, to build an LSTM. What is wrong?" |
+| Click line 4 | "Six names were changed. The one line that matters was not. It is still a plain recurrent layer. The summary proves it. 528 weights. An LSTM of this size has 2,112." |
+| Click bug 6, then click the last line | "Number six. Python points at the last line. Outputs is not defined. But that line is fine." |
+| Click line 4 | "The mistake is one line up. A capital O. When a name is not defined, look for the place where you thought you defined it." |
+| Click bug 8 | "And number eight. A dictionary of results. It runs. No error. Can you see it?" |
+| Click line 2 | "The first key is misspelled. An R where the E should be. Python never checks text inside quotes. The error comes later, when other code asks for the correct spelling. If that code is an automatic grader, you lose the points, and you never see why." |
+
+## Episode 12 wrap-up (4:22–4:42)
+
+| Show | Say |
+| --- | --- |
+| Scroll to "Three habits for this kind of code" | "Three habits. Read the summary before you train. The weight count is a fingerprint. When you copy a cell, change the important line first. And copy the names inside quotes. Do not type them." |
+| Back to the top | "The other four bugs are on the page. Try them. The link is in the description. See you in the next one." |
+
+## Episode 12 recording checklist
+
+- [ ] Check the live link opens
+- [ ] Browser zoom at 125%, light mode, bookmarks bar hidden, notifications off
+- [ ] Publishing on BrokenLabsFix (Hindi/Bahasa audience, auto-dubbing on)
+
+## Episode 12 title options
+
+1. Keras for Text: Tokenizer, Padding, LSTM and 8 Real Bugs | Deep Learning Without the Formula Wall Ep. 12
+2. From Words to a Model in Keras, and Eight Ways to Break It | Deep Learning Without the Formula Wall Ep. 12
+3. Keras Text Models Explained: One Line Changes Everything | Deep Learning Without the Formula Wall Ep. 12
+
+## Episode 12 description
+
+```
+One free interactive page on the Python behind text models in Keras. Type a sentence and watch the tokenizer and padding work, change one line to go from a plain RNN to an LSTM, a bidirectional LSTM or attention, then find eight real bugs, two of which give no error at all. No install, no code.
+
+Keras for text: from words to a model, and eight ways to break it
+https://fleabyte26.github.io/Introduction-to-Deep-Learning/keras-text.html
+
+All pages and source: https://github.com/Fleabyte26/Introduction-to-Deep-Learning
+
+Goes with Dive into Deep Learning (d2l.ai), chapters 9 to 11. Previous episodes: recurrent neural networks, LSTM, and attention.
+
+0:00 A network cannot read
+0:14 Words to numbers: tokenize, then pad
+1:18 One line changes the model
+2:22 Stack it, or wire it
+2:53 Spot the bug
+4:22 Three habits
+```
+
+## Episode 12 tags
+
+keras tokenizer, pad_sequences, text to sequences, oov token, num_words, embedding layer, SimpleRNN, LSTM keras, bidirectional LSTM, MultiHeadAttention keras, functional API, sequential model, sentiment analysis, keras errors, NameError, KeyError, python bugs, deep learning for beginners, dive into deep learning, d2l
