@@ -1594,7 +1594,7 @@ https://fleabyte26.github.io/Introduction-to-Deep-Learning/lstm.html
 All pages and source: https://github.com/Fleabyte26/Introduction-to-Deep-Learning
 
 Based on Dive into Deep Learning (d2l.ai), section 10.1. Previous episode, recurrent neural networks: https://www.youtube.com/watch?v=LT6A6pNxh68
-Next episode: attention.
+Next episode, attention: https://www.youtube.com/watch?v=LXadiJ-xh38
 
 0:00 The plain network forgets
 0:29 Longer than anything in training
@@ -1612,6 +1612,8 @@ LSTM, LSTM explained, long short-term memory, forget gate, input gate, output ga
 # Episode 11: Attention: Do Not Remember, Look Back
 
 BrokenLabsFix · Kris Hornung · November 2026
+
+Watch the recorded video: https://www.youtube.com/watch?v=LXadiJ-xh38
 
 ## Episode 11 at a glance
 
