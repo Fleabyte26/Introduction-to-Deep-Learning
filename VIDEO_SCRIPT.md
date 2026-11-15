@@ -1720,6 +1720,8 @@ attention mechanism, attention explained, queries keys values, self-attention, m
 
 BrokenLabsFix · Kris Hornung · November 2026
 
+Watch the recorded video: https://www.youtube.com/watch?v=14P6fsEOKgg
+
 ## Episode 12 at a glance
 
 A 5-minute walkthrough of one page. The Python behind sequence models, on a small example made for the page: a live tokenizer and padder with the same rules as Keras, the one line that turns a plain recurrent model into an LSTM, a two-direction LSTM or an attention model, stacking against wiring, and a spot-the-bug game built from eight real typing mistakes with their real error messages.
