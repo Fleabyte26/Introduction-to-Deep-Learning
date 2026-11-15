@@ -4,7 +4,7 @@ BrokenLabsFix · Kris Hornung · November 2026
 
 Watch the recorded video: https://www.youtube.com/watch?v=YQF4lMUv9d4
 
-This file holds six scripts. Episode 1, below, covers the first three pages. [Episode 2](#episode-2-how-models-stop-memorizing-and-learn-faster) covers the six newer pages: weight decay, early stopping, dropout, SGD, minibatch size and momentum. [Episode 3](#episode-3-batch-normalization-you-can-drag) covers the batch normalization page. [Episode 4](#episode-4-four-ways-to-close-the-overfitting-gap) covers the regularization comparison page. [Episode 5](#episode-5-convolutions-channels-and-the-arrow) covers the three convolution pages. [Episode 6](#episode-6-image-augmentation-and-fine-tuning) covers the image augmentation and fine-tuning pages.
+This file holds seven scripts. Episode 1, below, covers the first three pages. [Episode 2](#episode-2-how-models-stop-memorizing-and-learn-faster) covers the six newer pages: weight decay, early stopping, dropout, SGD, minibatch size and momentum. [Episode 3](#episode-3-batch-normalization-you-can-drag) covers the batch normalization page. [Episode 4](#episode-4-four-ways-to-close-the-overfitting-gap) covers the regularization comparison page. [Episode 5](#episode-5-convolutions-channels-and-the-arrow) covers the three convolution pages. [Episode 6](#episode-6-image-augmentation-and-fine-tuning) covers the image augmentation and fine-tuning pages. [Episode 7](#episode-7-three-cnns-five-epochs) covers the three-CNN comparison page.
 
 ## At a glance
 
@@ -1075,3 +1075,154 @@ Based on Dive into Deep Learning (d2l.ai), sections 14.1 and 14.2. The experimen
 ## Episode 6 tags
 
 image augmentation, data augmentation, random crop, horizontal flip, color jitter, fine-tuning, transfer learning, pretrained model, ResNet-18, ImageNet, learning rate, Fashion-MNIST, computer vision, convolutional neural network, deep learning, d2l, dive into deep learning, machine learning tutorial, interactive explainer
+
+# Episode 7: Three CNNs, Five Epochs
+
+BrokenLabsFix · Kris Hornung · November 2026
+
+Earlier episodes: [Episode 1](https://www.youtube.com/watch?v=YQF4lMUv9d4) · [Episode 2](https://www.youtube.com/watch?v=_69pXSvmCOY) · [Episode 3](https://www.youtube.com/watch?v=r_NqjxmXD8g) · [Episode 4](https://www.youtube.com/watch?v=b4tLpx3_934) · [Episode 5](https://www.youtube.com/watch?v=8Ab74b_z-Es) · Episode 6 (image augmentation and fine-tuning)
+
+## Episode 7 at a glance
+
+A 5-minute walkthrough of one page. Three versions of one small CNN were trained on CIFAR-10 for five epochs: plain, with augmentation, and with batch normalization and dropout. The plain one won. The episode uses the real numbers from that run to show why, and why five epochs is too short to judge.
+
+Made the same way as Episode 6: the page first, then this script, then the video rendered from the page with a synthetic narration voice. The timings are the rendered video's real timings.
+
+This episode explains results and concepts only. It does not show or walk through any course assignment or its code.
+
+| Part | Time | What happens |
+| --- | --- | --- |
+| Hook | 0:00–0:46 | The improved networks lost |
+| Part 1 | 0:46–2:02 | Three models, five epochs |
+| Part 2 | 2:02–2:58 | Where the plain network hits the wall |
+| Part 3 | 2:58–3:40 | 93 percent in one layer |
+| Part 4 | 3:40–4:29 | When unsure, it says frog |
+| Part 5 | 4:29–5:03 | What five epochs does not say |
+| Part 6 | 5:03–5:24 | Small filters, soft patches |
+| Wrap-up | 5:24–5:50 | Three lessons |
+
+Page: [cnn-three-models.html](https://fleabyte26.github.io/Introduction-to-Deep-Learning/cnn-three-models.html)
+
+Same format: left column is what to do on screen, right column is what to say. Every number is printed on the page.
+
+## Episode 7 hook (0:00–0:46)
+
+| Show | Say |
+| --- | --- |
+| The page, first panel, "All three" selected, epoch 5 | "Three neural networks. Same design, same pictures, same five epochs of training. One is plain. One uses image augmentation. One uses batch normalization and dropout." |
+| Point at the three lines | "The two with the improvements lost. The plain network scored 60 percent. The other two scored 44 and 48." |
+| Same | "So are these techniques useless? No. Today we use real numbers from a real training run to see what happened. And why this result is honest, but would not last." |
+| Scroll to the top of the page | "The data is CIFAR-10. Small colour pictures, 32 by 32 pixels, in ten classes: airplanes, cars, birds, cats, and so on. Thirty thousand pictures for training. Ten thousand for validation. Ten thousand for the final test." |
+
+## Episode 7 Part 1: The race (0:46–2:02)
+
+| Show | Say |
+| --- | --- |
+| Press Play on the first panel and let it run to epoch 5 | "Here is the race. Solid lines are validation accuracy: pictures the network is not trained on. Watch the five epochs." |
+| Click "Plain" | "First, the plain network alone. The dashed line is training accuracy. It starts below validation. At epoch four, it crosses above." |
+| Point at the verdict box | "That crossing matters. From here, the network does better on pictures it has seen than on new pictures. It has started to memorise." |
+| Click "Augmented" | "Now the augmented network. Every training picture is rotated, shifted, and sometimes mirrored. Differently each time. Harder pictures, so slower learning." |
+| Point at the dip at epoch 4 | "Look at epoch four. Validation fell from 42 percent to 35 percent. Then it came back to 44. Nothing broke. With augmentation, validation is jumpy. Never trust one epoch alone." |
+| Click "Batch norm + dropout" | "Third, batch normalization and dropout. Look how far training is below validation. 36 percent against 48." |
+| Point at the verdict box | "That is dropout. During training, half of the dense layer is switched off at random. The network trains with part of itself missing. At validation, everything is switched on." |
+| Point at epoch 1 of the solid line | "And the first epoch: validation was only 25 percent. That is batch normalization settling in. One epoch later, 36." |
+
+## Episode 7 Part 2: Fifteen epochs by accident (2:02–2:58)
+
+| Show | Say |
+| --- | --- |
+| Scroll to "The plain network, left running by accident". Drag the epoch slider to 5 | "Now a confession. In a notebook, if you run a training cell twice, it does not start again. It continues. I ran the plain network's cell three times, by mistake. So it trained for fifteen epochs." |
+| Point at the accuracy chart | "Here are the first five. Both lines rise together. This is the part the race measured." |
+| Drag the slider slowly to epoch 8 | "Keep going. The gap opens. Training keeps climbing. Validation slows down. At epoch eight, validation loss reaches its lowest point: 1.12." |
+| Drag on to epoch 15 | "And then it turns. Validation loss goes up, while training loss keeps going down." |
+| Point at the numbers panel | "At epoch fifteen: 79 percent on its own pictures. 62 percent on new ones. A gap of seventeen points. The network is learning facts about its training pictures that are not true of other pictures." |
+| Point at the red verdict box | "This is overfitting. And this is the wall that augmentation and dropout are built to move. Five epochs is too short to reach the wall." |
+
+## Episode 7 Part 3: Where the weights are (2:58–3:40)
+
+| Show | Say |
+| --- | --- |
+| Scroll to "Where the 282,250 weights are" | "What is inside this network? 282,250 weights. Here is every layer." |
+| Click the first convolution row | "The first convolution. 32 filters. Each filter looks at 3 by 3 pixels, in 3 colours. 27 weights and one bias. Times 32 filters: 896." |
+| Click the "Dense, 64 units" row | "Now look at the bars. The dense layer holds 262,000 weights. That is 93 percent of the model. The convolution layers, the part that makes this a CNN, are tiny." |
+| Click "With batch norm and dropout" | "Add batch normalization and dropout. The total goes up by 384 weights. So the third network is not bigger. It is the same network, with brakes." |
+
+## Episode 7 Part 4: What it confuses (3:40–4:29)
+
+| Show | Say |
+| --- | --- |
+| Scroll to "What the third network confuses" | "What does a network like this get wrong? This is a confusion matrix. Each row is the truth. Each column is what the network said. The diagonal is correct answers." |
+| "Automobile called truck" is selected. Point at the text on the right | "The biggest mistake: 416 automobiles were called truck. Only 413 were called automobile. Both are boxes on wheels." |
+| Click "Cat called frog" | "Now look at the frog column. The network said frog 2,179 times. There are only one thousand frogs. Cats, deer, birds, dogs: when it is not sure, it says frog." |
+| Click "Frog" | "So frog has the best score on the board. 836 out of one thousand. But part of that is an illusion. If you answer frog all the time, you will catch most of the frogs." |
+| Click "Cat called dog" | "And the classic one. A cat is called a dog more often than it is called a cat." |
+
+## Episode 7 Part 5: The final test (4:29–5:03)
+
+| Show | Say |
+| --- | --- |
+| Scroll to "The final test, and what it does not say" | "The final test. Ten thousand pictures no network has seen. Plain: 59.6 percent. Batch norm and dropout: 47.7. Augmented: 44." |
+| Point at the second set of bars | "But look at the second chart. Training accuracy minus validation accuracy. The plain network is already above zero. It has started to memorise. The other two have not." |
+| Point at the verdict box | "Augmentation and dropout make learning harder, on purpose. Five epochs measures the cost, and none of the benefit. A fair test would train all three until validation stops improving." |
+
+## Episode 7 Part 6: What the first layer learned (5:03–5:24)
+
+| Show | Say |
+| --- | --- |
+| Scroll to "What the first layer learned" | "One last look. These are eight filters from the first layer of the plain network. Each is 3 by 3 pixels." |
+| Click one of the filters | "Textbooks show sharp edge detectors. These are soft colour patches. That is normal for tiny filters after five epochs. Light on one side and dark on the other is still an edge detector. Just a very small one." |
+
+## Episode 7 wrap-up (5:24–5:50)
+
+| Show | Say |
+| --- | --- |
+| Back to the first panel, "All three" | "So, three lessons. One: more techniques do not mean a better score. Not in five epochs." |
+| Same | "Two: watch the gap between training and validation. It tells you more than the score." |
+| Same | "Three: one number from one epoch is noisy. Look at the whole curve." |
+| Same | "The page is in the description. Every number on it is from my own run. Press Play, click the squares, and tell me in the comments what to build next. See you in the next one." |
+
+## Episode 7 recording checklist
+
+- [ ] Check the live link opens
+- [ ] Browser zoom at 125%, light mode, bookmarks bar hidden, notifications off
+- [ ] On the first panel use Play for the race; on the second, drag the slider by hand so you control the pace
+- [ ] Publishing on BrokenLabsFix (Hindi/Bahasa audience, auto-dubbing on)
+
+## Episode 7 title options
+
+1. Why My Plain CNN Beat Dropout and Augmentation | Deep Learning Without the Formula Wall Ep. 7
+2. Three CNNs, Five Epochs, Real Numbers: Overfitting Explained | Deep Learning Without the Formula Wall Ep. 7
+3. CNN on CIFAR-10: Training Curves and Confusion Matrix Explained | Deep Learning Without the Formula Wall Ep. 7
+
+## Episode 7 description
+
+```
+One free interactive page built from a real training run: three versions of a small CNN on CIFAR-10, five epochs each. Watch the race, see a real overfitting curve, count where the weights are, and click through a confusion matrix. No install, no code.
+
+Three CNNs, five epochs: why the plain one won
+https://fleabyte26.github.io/Introduction-to-Deep-Learning/cnn-three-models.html
+
+All pages and source: https://github.com/Fleabyte26/Introduction-to-Deep-Learning
+
+Episode 1 (linear regression, gradient descent, sigmoid): https://www.youtube.com/watch?v=YQF4lMUv9d4
+Episode 2 (weight decay, early stopping, dropout, SGD, minibatch size, momentum): https://www.youtube.com/watch?v=_69pXSvmCOY
+Episode 3 (batch normalization): https://www.youtube.com/watch?v=r_NqjxmXD8g
+Episode 4 (comparing four regularization techniques): https://www.youtube.com/watch?v=b4tLpx3_934
+Episode 5 (convolutions, channels, residual connections): https://www.youtube.com/watch?v=8Ab74b_z-Es
+Episode 6 (image augmentation and fine-tuning): add link
+
+Concepts from Dive into Deep Learning (d2l.ai), chapters 7, 8 and 14. Dataset: CIFAR-10, 30,000 training pictures, 10,000 validation, 10,000 test.
+
+0:00 The improved networks lost
+0:46 The race: three models, five epochs
+2:02 Fifteen epochs by accident
+2:58 Where the 282,250 weights are
+3:40 What the network confuses
+4:29 The final test
+5:03 What the first layer learned
+5:24 Three lessons
+```
+
+## Episode 7 tags
+
+convolutional neural network, CNN, CIFAR-10, overfitting, training curves, validation accuracy, confusion matrix, dropout, batch normalization, data augmentation, early stopping, Keras, deep learning, d2l, dive into deep learning, machine learning tutorial, interactive explainer
