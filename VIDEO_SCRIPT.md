@@ -879,6 +879,8 @@ convolution, convolutional neural network, CNN, padding, stride, kernel size, ch
 
 BrokenLabsFix · Kris Hornung · November 2026
 
+Watch the recorded video: https://www.youtube.com/watch?v=IIWBWRTOFEg
+
 Earlier episodes: [Episode 1](https://www.youtube.com/watch?v=YQF4lMUv9d4) · [Episode 2](https://www.youtube.com/watch?v=_69pXSvmCOY) · [Episode 3](https://www.youtube.com/watch?v=r_NqjxmXD8g) · [Episode 4](https://www.youtube.com/watch?v=b4tLpx3_934) · [Episode 5](https://www.youtube.com/watch?v=8Ab74b_z-Es)
 
 ## Episode 6 at a glance
@@ -1080,7 +1082,7 @@ image augmentation, data augmentation, random crop, horizontal flip, color jitte
 
 BrokenLabsFix · Kris Hornung · November 2026
 
-Earlier episodes: [Episode 1](https://www.youtube.com/watch?v=YQF4lMUv9d4) · [Episode 2](https://www.youtube.com/watch?v=_69pXSvmCOY) · [Episode 3](https://www.youtube.com/watch?v=r_NqjxmXD8g) · [Episode 4](https://www.youtube.com/watch?v=b4tLpx3_934) · [Episode 5](https://www.youtube.com/watch?v=8Ab74b_z-Es) · Episode 6 (image augmentation and fine-tuning)
+Earlier episodes: [Episode 1](https://www.youtube.com/watch?v=YQF4lMUv9d4) · [Episode 2](https://www.youtube.com/watch?v=_69pXSvmCOY) · [Episode 3](https://www.youtube.com/watch?v=r_NqjxmXD8g) · [Episode 4](https://www.youtube.com/watch?v=b4tLpx3_934) · [Episode 5](https://www.youtube.com/watch?v=8Ab74b_z-Es) · [Episode 6](https://www.youtube.com/watch?v=IIWBWRTOFEg)
 
 ## Episode 7 at a glance
 
@@ -1209,7 +1211,7 @@ Episode 2 (weight decay, early stopping, dropout, SGD, minibatch size, momentum)
 Episode 3 (batch normalization): https://www.youtube.com/watch?v=r_NqjxmXD8g
 Episode 4 (comparing four regularization techniques): https://www.youtube.com/watch?v=b4tLpx3_934
 Episode 5 (convolutions, channels, residual connections): https://www.youtube.com/watch?v=8Ab74b_z-Es
-Episode 6 (image augmentation and fine-tuning): add link
+Episode 6 (image augmentation and fine-tuning): https://www.youtube.com/watch?v=IIWBWRTOFEg
 
 Concepts from Dive into Deep Learning (d2l.ai), chapters 7, 8 and 14. Dataset: CIFAR-10, 30,000 training pictures, 10,000 validation, 10,000 test.
 
