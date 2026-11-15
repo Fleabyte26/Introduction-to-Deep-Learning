@@ -1082,6 +1082,8 @@ image augmentation, data augmentation, random crop, horizontal flip, color jitte
 
 BrokenLabsFix · Kris Hornung · November 2026
 
+Watch the recorded video: https://www.youtube.com/watch?v=02nDUhqnNik
+
 Earlier episodes: [Episode 1](https://www.youtube.com/watch?v=YQF4lMUv9d4) · [Episode 2](https://www.youtube.com/watch?v=_69pXSvmCOY) · [Episode 3](https://www.youtube.com/watch?v=r_NqjxmXD8g) · [Episode 4](https://www.youtube.com/watch?v=b4tLpx3_934) · [Episode 5](https://www.youtube.com/watch?v=8Ab74b_z-Es) · [Episode 6](https://www.youtube.com/watch?v=IIWBWRTOFEg)
 
 ## Episode 7 at a glance
@@ -1335,6 +1337,8 @@ https://fleabyte26.github.io/Introduction-to-Deep-Learning/keras-patterns.html
 
 Companion page, the results of the three models:
 https://fleabyte26.github.io/Introduction-to-Deep-Learning/cnn-three-models.html
+
+Episode 7 (three CNNs, five epochs): https://www.youtube.com/watch?v=02nDUhqnNik
 
 All pages and source: https://github.com/Fleabyte26/Introduction-to-Deep-Learning
 
