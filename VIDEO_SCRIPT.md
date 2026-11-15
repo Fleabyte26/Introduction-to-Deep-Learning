@@ -1468,7 +1468,7 @@ https://fleabyte26.github.io/Introduction-to-Deep-Learning/rnn.html
 
 All pages and source: https://github.com/Fleabyte26/Introduction-to-Deep-Learning
 
-Based on Dive into Deep Learning (d2l.ai), sections 9.4 and 9.7. Next episode: LSTM.
+Based on Dive into Deep Learning (d2l.ai), sections 9.4 and 9.7. Next episode, LSTM: https://www.youtube.com/watch?v=rgTcmLxvKNY
 
 0:00 It remembers the animal
 0:36 Step through a sentence
@@ -1486,6 +1486,8 @@ recurrent neural network, RNN, RNN explained, hidden state, backpropagation thro
 # Episode 10: LSTM: A Memory With Gates
 
 BrokenLabsFix · Kris Hornung · November 2026
+
+Watch the recorded video: https://www.youtube.com/watch?v=rgTcmLxvKNY
 
 ## Episode 10 at a glance
 
@@ -1699,7 +1701,7 @@ https://fleabyte26.github.io/Introduction-to-Deep-Learning/attention.html
 
 All pages and source: https://github.com/Fleabyte26/Introduction-to-Deep-Learning
 
-Based on Dive into Deep Learning (d2l.ai), sections 11.1 to 11.5. Previous episodes: recurrent neural networks https://www.youtube.com/watch?v=LT6A6pNxh68 and LSTM.
+Based on Dive into Deep Learning (d2l.ai), sections 11.1 to 11.5. Previous episodes: recurrent neural networks https://www.youtube.com/watch?v=LT6A6pNxh68 and LSTM https://www.youtube.com/watch?v=rgTcmLxvKNY
 
 0:00 It just looks
 0:39 Where it looks: two heads, two jobs
