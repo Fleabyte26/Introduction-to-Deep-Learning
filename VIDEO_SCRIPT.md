@@ -1360,6 +1360,8 @@ keras tutorial, keras for beginners, python errors, SyntaxError, NameError, Type
 
 BrokenLabsFix · Kris Hornung · November 2026
 
+Watch the recorded video: https://www.youtube.com/watch?v=LT6A6pNxh68
+
 ## Episode 9 at a glance
 
 A 4-minute walkthrough of one page. A tiny character-level recurrent network, trained on two sentences, runs live in the page. The episode steps through a sentence one letter at a time, shows where the network stores what it must remember, and then shows why that memory fades with distance.
@@ -1589,7 +1591,8 @@ https://fleabyte26.github.io/Introduction-to-Deep-Learning/lstm.html
 
 All pages and source: https://github.com/Fleabyte26/Introduction-to-Deep-Learning
 
-Based on Dive into Deep Learning (d2l.ai), section 10.1. Previous episode: recurrent neural networks. Next episode: attention.
+Based on Dive into Deep Learning (d2l.ai), section 10.1. Previous episode, recurrent neural networks: https://www.youtube.com/watch?v=LT6A6pNxh68
+Next episode: attention.
 
 0:00 The plain network forgets
 0:29 Longer than anything in training
@@ -1696,7 +1699,7 @@ https://fleabyte26.github.io/Introduction-to-Deep-Learning/attention.html
 
 All pages and source: https://github.com/Fleabyte26/Introduction-to-Deep-Learning
 
-Based on Dive into Deep Learning (d2l.ai), sections 11.1 to 11.5. Previous episodes: recurrent neural networks, and LSTM.
+Based on Dive into Deep Learning (d2l.ai), sections 11.1 to 11.5. Previous episodes: recurrent neural networks https://www.youtube.com/watch?v=LT6A6pNxh68 and LSTM.
 
 0:00 It just looks
 0:39 Where it looks: two heads, two jobs
