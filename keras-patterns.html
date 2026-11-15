@@ -1,0 +1,234 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Keras in Five Moves, and Nine Ways to Break It</title>
+<style>
+  :root {
+    --bg:#fbfaf7; --ink:#1d1d1b; --quiet:#6b6a65; --grid:#e4e2dc; --axis:#9a978f; --card:#fff;
+    --curve:#2f6fb3; --ball:#c2410c; --good:#2e7d4f; --warn:#b7791f; --bad:#b42318; --pad:#7a4fb5; --teal:#1f8a8a;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root { --bg:#1b1b1a; --ink:#ecebe7; --quiet:#a3a19b; --grid:#34332f; --axis:#6f6d67; --card:#242422;
+      --curve:#6aa6e8; --ball:#f08a4b; --good:#5fbf86; --warn:#e0b04f; --bad:#f2786d; --pad:#b497e6; --teal:#5cc4c4; }
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.5 ui-sans-serif,system-ui,-apple-system,"Segoe UI",sans-serif}
+  main{max-width:900px;margin:0 auto;padding:32px 20px 48px}
+  h1{font-size:26px;margin:0 0 6px;letter-spacing:-.01em}
+  h2{font-size:19px;margin:30px 0 10px}
+  .lead{color:var(--quiet);margin:0 0 22px}
+  .panel{background:var(--card);border:1px solid var(--grid);border-radius:12px;padding:16px}
+  button{font:inherit;padding:6px 14px;border-radius:8px;border:1px solid var(--grid);background:var(--card);color:var(--ink);cursor:pointer}
+  button.primary{background:var(--curve);color:#fff;border-color:var(--curve);font-weight:600}
+  button.chip{font-size:14px;padding:5px 12px}
+  button.chip.on{border-color:var(--curve);color:var(--curve);font-weight:600;box-shadow:inset 0 0 0 1px var(--curve)}
+  button.chip.done{border-color:var(--good);color:var(--good)}
+  .chips{display:flex;gap:8px;flex-wrap:wrap;margin:0 0 14px}
+  .buttons{display:flex;gap:8px;margin-top:12px;flex-wrap:wrap;align-items:center}
+  .mono{font:14.5px/1.75 ui-monospace,SFMono-Regular,Menlo,Consolas,monospace}
+  .code{border:1px solid var(--grid);border-radius:10px;background:var(--bg);padding:10px 0;overflow-x:auto}
+  .code .ln{display:block;padding:0 14px;white-space:pre;border-left:3px solid transparent}
+  .code.pick .ln{cursor:pointer}
+  .code.pick .ln:hover{background:color-mix(in srgb,var(--curve) 8%,transparent)}
+  .code .ln.miss{background:color-mix(in srgb,var(--warn) 14%,transparent);border-left-color:var(--warn)}
+  .code .ln.hit{background:color-mix(in srgb,var(--bad) 12%,transparent);border-left-color:var(--bad)}
+  .code .ln.out{color:var(--quiet)}
+  .code .ln.sep{border-top:1px dashed var(--grid);margin-top:6px;padding-top:6px;color:var(--quiet)}
+  .tok{cursor:pointer;border-radius:4px;padding:1px 2px;border-bottom:2px solid color-mix(in srgb,var(--curve) 45%,transparent)}
+  .tok.on{background:var(--curve);color:#fff;border-bottom-color:var(--curve)}
+  .big{font-size:17px;line-height:2.1;padding:14px 16px;white-space:pre;overflow-x:auto}
+  .flow{display:grid;grid-template-columns:repeat(5,1fr);gap:8px;margin-bottom:14px}
+  .move{border:1px solid var(--grid);border-radius:10px;padding:10px 12px;background:var(--bg);cursor:pointer;text-align:left}
+  .move .n{font-size:12px;color:var(--quiet)} .move .t{font-weight:700}
+  .move.on{border-color:var(--curve);box-shadow:inset 0 0 0 1px var(--curve)} .move.on .t{color:var(--curve)}
+  .io{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:12px}
+  .io div{border:1px solid var(--grid);border-radius:10px;padding:10px 14px;background:var(--bg);font-size:14.5px}
+  .io b{display:block;font-size:12.5px;color:var(--quiet);font-weight:600;margin-bottom:2px}
+  .verdict{margin-top:14px;padding:12px 14px;border-radius:10px;border-left:4px solid var(--good);
+    background:color-mix(in srgb,var(--good) 10%,transparent)}
+  .verdict.warn{border-left-color:var(--warn);background:color-mix(in srgb,var(--warn) 12%,transparent)}
+  .verdict.bad{border-left-color:var(--bad);background:color-mix(in srgb,var(--bad) 10%,transparent)}
+  .err{margin-top:12px;border:1px solid color-mix(in srgb,var(--bad) 40%,var(--grid));border-radius:10px;padding:10px 14px;
+    background:color-mix(in srgb,var(--bad) 7%,transparent);white-space:pre-wrap;color:var(--bad)}
+  .fix{margin-top:12px;border:1px solid color-mix(in srgb,var(--good) 40%,var(--grid));border-radius:10px;padding:10px 14px;
+    background:color-mix(in srgb,var(--good) 7%,transparent);white-space:pre;overflow-x:auto}
+  .cap{font-size:12.5px;color:var(--quiet);font-weight:600;margin:14px 0 4px}
+  .score{font-size:14px;color:var(--quiet);margin-left:auto}
+  .habits{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
+  .habit{border:1px solid var(--grid);border-radius:10px;padding:12px 14px;background:var(--bg);font-size:14.5px}
+  .habit b{display:block;margin-bottom:4px}
+  .note{color:var(--quiet);font-size:14px;margin-top:12px}
+  p.body{font-size:15px;margin:10px 0}
+  code{font:13.5px ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;background:var(--bg);border:1px solid var(--grid);border-radius:5px;padding:1px 5px}
+  [hidden]{display:none!important}
+  @media (max-width:720px){ .flow{grid-template-columns:repeat(2,1fr)} .io,.habits{grid-template-columns:1fr} }
+</style>
+</head>
+<body>
+<main>
+  <h1>Keras in five moves, and nine ways to break it</h1>
+  <p class="lead">Every Keras program has the same five moves: build, compile, fit, evaluate, predict. Once you see the pattern, the code stops looking like a wall. Then comes the part nobody tells you: almost every error a beginner hits is a comma, a bracket or a capital letter. The nine bugs at the bottom are real. I made every one of them in a single afternoon, typing code by hand instead of pasting it. Each one shows the exact message Python gave back.</p>
+
+  <div class="panel">
+    <div class="flow" id="flow"></div>
+    <div class="code mono" id="moveCode"></div>
+    <div class="io"><div><b>What goes in</b><span id="moveIn"></span></div><div><b>What comes out</b><span id="moveOut"></span></div></div>
+    <div class="verdict" id="moveNote"></div>
+  </div>
+
+  <h2>One layer, read slowly</h2>
+  <div class="panel">
+    <p class="body">Most of a model is lines like this one. Every mark on it has a job. Click each underlined part.</p>
+    <div class="code mono big" id="anat"></div>
+    <div class="verdict" id="anatNote"></div>
+  </div>
+
+  <h2>Spot the bug</h2>
+  <div class="panel">
+    <div class="chips" id="bugNav" role="group" aria-label="Bugs"></div>
+    <p class="body" id="bugAsk"></p>
+    <div class="code mono pick" id="bugCode"></div>
+    <div class="buttons"><button id="reveal">Show me</button><button id="nextBug" class="primary">Next bug</button><span class="score" id="score"></span></div>
+    <div class="verdict warn" id="bugHint" hidden></div>
+    <div id="bugAnswer" hidden>
+      <div class="cap">What Python says</div>
+      <div class="err mono" id="bugErr"></div>
+      <div class="cap">The fix</div>
+      <div class="fix mono" id="bugFix"></div>
+      <div class="verdict" id="bugRule"></div>
+    </div>
+  </div>
+
+  <h2>Three habits that prevent most of them</h2>
+  <div class="panel">
+    <div class="habits">
+      <div class="habit"><b>Copy, do not retype</b>Eight of the nine bugs above came from typing code by hand. A comma, a bracket, a capital letter: the eye skips them and Python does not. If code is given to you, paste it.</div>
+      <div class="habit"><b>Read the last line first</b>A Python error is long and red, and the useful part is at the bottom: the type of error and one sentence. Then look at the line the arrow points to, and the line above it.</div>
+      <div class="habit"><b>Restart and run all</b>A notebook remembers everything you ran, in the order you ran it. Before you trust a result, restart the kernel and run every cell from the top. It is the only way to know the code on the page produced the numbers on the page.</div>
+    </div>
+    <p class="note">The five-move pattern is standard Keras, the library used in most introductory deep learning courses. It goes with the convolutional network chapters of <i>Dive into Deep Learning</i>. The model on this page is a small example made for it. Every error message is the real output of Python 3.13, Keras 3 and scikit-learn for that exact mistake.</p>
+  </div>
+</main>
+
+<script>
+(function () {
+  const $ = id => document.getElementById(id);
+  const esc = s => s.replace(/&/g,'&amp;').replace(/</g,'&lt;');
+  const lines = (box, arr, cls) => { box.replaceChildren(); arr.forEach((t,i)=>{ const s=document.createElement('span'); s.className='ln '+(cls?cls(i,t):''); s.textContent=t||' '; s.dataset.i=i; box.append(s); }); };
+
+  /* ---------- panel 1: the five moves ---------- */
+  const MOVES=[
+    { t:'Build', code:['model = Sequential([','    Input(shape=(32, 32, 3)),','    Conv2D(16, (3, 3), activation="relu", padding="same"),','    MaxPooling2D((2, 2)),','    Flatten(),','    Dense(10, activation="softmax"),','])'],
+      i:'A list of layers, in the order the picture passes through them. The first line says what one input looks like.',
+      o:'A model with random weights. It can already make predictions. They are just guesses.',
+      n:'Sequential takes one thing: a list. That is why there are square brackets inside the round ones, and why every layer ends with a comma. The model reads top to bottom, the same way the picture flows.' },
+    { t:'Compile', code:['model.compile(','    optimizer="adam",','    loss="sparse_categorical_crossentropy",','    metrics=["accuracy"],',')'],
+      i:'Three choices: how to update the weights, what to measure as error, and what to report.',
+      o:'Nothing you can see. The model is now ready to train. No learning has happened yet.',
+      n:'Compile changes nothing in the weights. It only sets the rules for training. If you forget it, the model builds without complaint and fails later, at fit.' },
+    { t:'Fit', code:['history = model.fit(','    x_train, y_train,','    epochs=5,','    batch_size=64,','    validation_data=(x_val, y_val),',')'],
+      i:'Training pictures and their labels, how many passes to make, how many pictures per step, and a second set to check on.',
+      o:'A history object. history.history["val_accuracy"] is a list with one number per epoch.',
+      n:'This is the only move that learns. It is also the only one that is not safe to run twice: a second fit does not start again, it continues from where the first one stopped.' },
+    { t:'Evaluate', code:['loss, acc = model.evaluate(x_test, y_test)'],
+      i:'Pictures the model has never seen, and their true labels.',
+      o:'Two numbers, in this order: the loss, then each metric you asked for in compile.',
+      n:'Evaluate does not learn anything, so it is safe to run as often as you like. Use the test set here once, at the end. If you tune the model by looking at this number, it stops being a fair test.' },
+    { t:'Predict', code:['probs = model.predict(x_new)          # shape (N, 10)','labels = np.argmax(probs, axis=1)     # shape (N,)'],
+      i:'Pictures only. No labels, because the label is what you are asking for.',
+      o:'One row per picture, one probability per class. argmax picks the position of the largest one.',
+      n:'Predict gives probabilities, not answers. A row might be 0.05, 0.71, 0.02 and so on. The answer is the position of the largest number, and argmax with axis=1 finds it for every row at once.' },
+  ];
+  let mv=0;
+  MOVES.forEach((m,i)=>{ const b=document.createElement('button'); b.className='move'; b.innerHTML='<div class="n">Move '+(i+1)+'</div><div class="t">'+m.t+'</div>'; b.onclick=()=>{ mv=i; move(); }; $('flow').append(b); });
+  function move(){ const m=MOVES[mv]; [...$('flow').children].forEach((b,i)=>b.classList.toggle('on',i===mv));
+    lines($('moveCode'),m.code); $('moveIn').textContent=m.i; $('moveOut').textContent=m.o; $('moveNote').className='verdict'+(mv===2?' warn':''); $('moveNote').textContent=m.n; }
+
+  /* ---------- panel 2: anatomy of one line ---------- */
+  const ANAT=[
+    ['    ',null],
+    ['Conv2D','A class name, spelled exactly: capital C, capital D. Python treats conv2d, Conv2d and Conv2D as three different names. Get one letter’s case wrong and it says the name is not defined.'],
+    ['(',null],
+    ['32','The number of filters. It comes first and has no label, so its position is what tells Keras what it means.'],
+    [', ',null],
+    ['(3, 3)','The filter size, as a tuple: two numbers, a comma between them, inside their own brackets. On paper people write 3×3. Python needs (3, 3). The × symbol is not something Python can read.'],
+    [', ',null],
+    ['activation="relu"','A named setting. The name has no quotes, the value does. And the value is lowercase: "relu", "softmax". Keras looks the word up exactly as written, so "RELU" is not found.'],
+    [', ',null],
+    ['padding="same"','Another named setting. "same" means the output keeps the same height and width as the input. Named settings can come in any order, as long as they come after the unnamed ones.'],
+    [')','Closes the bracket opened after Conv2D. Every opening bracket needs its partner. When a line has brackets inside brackets, count them: this line opens three and closes three.'],
+    [',','The comma that is easiest to forget. This layer is one item in a list, and items in a list are separated by commas. Leave it out and Python tries to read two layers as one expression. A period here is even worse: Python then looks for the next layer inside this one.'],
+  ];
+  let an=1;
+  function anat(){ const box=$('anat'); box.replaceChildren();
+    ANAT.forEach(([t,n],i)=>{ if(n===null){ box.append(document.createTextNode(t)); return; }
+      const s=document.createElement('span'); s.className='tok'+(i===an?' on':''); s.textContent=t; s.onclick=()=>{ an=i; anat(); }; box.append(s); });
+    $('anatNote').textContent=ANAT[an][1]; }
+
+  /* ---------- panel 3: spot the bug ---------- */
+  const BUGS=[
+    { name:'A capital letter', ask:'This cell stops with an error. Click the line that is wrong.',
+      code:['model = sequential([','    Input(shape=(32, 32, 3)),','    Flatten(),','    Dense(10, activation="softmax"),','])'], bad:0,
+      err:"NameError: name 'sequential' is not defined", fix:'model = Sequential([',
+      rule:'Python is case-sensitive. Sequential with a capital S was imported; sequential was not, so as far as Python knows it does not exist. The same error appears for Pred_idx when the variable is pred_idx.' },
+    { name:'A missing comma', ask:'Click the line that is wrong. Careful: it is not the line Python points at.',
+      code:['model.compile(','    optimizer="adam"','    loss="sparse_categorical_crossentropy",','    metrics=["accuracy"],',')'], bad:1,
+      err:'SyntaxError: invalid syntax. Perhaps you forgot a comma?', fix:'    optimizer="adam",',
+      rule:'Settings inside brackets are separated by commas, one at the end of each line. Python often reports the error on the line after the missing comma, because that is where it stops making sense. Always check the line above.' },
+    { name:'The × symbol', ask:'Click the line that is wrong.',
+      code:['model = Sequential([','    Input(shape=(32, 32, 3)),','    Conv2D(16, (3×3), activation="relu", padding="same"),','    MaxPooling2D((2, 2)),','    Flatten(),','    Dense(10, activation="softmax"),','])'], bad:2,
+      err:"SyntaxError: invalid character '×' (U+00D7)", fix:'    Conv2D(16, (3, 3), activation="relu", padding="same"),',
+      rule:'Instructions say 3×3. Code says (3, 3). The multiplication sign from a document is not a character Python understands. A size is always two numbers with a comma between them.' },
+    { name:'A period for a comma', ask:'One character is wrong, and the error message will not help you find it. Click the line.',
+      code:['model = Sequential([','    Input(shape=(32, 32, 3)),','    Conv2D(16, (3, 3), activation="relu", padding="same"),','    MaxPooling2D((2, 2)).','    Flatten(),','    Dense(10, activation="softmax"),','])'], bad:3,
+      err:"AttributeError: 'MaxPooling2D' object has no attribute 'Flatten'", fix:'    MaxPooling2D((2, 2)),',
+      rule:'A period means "look inside this thing". So Python read MaxPooling2D((2, 2)).Flatten() as one instruction: find something called Flatten inside the pooling layer. The message is confusing, but the clue is in it: two layer names in one sentence means the comma between them is missing or wrong.' },
+    { name:'Capitals in a string', ask:'Every bracket and comma here is correct. Click the line that is wrong.',
+      code:['model = Sequential([','    Input(shape=(32, 32, 3)),','    Flatten(),','    Dense(64, activation="relu"),','    Dense(10, activation="SOFTMAX"),','])'], bad:4,
+      err:'ValueError: Could not interpret activation function identifier: SOFTMAX', fix:'    Dense(10, activation="softmax"),',
+      rule:'Text inside quotes is looked up exactly as written. Keras knows "softmax". It does not know "SOFTMAX" or "Softmax". Names of activations, losses and optimizers are all lowercase.' },
+    { name:'A bracket in the wrong place', ask:'The goal is to take the last validation accuracy and round it to 3 decimals. Click the line that is wrong.',
+      code:['history = model.fit(x_train, y_train, epochs=5,','                    validation_data=(x_val, y_val))','last = history.history["val_accuracy"][-1]','val_acc = round(float(last, 3))'], bad:3,
+      err:'TypeError: float expected at most 1 argument, got 2', fix:'val_acc = round(float(last), 3)',
+      rule:'Read brackets from the inside out. float( ) takes one thing. round( ) takes two: the number and how many decimals. The ", 3" was sitting inside float’s brackets instead of round’s. The message says so exactly: float got 2 arguments.' },
+    { name:'A pair that is not a pair', ask:'This loop should go through three (name, model) pairs. Click the line that is wrong.',
+      code:['for name, model in [','    ("plain", model_plain),','    ("augmented", model_aug),','    ("deep"), model_deep,',']:','    loss, acc = model.evaluate(x_test, y_test)'], bad:3,
+      err:'ValueError: too many values to unpack (expected 2)', fix:'    ("deep", model_deep),',
+      rule:'Each line of the list should be one pair inside one set of brackets. With the bracket closed early, "deep" and model_deep became two separate items. The loop then tried to split the word "deep" into a name and a model, found four letters, and gave up.' },
+    { name:'The right code on the wrong model', ask:'A second model is built and trained. Every line is valid Python. Click the line that is wrong.',
+      code:['model_b = Sequential([','    Input(shape=(32, 32, 3)),','    Flatten(),','    Dense(10, activation="softmax"),','])','model_a.compile(optimizer="adam",','                loss="sparse_categorical_crossentropy")','model_b.fit(x_train, y_train, epochs=5)'], bad:5,
+      err:'ValueError: You must call `compile()` before using the model.', fix:'model_b.compile(optimizer="adam",',
+      rule:'This is what happens when you copy a cell and change the name in most places but not all. The old model was compiled a second time, the new one never was. When you reuse a cell, search it for the old name before you run it.' },
+    { name:'The bug with no error', ask:'The training cell was run twice. There is no error message at all. Click the line of output that proves something is wrong.',
+      code:['history = model.fit(x_train, y_train, epochs=5,','                    validation_data=(x_val, y_val))','first run:','Epoch 1/5   accuracy: 0.3796   val_accuracy: 0.4665','Epoch 5/5   accuracy: 0.6314   val_accuracy: 0.6017','second run of the same cell:','Epoch 1/5   accuracy: 0.6541   val_accuracy: 0.6093','Epoch 5/5   accuracy: 0.7227   val_accuracy: 0.6303'], bad:6, out:[2,3,4,5,6,7], sep:[2,5],
+      err:'(no error)', fix:'Rebuild the model, then fit once.\nOr: Kernel, Restart and Run All.',
+      rule:'A new model cannot score 65% in its first epoch. The second run started where the first one ended, so "Epoch 1" was really epoch 6. Fit never resets a model. Nothing warns you, and the number you record is for ten epochs, not five. These are real numbers from my own notebook.' },
+  ];
+  let bg=0; const found=new Set(), shown=new Set();
+  BUGS.forEach((b,i)=>{ const c=document.createElement('button'); c.className='chip'; c.textContent=(i+1)+' · '+b.name; c.onclick=()=>{ bg=i; bug(); }; $('bugNav').append(c); });
+  function bug(reveal){
+    const b=BUGS[bg], open=reveal||found.has(bg)||shown.has(bg);
+    [...$('bugNav').children].forEach((c,i)=>{ c.classList.toggle('on',i===bg); c.classList.toggle('done',found.has(i)&&i!==bg); });
+    $('bugAsk').textContent=b.ask;
+    lines($('bugCode'),b.code,(i)=>((b.out||[]).includes(i)?'out ':'')+((b.sep||[]).includes(i)?'sep ':'')+(open&&i===b.bad?'hit':''));
+    [...$('bugCode').children].forEach(s=>s.onclick=()=>{ const i=+s.dataset.i;
+      if((b.sep||[]).includes(i)) return;
+      if(i===b.bad){ found.add(bg); bug(true); }
+      else { [...$('bugCode').children].forEach(x=>x.classList.remove('miss')); s.classList.add('miss'); $('bugHint').hidden=false;
+        $('bugHint').textContent= bg===1&&i===2 ? 'That is the line Python points at. But that line is fine. The problem is that Python reached it without finding a comma first. Look one line up.'
+          : bg===8 ? 'That line is believable on its own. Look for a number that a brand new model could not produce.' : 'Not that line. It is correct as written. Check the commas, the brackets and the capital letters on each line.'; } });
+    $('bugHint').hidden=true; $('bugAnswer').hidden=!open;
+    $('bugErr').textContent=b.err; $('bugFix').textContent=b.fix; $('bugRule').textContent=b.rule;
+    $('score').textContent='Found '+found.size+' of '+BUGS.length;
+    $('reveal').hidden=open;
+  }
+  $('reveal').onclick=()=>{ shown.add(bg); bug(true); };
+  $('nextBug').onclick=()=>{ bg=(bg+1)%BUGS.length; bug(); };
+
+  move(); anat(); bug();
+})();
+</script>
+</body>
+</html>
