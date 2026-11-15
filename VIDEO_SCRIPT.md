@@ -4,7 +4,7 @@ BrokenLabsFix · Kris Hornung · November 2026
 
 Watch the recorded video: https://www.youtube.com/watch?v=YQF4lMUv9d4
 
-This file holds seven scripts. Episode 1, below, covers the first three pages. [Episode 2](#episode-2-how-models-stop-memorizing-and-learn-faster) covers the six newer pages: weight decay, early stopping, dropout, SGD, minibatch size and momentum. [Episode 3](#episode-3-batch-normalization-you-can-drag) covers the batch normalization page. [Episode 4](#episode-4-four-ways-to-close-the-overfitting-gap) covers the regularization comparison page. [Episode 5](#episode-5-convolutions-channels-and-the-arrow) covers the three convolution pages. [Episode 6](#episode-6-image-augmentation-and-fine-tuning) covers the image augmentation and fine-tuning pages. [Episode 7](#episode-7-three-cnns-five-epochs) covers the three-CNN comparison page.
+This file holds eight scripts. Episode 1, below, covers the first three pages. [Episode 2](#episode-2-how-models-stop-memorizing-and-learn-faster) covers the six newer pages: weight decay, early stopping, dropout, SGD, minibatch size and momentum. [Episode 3](#episode-3-batch-normalization-you-can-drag) covers the batch normalization page. [Episode 4](#episode-4-four-ways-to-close-the-overfitting-gap) covers the regularization comparison page. [Episode 5](#episode-5-convolutions-channels-and-the-arrow) covers the three convolution pages. [Episode 6](#episode-6-image-augmentation-and-fine-tuning) covers the image augmentation and fine-tuning pages. [Episode 7](#episode-7-three-cnns-five-epochs) covers the three-CNN comparison page. [Episode 8](#episode-8-keras-in-five-moves-and-nine-ways-to-break-it) covers the Keras patterns page.
 
 ## At a glance
 
@@ -879,6 +879,8 @@ convolution, convolutional neural network, CNN, padding, stride, kernel size, ch
 
 BrokenLabsFix · Kris Hornung · November 2026
 
+Watch the recorded video: https://www.youtube.com/watch?v=IIWBWRTOFEg
+
 Earlier episodes: [Episode 1](https://www.youtube.com/watch?v=YQF4lMUv9d4) · [Episode 2](https://www.youtube.com/watch?v=_69pXSvmCOY) · [Episode 3](https://www.youtube.com/watch?v=r_NqjxmXD8g) · [Episode 4](https://www.youtube.com/watch?v=b4tLpx3_934) · [Episode 5](https://www.youtube.com/watch?v=8Ab74b_z-Es)
 
 ## Episode 6 at a glance
@@ -1080,7 +1082,9 @@ image augmentation, data augmentation, random crop, horizontal flip, color jitte
 
 BrokenLabsFix · Kris Hornung · November 2026
 
-Earlier episodes: [Episode 1](https://www.youtube.com/watch?v=YQF4lMUv9d4) · [Episode 2](https://www.youtube.com/watch?v=_69pXSvmCOY) · [Episode 3](https://www.youtube.com/watch?v=r_NqjxmXD8g) · [Episode 4](https://www.youtube.com/watch?v=b4tLpx3_934) · [Episode 5](https://www.youtube.com/watch?v=8Ab74b_z-Es) · Episode 6 (image augmentation and fine-tuning)
+Watch the recorded video: https://www.youtube.com/watch?v=02nDUhqnNik
+
+Earlier episodes: [Episode 1](https://www.youtube.com/watch?v=YQF4lMUv9d4) · [Episode 2](https://www.youtube.com/watch?v=_69pXSvmCOY) · [Episode 3](https://www.youtube.com/watch?v=r_NqjxmXD8g) · [Episode 4](https://www.youtube.com/watch?v=b4tLpx3_934) · [Episode 5](https://www.youtube.com/watch?v=8Ab74b_z-Es) · [Episode 6](https://www.youtube.com/watch?v=IIWBWRTOFEg)
 
 ## Episode 7 at a glance
 
@@ -1209,7 +1213,7 @@ Episode 2 (weight decay, early stopping, dropout, SGD, minibatch size, momentum)
 Episode 3 (batch normalization): https://www.youtube.com/watch?v=r_NqjxmXD8g
 Episode 4 (comparing four regularization techniques): https://www.youtube.com/watch?v=b4tLpx3_934
 Episode 5 (convolutions, channels, residual connections): https://www.youtube.com/watch?v=8Ab74b_z-Es
-Episode 6 (image augmentation and fine-tuning): add link
+Episode 6 (image augmentation and fine-tuning): https://www.youtube.com/watch?v=IIWBWRTOFEg
 
 Concepts from Dive into Deep Learning (d2l.ai), chapters 7, 8 and 14. Dataset: CIFAR-10, 30,000 training pictures, 10,000 validation, 10,000 test.
 
@@ -1226,3 +1230,126 @@ Concepts from Dive into Deep Learning (d2l.ai), chapters 7, 8 and 14. Dataset: C
 ## Episode 7 tags
 
 convolutional neural network, CNN, CIFAR-10, overfitting, training curves, validation accuracy, confusion matrix, dropout, batch normalization, data augmentation, early stopping, Keras, deep learning, d2l, dive into deep learning, machine learning tutorial, interactive explainer
+
+# Episode 8: Keras in Five Moves, and Nine Ways to Break It
+
+BrokenLabsFix · Kris Hornung · November 2026
+
+## Episode 8 at a glance
+
+A 4-minute walkthrough of one page about code, not results. First the pattern every Keras program follows: build, compile, fit, evaluate, predict. Then nine real bugs from one afternoon of typing code by hand, each with the exact message Python gives.
+
+Made the same way as Episodes 6 and 7: the page first, then this script, then the video rendered from the page with a synthetic narration voice. The model on the page is a small example made for it, not an assignment solution.
+
+| Part | Time | What happens |
+| --- | --- | --- |
+| Hook | 0:00–0:27 | One wrong character |
+| Part 1 | 0:27–1:39 | Build, compile, fit, evaluate, predict |
+| Part 2 | 1:39–2:13 | Every mark has a job |
+| Part 3 | 2:13–3:47 | Real mistakes, real error messages |
+| Part 4 | 3:47–4:08 | Copy, read the last line, restart and run all |
+| Wrap-up | 4:08–4:18 | Five moves, nine bugs, three habits |
+
+Page: [keras-patterns.html](https://fleabyte26.github.io/Introduction-to-Deep-Learning/keras-patterns.html)
+
+Same format: left column is what to do on screen, right column is what to say.
+
+## Episode 8 hook (0:00–0:27)
+
+| Show | Say |
+| --- | --- |
+| The page, scrolled to "Spot the bug", bug 4 selected | "This code has one wrong character. Just one. Can you see it?" |
+| Click the MaxPooling2D line | "Here it is. A period, where a comma should be. And look at what Python says. MaxPooling2D object has no attribute Flatten. That message does not say comma anywhere." |
+| Scroll to the top of the page | "Today is about Keras code. First, the pattern. Every Keras program has the same five moves. Then, nine real bugs. I made every one of them in a single afternoon, typing code by hand." |
+
+## Episode 8 Part 1: The five moves (0:27–1:39)
+
+| Show | Say |
+| --- | --- |
+| The first panel. Click "Build" | "Move one: build. You give Sequential a list of layers, in the order the picture passes through them. Top to bottom." |
+| Point at the note | "A list. That is why there are square brackets inside the round ones. And that is why every layer ends with a comma." |
+| Click "Compile" | "Move two: compile. Three choices. How to update the weights. What to measure as error. What to report. Nothing is learned yet. Compile only sets the rules." |
+| Click "Fit" | "Move three: fit. This is the only move that learns. Training pictures, their labels, how many epochs, and a validation set to check on." |
+| Point at the warning | "And one warning. Fit is the only move that is not safe to run twice. A second fit does not start again. It continues." |
+| Click "Evaluate" | "Move four: evaluate. Pictures the model has never seen. It returns two numbers: the loss, then the accuracy. In that order." |
+| Click "Predict" | "Move five: predict. Pictures only, no labels. It returns probabilities: one row per picture, one number per class. Then argmax picks the largest." |
+| Point along the five boxes | "Build, compile, fit, evaluate, predict. Every Keras program you will read has this shape. Find the five moves first, and the code stops looking like a wall." |
+
+## Episode 8 Part 2: One layer, read slowly (1:39–2:13)
+
+| Show | Say |
+| --- | --- |
+| Scroll to "One layer, read slowly". Click "Conv2D" | "Now one layer, read slowly. Conv2D. Capital C, capital D. Python is case-sensitive. A small c is a different name." |
+| Click "(3, 3)" | "The filter size. On paper we write 3 times 3. In Python it is two numbers with a comma between them, inside their own brackets." |
+| Click activation="relu" | "A named setting. The value is in quotes, and it is lowercase. Keras looks up the word exactly as you wrote it." |
+| Click the last comma | "And the last comma. The easiest one to forget. This layer is one item in a list. Items in a list are separated by commas." |
+
+## Episode 8 Part 3: Nine bugs (2:13–3:47)
+
+| Show | Say |
+| --- | --- |
+| Scroll to "Spot the bug". Bug 1: click the first line | "Now the bugs. Number one. A small s in Sequential. Python says the name is not defined. It is not being difficult. To Python, that is a different word." |
+| Bug 2: click the "loss" line (the wrong guess) | "Number two. Python points at this line, the loss line. But this line is fine." |
+| Click the "optimizer" line | "The comma is missing on the line above. Python only notices one line later. So always check the line above the arrow." |
+| Bug 3: click the Conv2D line | "Number three. I copied the instructions: 3, multiplication sign, 3. Python cannot read that symbol. A size is two numbers and a comma." |
+| Bug 5: click the last Dense line | "Number five. Softmax, in capital letters. Every bracket is correct, and it still fails. Names inside quotes must be lowercase." |
+| Bug 6: click the last line | "Number six. A bracket in the wrong place. Float takes one thing. Round takes two. The message says exactly that: float got two arguments. Read brackets from the inside out." |
+| Bug 7: click the "deep" line | "Number seven. Three pairs, but the third bracket closes too early. So Python tries to split the word deep into two parts. Too many values to unpack." |
+| Bug 8: click the compile line | "Number eight. I copied a cell and changed the model's name. In most places. Not all. The old model was compiled twice. The new one, never." |
+| Bug 9: do not click yet | "And number nine. The dangerous one. I ran the training cell twice. No error. No warning. Can you see the proof?" |
+| Click the first line of the second run | "Epoch one, accuracy 65 percent. A new model cannot do that. It was not epoch one. It was epoch six. The model just kept training. These are real numbers from my notebook." |
+
+## Episode 8 Part 4: Three habits (3:47–4:08)
+
+| Show | Say |
+| --- | --- |
+| Scroll to "Three habits". Point at the first | "Three habits prevent most of this. One: copy, do not retype. Eight of my nine bugs came from typing by hand." |
+| Point at the second | "Two: read the last line of the error first. That is where the useful sentence is." |
+| Point at the third | "Three: before you trust a result, restart and run all. It is the only way to know that the code on the page made the numbers on the page." |
+
+## Episode 8 wrap-up (4:08–4:18)
+
+| Show | Say |
+| --- | --- |
+| Back to the first panel | "Five moves. Nine bugs. Three habits. The page is in the description. Try to find all nine without the Show me button. See you in the next one." |
+
+## Episode 8 recording checklist
+
+- [ ] Check the live link opens, and reload the page so "Found 0 of 9" shows
+- [ ] Browser zoom at 125%, light mode, bookmarks bar hidden, notifications off
+- [ ] Bug 2: click the "loss" line first on purpose, to show the hint, then the "optimizer" line
+- [ ] Bug 4 is used in the hook and skipped in Part 3
+- [ ] Publishing on BrokenLabsFix (Hindi/Bahasa audience, auto-dubbing on)
+
+## Episode 8 title options
+
+1. Keras in 5 Moves, and 9 Bugs Every Beginner Makes | Deep Learning Without the Formula Wall Ep. 8
+2. 9 Keras Errors Explained: Commas, Brackets and Capital Letters | Deep Learning Without the Formula Wall Ep. 8
+3. Build, Compile, Fit, Evaluate, Predict: The Keras Pattern | Deep Learning Without the Formula Wall Ep. 8
+
+## Episode 8 description
+
+```
+One free interactive page on writing Keras code. The five moves every Keras program follows, one layer read piece by piece, and nine real beginner bugs with the exact Python error message for each. Click the line you think is wrong. No install.
+
+Keras in five moves, and nine ways to break it
+https://fleabyte26.github.io/Introduction-to-Deep-Learning/keras-patterns.html
+
+Companion page, the results of the three models:
+https://fleabyte26.github.io/Introduction-to-Deep-Learning/cnn-three-models.html
+
+Episode 7 (three CNNs, five epochs): https://www.youtube.com/watch?v=02nDUhqnNik
+
+All pages and source: https://github.com/Fleabyte26/Introduction-to-Deep-Learning
+
+0:00 One wrong character
+0:27 The five moves: build, compile, fit, evaluate, predict
+1:39 One layer, read slowly
+2:13 Nine real bugs and their error messages
+3:47 Three habits
+4:08 Wrap-up
+```
+
+## Episode 8 tags
+
+keras tutorial, keras for beginners, python errors, SyntaxError, NameError, TypeError, ValueError, AttributeError, Sequential model, model.fit, model.compile, jupyter notebook, debugging python, tensorflow, CNN, deep learning, machine learning tutorial, interactive explainer
