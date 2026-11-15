@@ -4,7 +4,7 @@ BrokenLabsFix · Kris Hornung · November 2026
 
 Watch the recorded video: https://www.youtube.com/watch?v=YQF4lMUv9d4
 
-This file holds ten scripts. Episode 1, below, covers the first three pages. [Episode 2](#episode-2-how-models-stop-memorizing-and-learn-faster) covers the six newer pages: weight decay, early stopping, dropout, SGD, minibatch size and momentum. [Episode 3](#episode-3-batch-normalization-you-can-drag) covers the batch normalization page. [Episode 4](#episode-4-four-ways-to-close-the-overfitting-gap) covers the regularization comparison page. [Episode 5](#episode-5-convolutions-channels-and-the-arrow) covers the three convolution pages. [Episode 6](#episode-6-image-augmentation-and-fine-tuning) covers the image augmentation and fine-tuning pages. [Episode 7](#episode-7-three-cnns-five-epochs) covers the three-CNN comparison page. [Episode 8](#episode-8-keras-in-five-moves-and-nine-ways-to-break-it) covers the Keras patterns page. [Episode 9](#episode-9-recurrent-neural-networks) covers the recurrent network page. [Episode 10](#episode-10-lstm-a-memory-with-gates) covers the LSTM page.
+This file holds eleven scripts. Episode 1, below, covers the first three pages. [Episode 2](#episode-2-how-models-stop-memorizing-and-learn-faster) covers the six newer pages: weight decay, early stopping, dropout, SGD, minibatch size and momentum. [Episode 3](#episode-3-batch-normalization-you-can-drag) covers the batch normalization page. [Episode 4](#episode-4-four-ways-to-close-the-overfitting-gap) covers the regularization comparison page. [Episode 5](#episode-5-convolutions-channels-and-the-arrow) covers the three convolution pages. [Episode 6](#episode-6-image-augmentation-and-fine-tuning) covers the image augmentation and fine-tuning pages. [Episode 7](#episode-7-three-cnns-five-epochs) covers the three-CNN comparison page. [Episode 8](#episode-8-keras-in-five-moves-and-nine-ways-to-break-it) covers the Keras patterns page. [Episode 9](#episode-9-recurrent-neural-networks) covers the recurrent network page. [Episode 10](#episode-10-lstm-a-memory-with-gates) covers the LSTM page. [Episode 11](#episode-11-attention-do-not-remember-look-back) covers the attention page.
 
 ## At a glance
 
@@ -1603,3 +1603,108 @@ Based on Dive into Deep Learning (d2l.ai), section 10.1. Previous episode: recur
 ## Episode 10 tags
 
 LSTM, LSTM explained, long short-term memory, forget gate, input gate, output gate, memory cell, cell state, vanishing gradient, recurrent neural network, RNN vs LSTM, sequence models, gated recurrent network, deep learning, d2l, dive into deep learning, machine learning tutorial, interactive explainer
+
+# Episode 11: Attention: Do Not Remember, Look Back
+
+BrokenLabsFix · Kris Hornung · November 2026
+
+## Episode 11 at a glance
+
+A 4-minute walkthrough of one page. A small two-head attention network, trained on the same sentences as the recurrent network and the LSTM, runs live in the page. The episode shows where each head looks, works a query against keys and values by hand, and then puts all three networks on one test.
+
+Third of three episodes on sequences: recurrent networks, LSTM, attention.
+
+Made the same way as Episodes 6 to 9: the page first, then this script, then the video rendered from the page with a synthetic narration voice.
+
+| Part | Time | What happens |
+| --- | --- | --- |
+| Hook | 0:00–0:39 | It just looks |
+| Part 1 | 0:39–1:27 | Two heads, two jobs |
+| Part 2 | 1:27–2:20 | A soft lookup |
+| Part 3 | 2:20–3:05 | Distance, and cost |
+| Wrap-up | 3:05–3:30 | From attention to the transformer |
+
+Page: [attention.html](https://fleabyte26.github.io/Introduction-to-Deep-Learning/attention.html)
+
+Same format: left column is what to do on screen, right column is what to say. Every number is printed on the page.
+
+## Episode 11 hook (0:00–0:39)
+
+| Show | Say |
+| --- | --- |
+| The page, first panel, cat sentence, 5 extra words | "The same sentence as before. The cat, very really quite very really, sat on the. What comes next?" |
+| Point at the orange row, and the one dark square | "This network does not carry the animal through the extra words. It looks back. The orange row shows where. 93 percent of its attention is on one letter, 42 letters back. The last letter of cat." |
+| Point at the guess | "And it answers M, with 99.7 percent. No memory cell. No gates. It just looked. This is attention." |
+| Scroll to the top of the page | "This is the third episode of three. A plain network forgets. An LSTM protects its memory. Attention does not remember at all. This is chapter 11 of Dive into Deep Learning." |
+
+## Episode 11 Part 1: Where it looks (0:39–1:27)
+
+| Show | Say |
+| --- | --- |
+| Click the dog sentence | "Switch to the dog sentence. The same head looks at the same place, finds a G instead of a T, and the answer changes to L." |
+| Back to cat. Drag "Extra words" to 12 | "Make the sentence longer. Twelve extra words. Now the animal is 84 letters back. For attention, that is still one step." |
+| Point at the blue row | "There are two heads. Head one, in blue, looks somewhere else: at the N of the word, on. That tells it this is the second, the, in the sentence, so a noun is coming." |
+| Point at both rows | "Two heads, two jobs. One finds what kind of word is due. The other finds which animal. Nobody assigned those jobs. Training did. This is multi-head attention." |
+| Set extra words back to 5. Click a letter in the middle of the sentence | "And every letter does its own looking. Click any letter. From the middle of a word, head one looks at the letters just before it. Head two is still looking at the animal. It keeps the animal in view from almost anywhere." |
+
+## Episode 11 Part 2: Queries, keys and values (1:27–2:20)
+
+| Show | Say |
+| --- | --- |
+| Scroll to "Queries, keys and values, by hand" | "How does it decide where to look? With three things. Keys, values, and a query. Every stored item has a key: what it is about. And a value: what it holds." |
+| Point at the four bars | "The query is the question. It is compared with every key. Here the query points near the animal key, so the animal gets the biggest share: 94 percent." |
+| Drag "Query direction" round to the place key | "Turn the query. Now it points at the place key. The shares move with it. The answer becomes, mat." |
+| Point at the numbers panel | "The shares always add up to one hundred percent. That is a softmax. And the answer is the values, mixed in those shares." |
+| Drag "Sharpness" all the way down | "Now lower the sharpness. Every key gets about the same share. The answer is a blur of everything. The question is being ignored." |
+| Drag "Sharpness" all the way up | "Raise it. One key takes everything. Now it is an ordinary lookup. Real attention lives in between. And because every step is smooth, the network can learn where to look." |
+
+## Episode 11 Part 3: Three memories, one test (2:20–3:05)
+
+| Show | Say |
+| --- | --- |
+| Scroll to "Three memories, one test" | "Now all three networks, on the same test. Orange, the plain network: a coin flip after one extra word. Blue, the LSTM: perfect. Green, attention: perfect too, up to eight extra words." |
+| Point at the right side of the chart, then the verdict | "But look at the right side. Past the lengths it trained on, attention slips. The LSTM does not. Attention removed the distance problem. It did not remove the need to train on what you will be tested on." |
+| Point at the middle row of the table | "Here is the real difference. In a recurrent network, the animal is 42 steps from the answer. With attention, it is one step. At any distance." |
+| Drag "Sentence length" to 1,000 | "And the cost. For a thousand letters, a recurrent network takes a thousand steps. Attention makes half a million comparisons. But it can do them all at the same time." |
+
+## Episode 11 wrap-up (3:05–3:30)
+
+| Show | Say |
+| --- | --- |
+| Scroll to "The rest of the chapter" | "Attention started in translation, as an add-on to recurrent networks. Then people asked: what if we remove the recurrent network, and keep only attention? That is the transformer. It is behind every large language model today." |
+| Back to the first panel | "So. Three ways to remember. Rewrite it at every step, and lose it. Lock it in a cell. Or do not carry it at all, and look back. The page is in the description. See you in the next one." |
+
+## Episode 11 recording checklist
+
+- [ ] Check the live link opens
+- [ ] Browser zoom at 125%, light mode, bookmarks bar hidden, notifications off
+- [ ] Publishing on BrokenLabsFix (Hindi/Bahasa audience, auto-dubbing on)
+
+## Episode 11 title options
+
+1. Attention Explained: Queries, Keys and Values | Deep Learning Without the Formula Wall Ep. 11
+2. Attention vs LSTM vs RNN: Three Ways to Remember | Deep Learning Without the Formula Wall Ep. 11
+3. How Attention Works, With a Real Network You Can Click | Deep Learning Without the Formula Wall Ep. 11
+
+## Episode 11 description
+
+```
+One free interactive page with a real attention network running in your browser. Click any letter to see where its two heads look, turn a query against four keys by hand, and compare attention with an LSTM and a plain RNN on the same test. No install, no code.
+
+Attention: do not remember, look back
+https://fleabyte26.github.io/Introduction-to-Deep-Learning/attention.html
+
+All pages and source: https://github.com/Fleabyte26/Introduction-to-Deep-Learning
+
+Based on Dive into Deep Learning (d2l.ai), sections 11.1 to 11.5. Previous episodes: recurrent neural networks, and LSTM.
+
+0:00 It just looks
+0:39 Where it looks: two heads, two jobs
+1:27 Queries, keys and values
+2:20 Three memories, one test
+3:05 From attention to the transformer
+```
+
+## Episode 11 tags
+
+attention mechanism, attention explained, queries keys values, self-attention, multi-head attention, scaled dot-product attention, softmax, Bahdanau attention, transformer, RNN vs LSTM vs attention, sequence models, large language models, deep learning, d2l, dive into deep learning, machine learning tutorial, interactive explainer
