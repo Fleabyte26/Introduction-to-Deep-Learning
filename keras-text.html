@@ -1,0 +1,296 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Keras for Text: From Words to a Model</title>
+<style>
+  :root {
+    --bg:#fbfaf7; --ink:#1d1d1b; --quiet:#6b6a65; --grid:#e4e2dc; --axis:#9a978f; --card:#fff;
+    --curve:#2f6fb3; --ball:#c2410c; --good:#2e7d4f; --warn:#b7791f; --bad:#b42318; --pad:#7a4fb5; --teal:#1f8a8a;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root { --bg:#1b1b1a; --ink:#ecebe7; --quiet:#a3a19b; --grid:#34332f; --axis:#6f6d67; --card:#242422;
+      --curve:#6aa6e8; --ball:#f08a4b; --good:#5fbf86; --warn:#e0b04f; --bad:#f2786d; --pad:#b497e6; --teal:#5cc4c4; }
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.5 ui-sans-serif,system-ui,-apple-system,"Segoe UI",sans-serif}
+  main{max-width:900px;margin:0 auto;padding:32px 20px 48px}
+  h1{font-size:26px;margin:0 0 6px;letter-spacing:-.01em}
+  h2{font-size:19px;margin:30px 0 10px}
+  .lead{color:var(--quiet);margin:0 0 22px}
+  .panel{background:var(--card);border:1px solid var(--grid);border-radius:12px;padding:16px}
+  button{font:inherit;padding:6px 14px;border-radius:8px;border:1px solid var(--grid);background:var(--card);color:var(--ink);cursor:pointer}
+  button.primary{background:var(--curve);color:#fff;border-color:var(--curve);font-weight:600}
+  button.chip{font-size:14px;padding:5px 12px}
+  button.chip.on{border-color:var(--curve);color:var(--curve);font-weight:600;box-shadow:inset 0 0 0 1px var(--curve)}
+  button.chip.done{border-color:var(--good);color:var(--good)}
+  .chips{display:flex;gap:8px;flex-wrap:wrap;margin:0 0 14px}
+  .buttons{display:flex;gap:8px;margin-top:12px;flex-wrap:wrap;align-items:center}
+  .mono{font:14.5px/1.75 ui-monospace,SFMono-Regular,Menlo,Consolas,monospace}
+  .code{border:1px solid var(--grid);border-radius:10px;background:var(--bg);padding:10px 0;overflow-x:auto}
+  .code .ln{display:block;padding:0 14px;white-space:pre;border-left:3px solid transparent}
+  .code.pick .ln{cursor:pointer}
+  .code.pick .ln:hover{background:color-mix(in srgb,var(--curve) 8%,transparent)}
+  .code .ln.miss{background:color-mix(in srgb,var(--warn) 14%,transparent);border-left-color:var(--warn)}
+  .code .ln.hit{background:color-mix(in srgb,var(--bad) 12%,transparent);border-left-color:var(--bad)}
+  .code .ln.out{color:var(--quiet)}
+  .code .ln.sep{border-top:1px dashed var(--grid);margin-top:6px;padding-top:6px;color:var(--quiet)}
+  .tok{cursor:pointer;border-radius:4px;padding:1px 2px;border-bottom:2px solid color-mix(in srgb,var(--curve) 45%,transparent)}
+  .tok.on{background:var(--curve);color:#fff;border-bottom-color:var(--curve)}
+  .big{font-size:17px;line-height:2.1;padding:14px 16px;white-space:pre;overflow-x:auto}
+  .flow{display:grid;grid-template-columns:repeat(5,1fr);gap:8px;margin-bottom:14px}
+  .move{border:1px solid var(--grid);border-radius:10px;padding:10px 12px;background:var(--bg);cursor:pointer;text-align:left}
+  .move .n{font-size:12px;color:var(--quiet)} .move .t{font-weight:700}
+  .move.on{border-color:var(--curve);box-shadow:inset 0 0 0 1px var(--curve)} .move.on .t{color:var(--curve)}
+  .io{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:12px}
+  .io div{border:1px solid var(--grid);border-radius:10px;padding:10px 14px;background:var(--bg);font-size:14.5px}
+  .io b{display:block;font-size:12.5px;color:var(--quiet);font-weight:600;margin-bottom:2px}
+  .verdict{margin-top:14px;padding:12px 14px;border-radius:10px;border-left:4px solid var(--good);
+    background:color-mix(in srgb,var(--good) 10%,transparent)}
+  .verdict.warn{border-left-color:var(--warn);background:color-mix(in srgb,var(--warn) 12%,transparent)}
+  .verdict.bad{border-left-color:var(--bad);background:color-mix(in srgb,var(--bad) 10%,transparent)}
+  .err{margin-top:12px;border:1px solid color-mix(in srgb,var(--bad) 40%,var(--grid));border-radius:10px;padding:10px 14px;
+    background:color-mix(in srgb,var(--bad) 7%,transparent);white-space:pre-wrap;color:var(--bad)}
+  .fix{margin-top:12px;border:1px solid color-mix(in srgb,var(--good) 40%,var(--grid));border-radius:10px;padding:10px 14px;
+    background:color-mix(in srgb,var(--good) 7%,transparent);white-space:pre;overflow-x:auto}
+  .cap{font-size:12.5px;color:var(--quiet);font-weight:600;margin:14px 0 4px}
+  .score{font-size:14px;color:var(--quiet);margin-left:auto}
+  .habits{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
+  .habit{border:1px solid var(--grid);border-radius:10px;padding:12px 14px;background:var(--bg);font-size:14.5px}
+  .habit b{display:block;margin-bottom:4px}
+  .note{color:var(--quiet);font-size:14px;margin-top:12px}
+  p.body{font-size:15px;margin:10px 0}
+  code{font:13.5px ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;background:var(--bg);border:1px solid var(--grid);border-radius:5px;padding:1px 5px}
+  [hidden]{display:none!important}
+  @media (max-width:720px){ .flow{grid-template-columns:repeat(2,1fr)} .io,.habits{grid-template-columns:1fr} }
+  .ctrls{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin:12px 0 4px}
+  .ctrl label{display:block;font-size:12.5px;color:var(--quiet);margin-bottom:2px} .ctrl .val{font-weight:650;color:var(--ink)}
+  .ctrl input[type=range]{width:100%;accent-color:var(--curve)}
+  input[type=text]{font:inherit;width:100%;padding:7px 10px;border-radius:8px;border:1px solid var(--grid);background:var(--bg);color:var(--ink)}
+  .seg{display:flex;gap:0} .seg button{border-radius:0;font-size:13px;padding:4px 10px} .seg button:first-child{border-radius:8px 0 0 8px} .seg button:last-child{border-radius:0 8px 8px 0;border-left:0}
+  .seg button.on{background:var(--curve);color:#fff;border-color:var(--curve)}
+  .toks{display:flex;flex-wrap:wrap;gap:6px;margin:6px 0 2px}
+  .tk{border:1px solid var(--grid);border-radius:7px;padding:4px 8px;text-align:center;background:var(--bg);min-width:44px}
+  .tk b{display:block;font:700 16px ui-monospace,SFMono-Regular,Menlo,Consolas,monospace} .tk span{font-size:12px;color:var(--quiet)}
+  .tk.oov{border-color:var(--ball)} .tk.oov b{color:var(--ball)} .tk.pad{border-style:dashed} .tk.pad b{color:var(--axis)} .tk.cut{opacity:.35;text-decoration:line-through}
+  .vocab{display:flex;flex-wrap:wrap;gap:5px;font:13px ui-monospace,SFMono-Regular,Menlo,Consolas,monospace}
+  .vocab span{border:1px solid var(--grid);border-radius:6px;padding:2px 7px;background:var(--bg)} .vocab span.out{opacity:.4;text-decoration:line-through}
+  .code .ln.chg{background:color-mix(in srgb,var(--curve) 13%,transparent);border-left-color:var(--curve)}
+  .shapes{display:flex;align-items:stretch;gap:6px;margin:14px 0 4px;flex-wrap:wrap}
+  .shape{flex:1;min-width:120px;border:1px solid var(--grid);border-radius:10px;padding:8px 10px;background:var(--bg);text-align:center}
+  .shape.mid{border-color:var(--curve);box-shadow:inset 0 0 0 1px var(--curve)}
+  .shape .n{font-size:12px;color:var(--quiet)} .shape .s{font:700 14.5px ui-monospace,SFMono-Regular,Menlo,Consolas,monospace} .shape .p{font-size:12.5px;color:var(--quiet)}
+  .arrow{align-self:center;color:var(--axis);font-size:18px}
+  table{width:100%;border-collapse:collapse;font-size:14.5px;margin-top:6px}
+  th,td{text-align:left;padding:6px 10px;border-bottom:1px solid var(--grid)} th{color:var(--quiet);font-weight:600;font-size:13px}
+  td.num,th.num{text-align:right;font-variant-numeric:tabular-nums} tr.on td{background:color-mix(in srgb,var(--curve) 9%,transparent);font-weight:600}
+  .two{display:grid;grid-template-columns:1fr 1fr;gap:14px} .two .cap{margin-top:0}
+  @media (max-width:720px){ .ctrls{grid-template-columns:1fr 1fr} .two{grid-template-columns:1fr} }
+</style>
+</head>
+<body>
+<main>
+  <h1>Keras for text: from words to a model, and eight ways to break it</h1>
+  <p class="lead">A network cannot read. Before any model sees a sentence, three lines of Python turn the words into numbers and make every sentence the same length. After that, a recurrent network, an LSTM, a two-direction LSTM and an attention model are the same five lines with one of them changed. This page walks through that code with a small example made for it, and ends with eight real mistakes from one afternoon of typing it by hand. Two of them give no error at all.</p>
+
+  <div class="panel">
+    <div class="cap" style="margin-top:0">A sentence to convert. Pick one or type your own.</div>
+    <div class="chips" id="sents" role="group" aria-label="Example sentences"></div>
+    <input type="text" id="sent" aria-label="Sentence">
+    <div class="ctrls">
+      <div class="ctrl"><label>num_words <span class="val" id="vnw"></span></label><input id="nw" type="range" min="4" max="16" value="10"></div>
+      <div class="ctrl"><label>maxlen <span class="val" id="vml"></span></label><input id="ml" type="range" min="3" max="10" value="6"></div>
+      <div class="ctrl"><label>padding</label><div class="seg" id="padSeg"><button data-v="pre">pre</button><button data-v="post">post</button></div></div>
+      <div class="ctrl"><label>truncating</label><div class="seg" id="truSeg"><button data-v="pre">pre</button><button data-v="post">post</button></div></div>
+    </div>
+    <div class="cap">The vocabulary the tokenizer learned from four training sentences, most common word first</div>
+    <div class="vocab" id="vocab"></div>
+    <div class="cap">Step 1: each word becomes its number</div>
+    <div class="toks" id="seq"></div>
+    <div class="cap">Step 2: padded or cut to exactly <span id="capml"></span> numbers</div>
+    <div class="toks" id="padded"></div>
+    <div class="cap">The code that does it</div>
+    <div class="code mono" id="pipeCode"></div>
+    <div class="verdict" id="pipeVerdict"></div>
+  </div>
+
+  <h2>One line changes the model</h2>
+  <div class="panel">
+    <p class="body">Every model here has the same outline: numbers in, an Embedding layer that turns each number into a small vector, one layer that reads the sequence, and one output. Pick the reading layer. Only the highlighted line changes.</p>
+    <div class="chips" id="kinds" role="group" aria-label="Reading layer"></div>
+    <div class="code mono" id="modelCode"></div>
+    <div class="shapes" id="shapes"></div>
+    <div class="formula" id="modelFormula" style="margin-top:14px;padding:12px 14px;border:1px solid var(--grid);border-radius:10px;background:var(--bg);font:14.5px/1.9 ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;white-space:pre;overflow-x:auto"></div>
+    <div class="verdict" id="modelVerdict"></div>
+    <div class="cap">What happened when the four designs were trained on 8,000 real movie reviews, five passes each</div>
+    <table><thead><tr><th>Reading layer</th><th class="num">Training reviews, run 2</th><th class="num">New reviews, run 1</th><th class="num">New reviews, run 2</th></tr></thead><tbody id="results"></tbody></table>
+    <p class="note">The same notebook was run twice, start to finish. The best model was the LSTM the first time and the two-direction LSTM the second. Among the last three rows, a gap of one or two points is the luck of the random start, not a ranking. The gap to the first row is real. These runs used larger sizes than the example code above: 10,000 words, 100 words per review, 32 numbers per word and 32 units. The pattern is identical.</p>
+  </div>
+
+  <h2>Two ways to write the same model</h2>
+  <div class="panel">
+    <p class="body">Keras lets you stack layers, or wire them. Stacking is shorter. Wiring is needed as soon as a layer takes more than one input, and attention does: the same word vectors go in twice, once as the questions and once as the things being looked at.</p>
+    <div class="two">
+      <div><div class="cap">Stacking: each layer sits on the one before</div><div class="code mono" id="stackCode"></div></div>
+      <div><div class="cap">Wiring: each layer is called on a named output</div><div class="code mono" id="wireCode"></div></div>
+    </div>
+    <div class="verdict" id="wireVerdict">Read a wired line from the right. <code>(x)</code> is what goes in, <code>LSTM(16)</code> is the layer, and the name on the left is what comes out. The same LSTM model is written both ways above. Click the attention button to see the line that stacking cannot express.</div>
+    <div class="buttons"><button class="chip on" id="wLSTM">LSTM, both ways</button><button class="chip" id="wAttn">Attention</button></div>
+  </div>
+
+  <h2>Spot the bug</h2>
+  <div class="panel">
+    <div class="chips" id="bugNav" role="group" aria-label="Bugs"></div>
+    <p class="body" id="bugAsk"></p>
+    <div class="code mono pick" id="bugCode"></div>
+    <div class="buttons"><button id="reveal">Show me</button><button id="nextBug" class="primary">Next bug</button><span class="score" id="score"></span></div>
+    <div class="verdict warn" id="bugHint" hidden></div>
+    <div id="bugAnswer" hidden>
+      <div class="cap">What Python says</div>
+      <div class="err mono" id="bugErr"></div>
+      <div class="cap">The fix</div>
+      <div class="fix mono" id="bugFix"></div>
+      <div class="verdict" id="bugRule"></div>
+    </div>
+  </div>
+
+  <h2>Three habits for this kind of code</h2>
+  <div class="panel">
+    <div class="habits">
+      <div class="habit"><b>Read the summary before you train</b>The parameter count is a fingerprint. With 16 units on 16-number vectors, a plain recurrent layer is 528, an LSTM is 2,112 and a two-direction LSTM is 4,224. If the number is not the one you expect, the model is not the one you meant, and you find out in a second instead of after five passes of training.</div>
+      <div class="habit"><b>When you copy a cell, change the important line first</b>A copied cell needs its names changed in six places and its one meaningful line changed once. The names are easy to see. The meaningful line looks right because it was right, for the previous model.</div>
+      <div class="habit"><b>Python never checks what is inside quotes</b>A misspelled layer name stops the program. A misspelled dictionary key or column name does not. It becomes a new, valid, wrong name, and the error appears later and somewhere else. Copy keys from the instructions; do not type them.</div>
+    </div>
+    <p class="note">The code on this page is a small example made for it: 5,000 words, 80 words per sentence, 16 numbers per word, 16 units. Every error message is the real output of Python 3.13 and Keras 3 for that exact mistake, and the tokenizer on this page follows the same rules as the Keras one, including the detail that only word numbers below num_words are kept. Goes with chapters 9 to 11 of <i>Dive into Deep Learning</i>.</p>
+  </div>
+</main>
+
+<script>
+(function () {
+  const $ = id => document.getElementById(id);
+  const fmt = n => n.toLocaleString('en-US');
+  const lines = (box, arr, cls) => { box.replaceChildren(); arr.forEach((t,i)=>{ const s=document.createElement('span'); s.className='ln '+(cls?cls(i,t):''); s.textContent=t||' '; s.dataset.i=i; box.append(s); }); };
+
+  /* ---------- panel 1: words to numbers, with the Keras tokenizer's rules ---------- */
+  const TRAIN=['a great movie with a great story','a dull movie and a dull story','great acting and a clever plot','the plot was dull and the acting was bad'];
+  const clean = s => s.toLowerCase().replace(/[^a-z0-9' ]+/g,' ').trim().split(/\s+/).filter(Boolean);
+  const counts=new Map(); TRAIN.forEach(t=>clean(t).forEach(w=>counts.set(w,(counts.get(w)||0)+1)));
+  const ordered=[...counts.entries()].sort((a,b)=>b[1]-a[1]).map(e=>e[0]), INDEX=new Map([['<OOV>',1]]); ordered.forEach((w,i)=>INDEX.set(w,i+2));
+  let pad='post', tru='post';
+  ['a great story','the acting was clever and the plot was great','an astonishing movie','a dull movie and a dull story with bad acting and a bad plot'].forEach(s=>{ const b=document.createElement('button'); b.className='chip'; b.textContent=s.length>34?s.slice(0,32)+'…':s; b.onclick=()=>{ $('sent').value=s; pipe(); }; $('sents').append(b); });
+  const seg=(id,get,set)=>[...$(id).children].forEach(b=>{ b.onclick=()=>{ set(b.dataset.v); pipe(); }; });
+  seg('padSeg',()=>pad,v=>pad=v); seg('truSeg',()=>tru,v=>tru=v);
+  function tk(top,bot,cls){ const d=document.createElement('div'); d.className='tk '+(cls||''); d.innerHTML='<b>'+top+'</b><span>'+bot+'</span>'; return d; }
+  function pipe(){ const nw=+$('nw').value, ml=+$('ml').value, words=clean($('sent').value); $('vnw').textContent=nw; $('vml').textContent=ml; $('capml').textContent=ml;
+    [...$('padSeg').children].forEach(b=>b.classList.toggle('on',b.dataset.v===pad)); [...$('truSeg').children].forEach(b=>b.classList.toggle('on',b.dataset.v===tru));
+    $('vocab').replaceChildren(); [...INDEX.entries()].forEach(([w,i])=>{ const s=document.createElement('span'); s.textContent=i+' '+w; if(i>=nw) s.className='out'; $('vocab').append(s); });
+    const ids=words.map(w=>{ const i=INDEX.get(w); return (i===undefined||i>=nw)?1:i; }), oov=ids.filter((v,j)=>v===1).length;
+    $('seq').replaceChildren(); words.forEach((w,j)=>$('seq').append(tk(ids[j],w,ids[j]===1?'oov':'')));
+    let kept=ids.map((v,j)=>[v,words[j],false]), cut=0, added=0;
+    $('padded').replaceChildren();
+    if (kept.length>ml){ cut=kept.length-ml; const gone= tru==='pre'? kept.slice(0,cut) : kept.slice(ml); kept= tru==='pre'? kept.slice(cut) : kept.slice(0,ml);
+      if(tru==='pre') gone.forEach(g=>$('padded').append(tk(g[0],g[1],'cut'))); kept.forEach(k=>$('padded').append(tk(k[0],k[1],k[0]===1?'oov':''))); if(tru==='post') gone.forEach(g=>$('padded').append(tk(g[0],g[1],'cut'))); }
+    else { added=ml-kept.length; const zeros=Array.from({length:added},()=>tk(0,'padding','pad'));
+      if(pad==='pre') zeros.forEach(z=>$('padded').append(z)); kept.forEach(k=>$('padded').append(tk(k[0],k[1],k[0]===1?'oov':''))); if(pad==='post') zeros.forEach(z=>$('padded').append(z)); }
+    const out= (pad==='pre'&&added?Array(added).fill(0):[]).concat(kept.map(k=>k[0])).concat(pad==='post'&&added?Array(added).fill(0):[]);
+    lines($('pipeCode'),['tokenizer = Tokenizer(num_words='+nw+', oov_token="<OOV>")','tokenizer.fit_on_texts(train_texts)                 # learn the vocabulary','sequences = tokenizer.texts_to_sequences(texts)      # words -> numbers',
+      'X = pad_sequences(sequences, maxlen='+ml+', padding="'+pad+'", truncating="'+tru+'")','# this sentence becomes  ['+out.join(', ')+']']);
+    const v=$('pipeVerdict'); let cls='verdict', t;
+    if (!words.length){ t='Type a sentence above.'; }
+    else if (oov){ cls='verdict warn'; t=oov+' word'+(oov>1?'s are':' is')+' shown in orange as number 1, the out-of-vocabulary marker. Either the tokenizer never saw the word in training, or its number is '+nw+' or higher and num_words='+nw+' cut it off. The network will see the same number 1 for every such word and cannot tell them apart.'; }
+    else if (cut){ cls='verdict warn'; t='The sentence has '+words.length+' words and maxlen is '+ml+', so '+cut+' '+(cut>1?'are':'is')+' thrown away, from the '+(tru==='pre'?'start':'end')+'. With truncating="'+tru+'" the network never sees the '+(tru==='pre'?'beginning':'ending')+' of a long text. For reviews, the verdict is often in the last sentence, so this choice matters.'; }
+    else if (added){ t='The sentence has '+words.length+' words, so '+added+' zero'+(added>1?'s are':' is')+' added at the '+(pad==='pre'?'start':'end')+'. Zero is reserved for padding and never used for a real word. With padding="post" a recurrent network reads the real words first and then steps through the zeros; with "pre" the real words come last, right before it has to answer.'; }
+    else t='Exactly '+ml+' words: nothing to pad and nothing to cut.';
+    v.className=cls; v.textContent=t; }
+  $('sent').oninput=pipe; $('nw').oninput=pipe; $('ml').oninput=pipe;
+
+  /* ---------- panel 2: one line changes the model ---------- */
+  const KIND={
+    rnn:{ lab:'SimpleRNN', line:'model.add(SimpleRNN(16))', out:'(batch, 16)', p:528, calc:'16 × (16 + 16) + 16 = 528', dense:17,
+      v:['bad','A plain recurrent layer: one memory of 16 numbers, rewritten at every word. On real reviews it reached 97% on the training set and about 50% on new reviews, which is a coin flip. It memorised the reviews and learned nothing about them.'], r:['96.8%','49.7%','54.9%'] },
+    lstm:{ lab:'LSTM', line:'model.add(LSTM(16))', out:'(batch, 16)', p:2112, calc:'4 × (16 × (16 + 16) + 16) = 2,112', dense:17,
+      v:['','One word changed. Same output shape, four times the weights: three gates and the new information. On real reviews: about 79% on new reviews, and already 74% after the first pass. One word is worth roughly thirty points.'], r:['93.7%','79.5%','78.6%'] },
+    bi:{ lab:'Bidirectional(LSTM)', line:'model.add(Bidirectional(LSTM(16)))', out:'(batch, 32)', p:4224, calc:'2 × 2,112 = 4,224', dense:33,
+      v:['','A wrapper around the same layer. Two LSTMs read the sentence, one forwards and one backwards, and their two memories are joined. The output doubles to 32, so the last layer grows from 17 weights to 33. On real reviews it scored 79.0% in one run and 80.2% in the next. The plain LSTM scored 79.5% and 78.6%. That is a tie.'], r:['93.8%','79.0%','80.2%'] },
+    attn:{ lab:'Attention', line:null, out:'(batch, 16)', p:2160, calc:'3 × (16 × 32 + 32) + (32 × 16 + 16) = 2,160', dense:17,
+      v:['warn','Attention does not fit the stack, because it takes the word vectors twice. This is the wired form, explained in the next panel. It compares every word with every other word at once, so it is the fastest: 2 ms a step, against 6 to 9 for the others. On real reviews it peaked near 81% after two or three passes and then slipped, to 77.6% in one run and 79.9% in the next.'], r:['95.6%','77.6%','79.9%'] } };
+  let kind='rnn';
+  Object.keys(KIND).forEach(k=>{ const b=document.createElement('button'); b.className='chip'; b.dataset.k=k; b.textContent=KIND[k].lab; b.onclick=()=>{ kind=k; model(); }; $('kinds').append(b); });
+  function model(){ const K=KIND[kind]; [...$('kinds').children].forEach(b=>b.classList.toggle('on',b.dataset.k===kind));
+    const code= kind==='attn'
+      ? ['inputs = Input(shape=(80,))','x = Embedding(input_dim=5000, output_dim=16)(inputs)','x = MultiHeadAttention(num_heads=2, key_dim=16)(x, x)','x = GlobalAveragePooling1D()(x)','outputs = Dense(1, activation="sigmoid")(x)','model = Model(inputs=inputs, outputs=outputs)']
+      : ['model = Sequential()','model.add(Input(shape=(80,)))','model.add(Embedding(input_dim=5000, output_dim=16))',K.line,'model.add(Dense(1, activation="sigmoid"))'];
+    lines($('modelCode'),code,(i)=> (kind==='attn'?(i===2||i===3):i===3)?'chg':'');
+    const boxes=[['Input','(batch, 80)','80 word numbers'],['Embedding','(batch, 80, 16)',fmt(80000)+' weights'],[K.lab,K.out,fmt(K.p)+' weights'],['Dense','(batch, 1)',K.dense+' weights']];
+    $('shapes').replaceChildren(); boxes.forEach((b,i)=>{ if(i){ const a=document.createElement('div'); a.className='arrow'; a.textContent='→'; $('shapes').append(a); }
+      const d=document.createElement('div'); d.className='shape'+(i===2?' mid':''); d.innerHTML='<div class="n">'+b[0]+'</div><div class="s">'+b[1]+'</div><div class="p">'+b[2]+'</div>'; $('shapes').append(d); });
+    $('modelFormula').innerHTML='Embedding = 5,000 words × 16 numbers = 80,000\n'+K.lab+' = '+K.calc+'\nDense     = '+(K.dense-1)+' + 1 = '+K.dense+'\ntotal     = <b>'+fmt(80000+K.p+K.dense)+'</b>';
+    $('modelVerdict').className='verdict '+K.v[0]; $('modelVerdict').textContent=K.v[1];
+    $('results').replaceChildren(); Object.keys(KIND).forEach(k=>{ const r=document.createElement('tr'); if(k===kind) r.className='on'; r.innerHTML='<td>'+KIND[k].lab+'</td><td class="num">'+KIND[k].r[0]+'</td><td class="num">'+KIND[k].r[1]+'</td><td class="num">'+KIND[k].r[2]+'</td>'; $('results').append(r); }); }
+
+  /* ---------- panel 3: stacking and wiring ---------- */
+  function wire(attn){ $('wLSTM').classList.toggle('on',!attn); $('wAttn').classList.toggle('on',attn);
+    lines($('stackCode'), attn ? ['model = Sequential()','model.add(Input(shape=(80,)))','model.add(Embedding(5000, 16))','model.add(MultiHeadAttention(...))   # ?','# a stacked layer receives one thing:','# the output of the layer before.','# Attention needs two.'] : ['model = Sequential()','model.add(Input(shape=(80,)))','model.add(Embedding(5000, 16))','model.add(LSTM(16))','model.add(Dense(1, activation="sigmoid"))'], (i)=>attn&&i===3?'miss':'');
+    lines($('wireCode'), attn ? ['inputs = Input(shape=(80,))','x = Embedding(5000, 16)(inputs)','x = MultiHeadAttention(num_heads=2,','                       key_dim=16)(x, x)','x = GlobalAveragePooling1D()(x)','outputs = Dense(1, activation="sigmoid")(x)','model = Model(inputs=inputs, outputs=outputs)'] : ['inputs = Input(shape=(80,))','x = Embedding(5000, 16)(inputs)','x = LSTM(16)(x)','outputs = Dense(1, activation="sigmoid")(x)','model = Model(inputs=inputs, outputs=outputs)'], (i)=>attn&&(i===2||i===3)?'chg':'');
+    $('wireVerdict').className='verdict'+(attn?' warn':'');
+    $('wireVerdict').innerHTML = attn ? 'The highlighted line ends in <code>(x, x)</code>: the same word vectors, passed twice. The first is the query, the second is what gets looked at. That is self-attention, and there is no way to say it with <code>model.add()</code>. The line after it averages the 80 word vectors into one, because attention returns a vector for every word and the output layer needs just one.'
+      : 'Read a wired line from the right. <code>(x)</code> is what goes in, <code>LSTM(16)</code> is the layer, and the name on the left is what comes out. The last line tells Keras where the model starts and ends. Five lines either way, and the same 82,129 weights.'; }
+  $('wLSTM').onclick=()=>wire(false); $('wAttn').onclick=()=>wire(true);
+
+  /* ---------- panel 4: spot the bug ---------- */
+  const BUGS=[
+    { name:'The blueprint, not the thing', ask:'This cell stops with an error. Click the line that is wrong.',
+      code:['tokenizer = Tokenizer(num_words=5000, oov_token="<OOV>")','Tokenizer.fit_on_texts(train_texts)','sequences = tokenizer.texts_to_sequences(train_texts)'], bad:1,
+      err:"TypeError: Tokenizer.fit_on_texts() missing 1 required positional argument: 'texts'", fix:'tokenizer.fit_on_texts(train_texts)',
+      rule:'Tokenizer with a capital T is the blueprint. tokenizer in lowercase is the one you built from it on the line above. Both names exist, so Python does not say "not defined". It gives a stranger message, about a missing argument, because you asked the blueprint to do a job that only a built tokenizer can do.' },
+    { name:'One missing s', ask:'Click the line that is wrong. Look closely at the method names.',
+      code:['tokenizer = Tokenizer(num_words=5000, oov_token="<OOV>")','tokenizer.fit_on_texts(train_texts)','sequences = tokenizer.text_to_sequences(train_texts)','X = pad_sequences(sequences, maxlen=80)'], bad:2,
+      err:"AttributeError: 'Tokenizer' object has no attribute 'text_to_sequences'", fix:'sequences = tokenizer.texts_to_sequences(train_texts)',
+      rule:'It is texts, plural: fit_on_texts, texts_to_sequences. "Has no attribute" means the thing on the left of the dot is fine, and the name on the right of the dot is not one it knows. Nine times out of ten that is a spelling slip.' },
+    { name:'A word Python already owns', ask:'Click the line that is wrong. The error message will not mention a missing name.',
+      code:['model = Sequential()','model.add(input(shape=(80,)))','model.add(Embedding(input_dim=5000, output_dim=16))','model.add(LSTM(16))'], bad:1,
+      err:'TypeError: input() takes no keyword arguments', fix:'model.add(Input(shape=(80,)))',
+      rule:'Every other lowercase layer name gives "name is not defined". This one does not, because Python has its own built-in function called input, the one that waits for someone to type. So Python finds a function, tries to use it, and complains about the way you called it. Keras layer names always start with a capital: Input.' },
+    { name:'A comma that makes a tuple', ask:'Every name here is spelled correctly. Click the line that is wrong.',
+      code:['model = Sequential()','model.add(Input(shape=(80)))','model.add(Embedding(input_dim=5000, output_dim=16))','model.add(LSTM(16))'], bad:1,
+      err:"ValueError: Cannot convert '80' to a shape.", fix:'model.add(Input(shape=(80,)))',
+      rule:'(80) is just the number 80 with brackets round it. (80,) with a comma is a list of one item, which is what a shape has to be. The comma is what makes it a tuple, not the brackets.' },
+    { name:'Copied, but not changed', ask:'This cell was copied from the plain recurrent model and renamed, to build an LSTM. It runs with no error. Click the line that proves it is not an LSTM.',
+      code:['model_lstm = Sequential()','model_lstm.add(Input(shape=(80,)))','model_lstm.add(Embedding(input_dim=5000, output_dim=16))','model_lstm.add(SimpleRNN(16))','model_lstm.add(Dense(1, activation="sigmoid"))','model_lstm.summary()','output:','embedding (Embedding)      (None, 80, 16)     80,000','simple_rnn (SimpleRNN)     (None, 16)            528','dense (Dense)              (None, 1)              17'], bad:3, also:[8], out:[6,7,8,9], sep:[6],
+      err:'(no error)', fix:'model_lstm.add(LSTM(16))',
+      rule:'All six names were changed to model_lstm, and the one line that makes it an LSTM was left alone. Nothing fails. You would train a second plain recurrent network and wonder why the LSTM was no better. The summary gives it away twice: the layer type, and 528 weights where an LSTM of this size has 2,112.' },
+    { name:'A capital O', ask:'A wired model. Click the line that is wrong.',
+      code:['inputs = Input(shape=(80,))','x = Embedding(input_dim=5000, output_dim=16)(inputs)','x = LSTM(16)(x)','Outputs = Dense(1, activation="sigmoid")(x)','model = Model(inputs=inputs, outputs=outputs)'], bad:3,
+      err:"NameError: name 'outputs' is not defined", fix:'outputs = Dense(1, activation="sigmoid")(x)',
+      rule:'Python points at the last line, where outputs is used. But the mistake is one line up, where it was created as Outputs. When a name is "not defined", look for where you think you defined it.' },
+    { name:'Singular or plural', ask:'Click the line that is wrong.',
+      code:['inputs = Input(shape=(80,))','x = Embedding(input_dim=5000, output_dim=16)(inputs)','x = LSTM(16)(x)','outputs = Dense(1, activation="sigmoid")(x)','model = Model(input=inputs, output=outputs)'], bad:4,
+      err:"ValueError: Unrecognized keyword arguments passed to Model: {'input': …, 'output': …}", fix:'model = Model(inputs=inputs, outputs=outputs)',
+      rule:'On the left of each equals sign is the name of a setting, and Keras decides those: inputs and outputs, both plural. On the right is your own variable. Here they have the same name, which makes the line look like it repeats itself. It does not.' },
+    { name:'The name inside the quotes', ask:'A dictionary of results, to be checked later by code you cannot see. It runs with no error. Click the line that is wrong.',
+      code:['results = {','    "SimplrRNN": 0.549,','    "LSTM": 0.786,','    "BiLSTM": 0.802,','    "Transformer": 0.799,','}','best = max(results, key=results.get)'], bad:1,
+      err:"(no error here. Later, when something asks for results[\"SimpleRNN\"]:)\nKeyError: 'SimpleRNN'", fix:'    "SimpleRNN": 0.549,',
+      rule:'Python checks the names of variables and functions. It never checks text inside quotes. "SimplrRNN" is a perfectly good key, just not the one anyone will ask for. The cell runs, the dictionary has four entries, and the mistake only surfaces when another piece of code looks up the right spelling. If that code is an automatic grader, you lose the points and never see why.' },
+  ];
+  let bg=0; const found=new Set(), shown=new Set();
+  BUGS.forEach((b,i)=>{ const c=document.createElement('button'); c.className='chip'; c.textContent=(i+1)+' · '+b.name; c.onclick=()=>{ bg=i; bug(); }; $('bugNav').append(c); });
+  function bug(reveal){ const b=BUGS[bg], open=reveal||found.has(bg)||shown.has(bg);
+    [...$('bugNav').children].forEach((c,i)=>{ c.classList.toggle('on',i===bg); c.classList.toggle('done',found.has(i)&&i!==bg); });
+    $('bugAsk').textContent=b.ask;
+    lines($('bugCode'),b.code,(i)=>((b.out||[]).includes(i)?'out ':'')+((b.sep||[]).includes(i)?'sep ':'')+(open&&(i===b.bad||(b.also||[]).includes(i))?'hit':''));
+    [...$('bugCode').children].forEach(s=>s.onclick=()=>{ const i=+s.dataset.i; if((b.sep||[]).includes(i)) return;
+      if(i===b.bad||(b.also||[]).includes(i)){ found.add(bg); bug(true); }
+      else { [...$('bugCode').children].forEach(x=>x.classList.remove('miss')); s.classList.add('miss'); $('bugHint').hidden=false;
+        $('bugHint').textContent= bg===5&&i===4 ? 'That is the line Python points at. But outputs is only being used there. Look for where it was meant to be created.' : bg===4 ? 'That line is fine. Look for the one line that should be different in an LSTM model, or for a number in the output that is too small.' : 'Not that line. It is correct as written. Check capital letters, plurals and commas.'; } });
+    $('bugHint').hidden=true; $('bugAnswer').hidden=!open; $('bugErr').textContent=b.err; $('bugFix').textContent=b.fix; $('bugRule').textContent=b.rule;
+    $('score').textContent='Found '+found.size+' of '+BUGS.length; $('reveal').hidden=open; }
+  $('reveal').onclick=()=>{ shown.add(bg); bug(true); };
+  $('nextBug').onclick=()=>{ bg=(bg+1)%BUGS.length; bug(); };
+
+  $('sent').value='the acting was clever and the plot was great';
+  pipe(); model(); wire(false); bug();
+})();
+</script>
+</body>
+</html>
