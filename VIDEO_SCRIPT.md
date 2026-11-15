@@ -4,7 +4,7 @@ BrokenLabsFix · Kris Hornung · November 2026
 
 Watch the recorded video: https://www.youtube.com/watch?v=YQF4lMUv9d4
 
-This file holds eight scripts. Episode 1, below, covers the first three pages. [Episode 2](#episode-2-how-models-stop-memorizing-and-learn-faster) covers the six newer pages: weight decay, early stopping, dropout, SGD, minibatch size and momentum. [Episode 3](#episode-3-batch-normalization-you-can-drag) covers the batch normalization page. [Episode 4](#episode-4-four-ways-to-close-the-overfitting-gap) covers the regularization comparison page. [Episode 5](#episode-5-convolutions-channels-and-the-arrow) covers the three convolution pages. [Episode 6](#episode-6-image-augmentation-and-fine-tuning) covers the image augmentation and fine-tuning pages. [Episode 7](#episode-7-three-cnns-five-epochs) covers the three-CNN comparison page. [Episode 8](#episode-8-keras-in-five-moves-and-nine-ways-to-break-it) covers the Keras patterns page.
+This file holds nine scripts. Episode 1, below, covers the first three pages. [Episode 2](#episode-2-how-models-stop-memorizing-and-learn-faster) covers the six newer pages: weight decay, early stopping, dropout, SGD, minibatch size and momentum. [Episode 3](#episode-3-batch-normalization-you-can-drag) covers the batch normalization page. [Episode 4](#episode-4-four-ways-to-close-the-overfitting-gap) covers the regularization comparison page. [Episode 5](#episode-5-convolutions-channels-and-the-arrow) covers the three convolution pages. [Episode 6](#episode-6-image-augmentation-and-fine-tuning) covers the image augmentation and fine-tuning pages. [Episode 7](#episode-7-three-cnns-five-epochs) covers the three-CNN comparison page. [Episode 8](#episode-8-keras-in-five-moves-and-nine-ways-to-break-it) covers the Keras patterns page. [Episode 9](#episode-9-recurrent-neural-networks) covers the recurrent network page.
 
 ## At a glance
 
@@ -1355,3 +1355,128 @@ All pages and source: https://github.com/Fleabyte26/Introduction-to-Deep-Learnin
 ## Episode 8 tags
 
 keras tutorial, keras for beginners, python errors, SyntaxError, NameError, TypeError, ValueError, AttributeError, Sequential model, model.fit, model.compile, jupyter notebook, debugging python, tensorflow, CNN, deep learning, machine learning tutorial, interactive explainer
+
+# Episode 9: Recurrent Neural Networks
+
+BrokenLabsFix · Kris Hornung · November 2026
+
+## Episode 9 at a glance
+
+A 4-minute walkthrough of one page. A tiny character-level recurrent network, trained on two sentences, runs live in the page. The episode steps through a sentence one letter at a time, shows where the network stores what it must remember, and then shows why that memory fades with distance.
+
+First of three episodes on sequences: recurrent networks, then LSTM, then attention. Made the same way as Episodes 6 to 8: the page first, then this script, then the video rendered from the page with a synthetic narration voice.
+
+| Part | Time | What happens |
+| --- | --- | --- |
+| Hook | 0:00–0:36 | It remembers the animal |
+| Part 1 | 0:36–1:47 | One letter, one update |
+| Part 2 | 1:47–2:03 | Where the animal is stored |
+| Part 3 | 2:03–2:28 | More steps, not more weights |
+| Part 4 | 2:28–3:02 | Scoring a guess |
+| Part 5 | 3:02–3:53 | Why memory fades |
+| Wrap-up | 3:53–4:09 | Three things to keep |
+
+Page: [rnn.html](https://fleabyte26.github.io/Introduction-to-Deep-Learning/rnn.html)
+
+Same format: left column is what to do on screen, right column is what to say. Every number is printed on the page.
+
+## Episode 9 hook (0:00–0:36)
+
+| Show | Say |
+| --- | --- |
+| The page, scrolled to "The memory test" | "Two sentences. The cat sat on the mat. The dog sat on the log. A tiny neural network reads them, one letter at a time." |
+| Point at the three boxes | "After the words, sat on the, it has to choose. M for mat, or L for log. It gets it right every time. One hundred percent." |
+| Same | "But those last eleven letters are identical in both sentences. The only clue is the animal, and that was fifteen letters ago. So the network must be remembering. Today: how a network remembers." |
+| Scroll to the top of the page | "This is a recurrent neural network. It is chapter 9 of Dive into Deep Learning. And the network on this page is real. It runs in your browser." |
+
+## Episode 9 Part 1: Step through a sentence (0:36–1:47)
+
+| Show | Say |
+| --- | --- |
+| The first panel. Press Reset | "Here is its memory. Twenty-four numbers. Right now they are all zero. It has read nothing." |
+| Press Step once | "Press Step. It reads the letter T. It mixes that letter with its old memory, and gets a new memory. Then it guesses the next letter: H." |
+| Press Step twice more | "Read H. Read E. Each time, the same small calculation. New memory equals old memory, plus one new letter." |
+| Press Step. It has read "the" and a space | "Now a space. The next word is cat, or dog. And look at its guess. C and D, about half each. It does not know. And that is correct. Nobody could know." |
+| Press Step. It reads "c". Point at the two memory rows | "It reads C. Now it knows the animal. Look at the two memory rows. Before, and after. The memory changed. The cat is now stored in those numbers." |
+| Press Play, or Step fourteen more times, to the end of "the " | "Now watch it read the rest. A, T. Sat. On. The. Fourteen more letters. The memory changes at every step, but the cat has to survive inside it." |
+| Point at the guess | "And here is the moment. Next letter: M. One hundred percent. It remembered." |
+| Click the dog sentence and press Play | "Same thing with the dog sentence. The same last eleven letters. This time, it says L. For log." |
+| Press "Let it write" | "And it can write by itself. Each letter it chooses goes back in as the next input. The orange letters are its own." |
+
+## Episode 9 Part 2: The memory test (1:47–2:03)
+
+| Show | Say |
+| --- | --- |
+| Scroll to "The memory test". Point at the two rows | "So where is the animal stored? Here are the two memories, at the moment of decision. Eight of the twenty-four numbers are clearly different. They are outlined in black." |
+| Point at the verdict box | "Nobody told the network to store the animal. It learned to, because that was the only way to get the last word right." |
+
+## Episode 9 Part 3: One set of weights (2:03–2:28)
+
+| Show | Say |
+| --- | --- |
+| Scroll to "One set of weights, used at every step" | "Drawn along a sentence, the network looks like a long chain. It is not. It is one small network, used again at every letter." |
+| Drag "Sentence length" from 24 to 200 | "This network has 1,286 weights. For a sentence of 24 letters: 1,286. For 200 letters: still 1,286. A longer sentence means more steps, not more weights." |
+
+## Episode 9 Part 4: Perplexity (2:28–3:02)
+
+| Show | Say |
+| --- | --- |
+| Scroll to "How good is a guess: perplexity" | "How do we score it? With perplexity. On average, how many letters is it still choosing between? Pure guessing among 14 letters gives 14. Always right gives 1." |
+| Point at the three boxes | "Before training: 16. After training: 1.03." |
+| Point at the row of bars, then the one short bar | "Why not exactly 1? Look at the bars. Every one is full, except one. The first letter of the animal. That one is a coin flip. And no network can predict a coin flip." |
+| Point at the verdict box | "The best possible score here is 1.029. The network scores 1.030. It learned everything there was to learn." |
+
+## Episode 9 Part 5: Backpropagation through time (3:02–3:53)
+
+| Show | Say |
+| --- | --- |
+| Scroll to "Backpropagation through time" | "Last question. How did it learn that M depends on cat? The error at the M must travel backwards, through every step in between. This is called backpropagation through time." |
+| Slider at 0.85. Point at the numbers | "And each step multiplies the signal. Multiply by 0.85, fifteen times, and only 9 percent is left." |
+| Point at the black line | "The black line is measured from the real network. After fifteen steps, 26 percent of the signal survives. After twenty-four steps, less than 3 percent. That was enough for cat and mat. For a clue one hundred steps back, nothing would arrive. This is the vanishing gradient." |
+| Drag the slider above 1.00 | "And if the multiplier is above 1, the opposite happens. The signal explodes. That is why recurrent networks use gradient clipping." |
+| Set the slider to exactly 1.00 | "Exactly 1 is the only safe value. And holding it at exactly 1, on purpose, is the idea behind the LSTM. That is the next episode." |
+
+## Episode 9 wrap-up (3:53–4:09)
+
+| Show | Say |
+| --- | --- |
+| Back to the first panel | "So. A recurrent network reads one piece at a time, and carries a memory forward. It uses the same weights at every step. And its memory fades with distance." |
+| Same | "The page is in the description. Step through both sentences, and let it write. See you in the next one." |
+
+## Episode 9 recording checklist
+
+- [ ] Check the live link opens
+- [ ] Browser zoom at 125%, light mode, bookmarks bar hidden, notifications off
+- [ ] Press Reset before stepping, and use Step (not Play) for the first five letters so you control the pace
+- [ ] Publishing on BrokenLabsFix (Hindi/Bahasa audience, auto-dubbing on)
+
+## Episode 9 title options
+
+1. Recurrent Neural Networks Explained: A Network With a Memory | Deep Learning Without the Formula Wall Ep. 9
+2. How an RNN Remembers, and Why It Forgets | Deep Learning Without the Formula Wall Ep. 9
+3. RNN, Perplexity and Vanishing Gradients, Step by Step | Deep Learning Without the Formula Wall Ep. 9
+
+## Episode 9 description
+
+```
+One free interactive page with a real recurrent neural network running in your browser. Step through a sentence one letter at a time, watch its 24-number memory change, see where it stores what it needs to remember, and see why that memory fades. No install, no code.
+
+Recurrent neural networks: a network with a memory
+https://fleabyte26.github.io/Introduction-to-Deep-Learning/rnn.html
+
+All pages and source: https://github.com/Fleabyte26/Introduction-to-Deep-Learning
+
+Based on Dive into Deep Learning (d2l.ai), sections 9.4 and 9.7. Next episode: LSTM.
+
+0:00 It remembers the animal
+0:36 Step through a sentence
+1:47 Where the memory is stored
+2:03 One set of weights at every step
+2:28 Perplexity: scoring a guess
+3:02 Backpropagation through time and the vanishing gradient
+3:53 Wrap-up
+```
+
+## Episode 9 tags
+
+recurrent neural network, RNN, RNN explained, hidden state, backpropagation through time, BPTT, vanishing gradient, exploding gradient, gradient clipping, perplexity, language model, character-level RNN, LSTM, sequence models, deep learning, d2l, dive into deep learning, machine learning tutorial, interactive explainer
