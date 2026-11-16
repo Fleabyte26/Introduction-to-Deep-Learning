@@ -4,7 +4,7 @@ BrokenLabsFix · Kris Hornung · November 2026
 
 Watch the recorded video: https://www.youtube.com/watch?v=YQF4lMUv9d4
 
-This file holds twelve scripts. Episode 1, below, covers the first three pages. [Episode 2](#episode-2-how-models-stop-memorizing-and-learn-faster) covers the six newer pages: weight decay, early stopping, dropout, SGD, minibatch size and momentum. [Episode 3](#episode-3-batch-normalization-you-can-drag) covers the batch normalization page. [Episode 4](#episode-4-four-ways-to-close-the-overfitting-gap) covers the regularization comparison page. [Episode 5](#episode-5-convolutions-channels-and-the-arrow) covers the three convolution pages. [Episode 6](#episode-6-image-augmentation-and-fine-tuning) covers the image augmentation and fine-tuning pages. [Episode 7](#episode-7-three-cnns-five-epochs) covers the three-CNN comparison page. [Episode 8](#episode-8-keras-in-five-moves-and-nine-ways-to-break-it) covers the Keras patterns page. [Episode 9](#episode-9-recurrent-neural-networks) covers the recurrent network page. [Episode 10](#episode-10-lstm-a-memory-with-gates) covers the LSTM page. [Episode 11](#episode-11-attention-do-not-remember-look-back) covers the attention page. [Episode 12](#episode-12-keras-for-text-from-words-to-a-model) covers the Keras-for-text page.
+This file holds thirteen scripts. Episode 1, below, covers the first three pages. [Episode 2](#episode-2-how-models-stop-memorizing-and-learn-faster) covers the six newer pages: weight decay, early stopping, dropout, SGD, minibatch size and momentum. [Episode 3](#episode-3-batch-normalization-you-can-drag) covers the batch normalization page. [Episode 4](#episode-4-four-ways-to-close-the-overfitting-gap) covers the regularization comparison page. [Episode 5](#episode-5-convolutions-channels-and-the-arrow) covers the three convolution pages. [Episode 6](#episode-6-image-augmentation-and-fine-tuning) covers the image augmentation and fine-tuning pages. [Episode 7](#episode-7-three-cnns-five-epochs) covers the three-CNN comparison page. [Episode 8](#episode-8-keras-in-five-moves-and-nine-ways-to-break-it) covers the Keras patterns page. [Episode 9](#episode-9-recurrent-neural-networks) covers the recurrent network page. [Episode 10](#episode-10-lstm-a-memory-with-gates) covers the LSTM page. [Episode 11](#episode-11-attention-do-not-remember-look-back) covers the attention page. [Episode 12](#episode-12-keras-for-text-from-words-to-a-model) covers the Keras-for-text page. [Episode 13](#episode-13-the-transformer-attention-plus-order-stacked) covers the transformer page.
 
 ## At a glance
 
@@ -1838,3 +1838,116 @@ Goes with Dive into Deep Learning (d2l.ai), chapters 9 to 11. Previous episodes:
 ## Episode 12 tags
 
 keras tokenizer, pad_sequences, text to sequences, oov token, num_words, embedding layer, SimpleRNN, LSTM keras, bidirectional LSTM, MultiHeadAttention keras, functional API, sequential model, sentiment analysis, keras errors, NameError, KeyError, python bugs, deep learning for beginners, dive into deep learning, d2l
+
+# Episode 13: The Transformer: Attention, Plus Order, Stacked
+
+BrokenLabsFix · Kris Hornung · November 2026
+
+## Episode 13 at a glance
+
+A 4-minute walkthrough of one page. Two small real transformers run in the page, one with positional encoding and one without. The episode shows that attention alone cannot tell "the cat chased the dog" from "the dog chased the cat", how position patterns fix that, what the block is made of, a real depth experiment on skip connections with an honest surprise at 12 blocks, and the difference between an encoder and a decoder.
+
+First of three episodes on transformers: the architecture, vision transformers, pretraining and BERT.
+
+Made the same way as Episodes 6 to 9: the page first, then this script, then the video rendered from the page with a synthetic narration voice.
+
+| Part | Time | What happens |
+| --- | --- | --- |
+| Hook | 0:00–0:45 | Same words, different order |
+| Part 1 | 0:45–1:15 | A real network, with positions |
+| Part 2 | 1:15–1:54 | A pattern added to each word |
+| Part 3 | 1:54–2:58 | Skip connections, tested for real |
+| Part 4 | 2:58–3:45 | Who may look where |
+| Wrap-up | 3:45–4:03 | Attention, plus order, stacked |
+
+Page: [transformer.html](https://fleabyte26.github.io/Introduction-to-Deep-Learning/transformer.html)
+
+Same format: left column is what to do on screen, right column is what to say. Every number is printed on the page.
+
+## Episode 13 hook (0:00–0:45)
+
+| Show | Say |
+| --- | --- |
+| The page, first panel | "The cat chased the dog. Who did it? The cat. Now swap the animals. The dog chased the cat. Who did it? The dog. This small network gets both right." |
+| Click Positional encoding: Off | "Now switch off one thing. Positional encoding. Both sentences get the same answer. Dog, 56.5 percent. The same, to the last decimal. So one of them must be wrong." |
+| Point at the six boxes | "Why? Attention does not know order. Without positions, the network gets six words, like tiles shaken in a bag. I trained this one on every possible sentence. All 448. It is right exactly half the time." |
+| Scroll to the top of the page | "The fix, and what is built around it, is the transformer. Attention, plus order, stacked. This is section 11.7 of Dive into Deep Learning." |
+
+## Episode 13 Part 1: Where the question looks (0:45–1:15)
+
+| Show | Say |
+| --- | --- |
+| Positional encoding back On | "Positions back on. The outlined box is the question, and it looks at the words. Head two, in orange, puts 93 percent on one box. The second box. The animal before the verb." |
+| Click "Swap the animals" | "Swap the animals. It looks at the same place. A different animal is standing there now. So the answer changes." |
+| Click "Who was it done to?" | "Change the question. Who was it done to? Now head two puts 83 percent on the fifth box. The animal after the verb. It is not finding an animal. It is finding a place." |
+
+## Episode 13 Part 2: How order gets in (1:15–1:54)
+
+| Show | Say |
+| --- | --- |
+| Scroll to "How order gets in" | "So how does order get in? Every position gets its own pattern of sixteen numbers, made from waves. Fast waves on the left. Slow waves on the right. Each row is one position." |
+| Point at the two sums on the right | "The pattern is added to the word. That is all. Here is the word, cat, at position one, and at position four. Same word. Different pattern. So a different vector goes into the network." |
+| Drag Position B to 2 | "Positions next to each other get similar patterns. Only the fast waves differ. So the network can also tell that two words are close together." |
+| Drag Position B to 25 | "Far apart, the patterns are clearly different. Nothing else in the network changed. Order is just part of the input now." |
+
+## Episode 13 Part 3: One block, stacked (1:54–2:58)
+
+| Show | Say |
+| --- | --- |
+| Scroll to "One block, stacked" | "Now the block. Attention. Then a small ordinary network for each word. Around each one, a skip connection that adds the input back, and a normalise step. A transformer is this block, repeated." |
+| Click "No skip connections". Drag blocks to 4 | "Does the skip connection matter? I trained it for real. Without skip connections, in orange. One block. Two blocks. Four blocks. All reach one hundred percent." |
+| Drag blocks to 6 | "Six blocks. It fails. Around twenty percent, from three different starts. Pure guessing is twelve and a half." |
+| Click "Skip, then normalise". Drag blocks to 8 | "Put the skip connections back. Six blocks train. Eight blocks train. Same parts. One extra path." |
+| Drag blocks to 12 | "Twelve blocks. And here is an honest surprise. It fails too. Skip connections moved the limit. They did not remove it. The original paper needed a slow, careful start to the learning rate to train deep stacks." |
+| Click "Normalise, then skip" | "Here is the modern fix. Normalise first. Then add the skip. Only the order of two steps changes. Twelve blocks, one hundred percent, from every start. This is the layout most large models use today." |
+
+## Episode 13 Part 4: Encoder and decoder (2:58–3:45)
+
+| Show | Say |
+| --- | --- |
+| Scroll to "Encoder, decoder, and who may look where" | "The original transformer has two stacks. In the encoder, every word may look at every word. In both directions." |
+| Click Decoder | "In the decoder, a word may only look at itself and the words before it. The rest are blocked. When the model is writing, those words do not exist yet." |
+| Point at the table | "Keep only the encoder, and you get models like BERT, for understanding text. Keep only the decoder, and you get models like GPT, for writing it. Keep both, and you can turn one text into another." |
+| Scroll down to "Count the weights" | "And the size. With the numbers from the 2017 paper, the blocks hold 44 million weights. With the table of word vectors, about 63 million. The paper says 65. Notice where they are. In an encoder block, two thirds belong to the plain feed-forward network. Not to the attention." |
+
+## Episode 13 wrap-up (3:45–4:03)
+
+| Show | Say |
+| --- | --- |
+| Back to the first panel | "So. Attention does not know order, so order is added to the words. The block is attention plus a small network, with skip connections so it can be stacked. Stack it, and you have the transformer. Next episode: the same idea, on images. The page is in the description. See you there." |
+
+## Episode 13 recording checklist
+
+- [ ] Check the live link opens
+- [ ] Browser zoom at 125%, light mode, bookmarks bar hidden, notifications off
+- [ ] Publishing on BrokenLabsFix (Hindi/Bahasa audience, auto-dubbing on)
+
+## Episode 13 title options
+
+1. The Transformer Explained: Positions, Blocks and Skip Connections | Deep Learning Without the Formula Wall Ep. 13
+2. Why Transformers Need Positional Encoding (A Real Network Shows You) | Deep Learning Without the Formula Wall Ep. 13
+3. Transformer Architecture, Tested for Real: Encoder, Decoder, Skip Connections | Deep Learning Without the Formula Wall Ep. 13
+
+## Episode 13 description
+
+```
+One free interactive page with two real transformers running in your browser. Switch positional encoding off and watch the network lose track of who chased whom. Then see what a transformer block is made of, a real experiment on skip connections at 1 to 12 blocks, and the difference between an encoder and a decoder. No install, no code.
+
+The transformer: attention, plus order, stacked
+https://fleabyte26.github.io/Introduction-to-Deep-Learning/transformer.html
+
+All pages and source: https://github.com/Fleabyte26/Introduction-to-Deep-Learning
+
+Based on Dive into Deep Learning (d2l.ai), section 11.7. Previous episode on the idea behind it: attention.
+
+0:00 Same words, different order
+0:45 Where the question looks
+1:15 How order gets in
+1:54 One block, stacked: skip connections tested
+2:58 Encoder and decoder
+3:45 Attention, plus order, stacked
+```
+
+## Episode 13 tags
+
+transformer explained, transformer architecture, positional encoding, self-attention, multi-head attention, skip connections, residual connections, layer normalization, pre-norm vs post-norm, encoder decoder, BERT vs GPT, attention is all you need, causal mask, deep learning for beginners, dive into deep learning, d2l, large language models
