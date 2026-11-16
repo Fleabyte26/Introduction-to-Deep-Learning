@@ -1843,6 +1843,8 @@ keras tokenizer, pad_sequences, text to sequences, oov token, num_words, embeddi
 
 BrokenLabsFix · Kris Hornung · November 2026
 
+Watch the recorded video: https://www.youtube.com/watch?v=SdLY2syrjtU
+
 ## Episode 13 at a glance
 
 A 4-minute walkthrough of one page. Two small real transformers run in the page, one with positional encoding and one without. The episode shows that attention alone cannot tell "the cat chased the dog" from "the dog chased the cat", how position patterns fix that, what the block is made of, a real depth experiment on skip connections with an honest surprise at 12 blocks, and the difference between an encoder and a decoder.
