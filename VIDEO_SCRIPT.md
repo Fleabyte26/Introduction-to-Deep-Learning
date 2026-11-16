@@ -4,7 +4,7 @@ BrokenLabsFix · Kris Hornung · November 2026
 
 Watch the recorded video: https://www.youtube.com/watch?v=YQF4lMUv9d4
 
-This file holds fifteen scripts. Episode 1, below, covers the first three pages. [Episode 2](#episode-2-how-models-stop-memorizing-and-learn-faster) covers the six newer pages: weight decay, early stopping, dropout, SGD, minibatch size and momentum. [Episode 3](#episode-3-batch-normalization-you-can-drag) covers the batch normalization page. [Episode 4](#episode-4-four-ways-to-close-the-overfitting-gap) covers the regularization comparison page. [Episode 5](#episode-5-convolutions-channels-and-the-arrow) covers the three convolution pages. [Episode 6](#episode-6-image-augmentation-and-fine-tuning) covers the image augmentation and fine-tuning pages. [Episode 7](#episode-7-three-cnns-five-epochs) covers the three-CNN comparison page. [Episode 8](#episode-8-keras-in-five-moves-and-nine-ways-to-break-it) covers the Keras patterns page. [Episode 9](#episode-9-recurrent-neural-networks) covers the recurrent network page. [Episode 10](#episode-10-lstm-a-memory-with-gates) covers the LSTM page. [Episode 11](#episode-11-attention-do-not-remember-look-back) covers the attention page. [Episode 12](#episode-12-keras-for-text-from-words-to-a-model) covers the Keras-for-text page. [Episode 13](#episode-13-the-transformer-attention-plus-order-stacked) covers the transformer page. [Episode 14](#episode-14-vision-transformers-a-picture-as-a-sentence-of-patches) covers the vision transformer page. [Episode 15](#episode-15-pretraining-and-bert-learn-by-filling-in-the-blank) covers the pretraining and BERT page.
+This file holds sixteen scripts. Episode 1, below, covers the first three pages. [Episode 2](#episode-2-how-models-stop-memorizing-and-learn-faster) covers the six newer pages: weight decay, early stopping, dropout, SGD, minibatch size and momentum. [Episode 3](#episode-3-batch-normalization-you-can-drag) covers the batch normalization page. [Episode 4](#episode-4-four-ways-to-close-the-overfitting-gap) covers the regularization comparison page. [Episode 5](#episode-5-convolutions-channels-and-the-arrow) covers the three convolution pages. [Episode 6](#episode-6-image-augmentation-and-fine-tuning) covers the image augmentation and fine-tuning pages. [Episode 7](#episode-7-three-cnns-five-epochs) covers the three-CNN comparison page. [Episode 8](#episode-8-keras-in-five-moves-and-nine-ways-to-break-it) covers the Keras patterns page. [Episode 9](#episode-9-recurrent-neural-networks) covers the recurrent network page. [Episode 10](#episode-10-lstm-a-memory-with-gates) covers the LSTM page. [Episode 11](#episode-11-attention-do-not-remember-look-back) covers the attention page. [Episode 12](#episode-12-keras-for-text-from-words-to-a-model) covers the Keras-for-text page. [Episode 13](#episode-13-the-transformer-attention-plus-order-stacked) covers the transformer page. [Episode 14](#episode-14-vision-transformers-a-picture-as-a-sentence-of-patches) covers the vision transformer page. [Episode 15](#episode-15-pretraining-and-bert-learn-by-filling-in-the-blank) covers the pretraining and BERT page. [Episode 16](#episode-16-a-camera-on-the-line-from-video-to-one-row-per-fruit) covers the production line page.
 
 ## At a glance
 
@@ -2171,3 +2171,116 @@ Based on Dive into Deep Learning (d2l.ai), sections 11.9 and 15.8. Previous epis
 ## Episode 15 tags
 
 BERT explained, what does BERT stand for, bidirectional encoder representations from transformers, masked language model, pretraining, fine-tuning, self-supervised learning, BERT vs GPT, encoder vs decoder, CLS token, next sentence prediction, transformer, large language models, NLP, deep learning for beginners, dive into deep learning, d2l
+
+# Episode 16: A Camera on the Line: From Video to One Row per Fruit
+
+BrokenLabsFix · Kris Hornung · November 2026
+
+## Episode 16 at a glance
+
+A 4-minute walkthrough of one page. The series put to work on one problem: fruit on a sorting line, one a second, filmed at 30 frames a second, with a reject arm 30 minutes downstream. Drawn avocados move down a belt in the page and a small real convolutional network grades each one live. The episode follows one fruit from 360 MB a second of video to one row in a table, shows the JSON that carries a still to a large vision model and the JSON that comes back, and measures the trade-offs: the reject cut-off, how many frames to average, shutter speed, and how much training data.
+
+The fruit are drawings and the tracking is simulated; the small network, every accuracy figure and the sixteen recorded inspections are real. No company or product is described.
+
+Made the same way as Episodes 6 to 9: the page first, then this script, then the video rendered from the page with a synthetic narration voice.
+
+| Part | Time | What happens |
+| --- | --- | --- |
+| Hook | 0:00–0:38 | A sorting line, graded live |
+| Part 1 | 0:38–1:51 | From 360 MB a second to one row |
+| Part 2 | 1:51–2:40 | A picture goes out, JSON comes back |
+| Part 3 | 2:40–3:15 | Two kinds of mistake |
+| Part 4 | 3:15–4:02 | Three measured results |
+| Wrap-up | 4:02–4:17 | One row per fruit |
+
+Page: [line.html](https://fleabyte26.github.io/Introduction-to-Deep-Learning/line.html)
+
+Same format: left column is what to do on screen, right column is what to say. Every number is printed on the page.
+
+## Episode 16 hook (0:00–0:38)
+
+| Show | Say |
+| --- | --- |
+| The page, first panel. The line is running | "This is a sorting line. One avocado a second. A camera films them at 30 frames a second. And a small neural network, running in this page, grades every one as it passes." |
+| Point at the table filling up | "Each fruit becomes one row in a table. A reference number, made from its time stamp. Its length. Its grade. And a decision. Pass, or reject." |
+| Point at the reject arm on the right | "At the end of the line, half an hour later, an arm pushes the rejects into a bin. The arm has no camera. It only reads the table." |
+| Scroll to the top of the page | "This episode puts the whole series to work. From video, to one row per fruit. The fruit are drawings. The network, and every number, are real." |
+
+## Episode 16 Part 1: Follow one fruit (0:38–1:51)
+
+| Show | Say |
+| --- | --- |
+| Scroll to "Follow one fruit" | "Follow one fruit. Stage one, the camera. Four megapixels, 30 times a second. That is 360 megabytes every second. Far too much to keep. The first job is to throw almost all of it away." |
+| Click "Next stage" | "Stage two. The same fruit is in 30 frames. Tracking follows it from frame to frame. So it is counted once, and gets one identity." |
+| Click "Next stage" | "Stage three. Keep one frame of the thirty. The sharpest one, with the fruit in the centre. Crop it, and name it after the moment it was taken. Now it is a picture and a number. Not a video." |
+| Click "Next stage" | "Stage four. The small network. Twelve thousand weights. It is the convolutional network from the earlier episodes. It grades every fruit in a few thousandths of a second. And it says how sure it is." |
+| Click "Next stage" | "Stage five. The doubtful ones go to a large vision model that already exists. It takes seconds, not milliseconds. On this line that would be far too slow. But the arm is thirty minutes away. So there is time." |
+| Click "Next stage" twice | "Then the table, and the wait. At any moment, 1,800 graded fruit are travelling towards the arm. The reference number only finds the right one if they stay in order. That is the fragile link." |
+
+## Episode 16 Part 2: The second look (1:51–2:40)
+
+| Show | Say |
+| --- | --- |
+| Scroll to "The second look". Click the tenth still | "Here is one the small network got wrong. It said, good. Look closely. There is a small brown spot. At 32 by 32 pixels, that spot is about one pixel." |
+| Point at "What is sent" | "So the still goes for a second look. This is the request. It is JSON. The picture travels as text, inside an image block. Then the question. And at the bottom, output config: the exact fields we want back." |
+| Point at "What comes back" | "And this comes back. Condition: bruised. One small orange brown spot near the centre, about three millimetres. It goes straight into the table. This is what Claude wrote when it was shown this still." |
+| Point at the verdict | "On sixteen stills, the small network was right on eight. The large model, on all sixteen. That is not a fair race. Half were picked because the small one failed, and drawings are easy. The point is the division of work." |
+
+## Episode 16 Part 3: Where to draw the line (2:40–3:15)
+
+| Show | Say |
+| --- | --- |
+| Scroll to "Where to draw the line" | "Now the business question. The small network gives each fruit a number: how sure it is that the fruit is good. Where do you put the cut-off? At fifty percent, 250 bad fruit are shipped every shift. And 960 good ones are thrown away." |
+| Drag the cut-off up to 85% | "Raise the cut-off. Fewer bad fruit get through. But far more good fruit are wasted. No setting makes both numbers zero." |
+| Cut-off back to 50%. Drag the second-look band to 30% | "So do not let the small network decide the doubtful ones. Send those for a second look. That is 28 percent of the fruit. And 94 percent of the small network's mistakes are among them." |
+
+## Episode 16 Part 4: What helps, and what hurts (3:15–4:02)
+
+| Show | Say |
+| --- | --- |
+| Scroll to "What helps, and what hurts" | "Three measured results. One. Video gives you repeated looks for free. One frame per fruit: 93.9 percent. Nine frames: 96.1." |
+| Point at the shutter bars | "Two. The shutter. The belt moves, so a slow shutter smears the fruit. This small network copes down to one thirtieth of a second. At one eighth, it falls to 75 percent." |
+| Back to the line. Click shutter 1/8 s | "Watch it happen. Shutter at one eighth of a second. The small picture is smeared. Bruises and cuts disappear into the skin. No model can recover detail the camera never recorded." |
+| Shutter back to 1/1000. Point at the training bars | "Three. Data. With 25 labelled fruit, the network is right 64 percent of the time. With 500, 92 percent. A few hundred examples of each defect gets you most of the way." |
+
+## Episode 16 wrap-up (4:02–4:17)
+
+| Show | Say |
+| --- | --- |
+| Back to the running line | "So. A cheap camera. A small network on every fruit. A large model on the few that need it. A table with one row per fruit. And an arm that only reads the table. Everything in between is what this series has been about. Thank you for watching." |
+
+## Episode 16 recording checklist
+
+- [ ] Check the live link opens
+- [ ] Browser zoom at 125%, light mode, bookmarks bar hidden, notifications off
+- [ ] Publishing on BrokenLabsFix (Hindi/Bahasa audience, auto-dubbing on)
+
+## Episode 16 title options
+
+1. AI Quality Control on a Production Line: From Video to One Row per Item | Deep Learning Without the Formula Wall Ep. 16
+2. Video Analytics for Quality Control, Explained With a Live Demo | Deep Learning Without the Formula Wall Ep. 16
+3. How AI Inspects a Production Line: Small Model, Large Model, and JSON | Deep Learning Without the Formula Wall Ep. 16
+
+## Episode 16 description
+
+```
+One free interactive page that puts the whole series to work. Drawn avocados move down a sorting line and a small real neural network grades each one live in your browser. Follow one fruit from 30 frames a second of video to a single row in a table, see the JSON that sends a still to a large vision model and the JSON that comes back, and move the reject cut-off to see the trade-off. No install, no code.
+
+A camera on the line: from video to one row per fruit
+https://fleabyte26.github.io/Introduction-to-Deep-Learning/line.html
+
+All pages and source: https://github.com/Fleabyte26/Introduction-to-Deep-Learning
+
+Builds on the earlier episodes: convolutional networks, confusion matrices, how much data a network needs, vision transformers and pretrained models. The fruit are drawings; the network and all results are real.
+
+0:00 A sorting line, graded live
+0:38 Follow one fruit: from video to a row
+1:51 The second look: JSON out, JSON back
+2:40 Where to draw the line
+3:15 What helps, and what hurts
+4:02 One row per fruit
+```
+
+## Episode 16 tags
+
+video analytics, quality control AI, visual inspection, production line AI, computer vision, defect detection, convolutional neural network, vision language model, JSON structured output, image API, edge AI, two-stage inference, confusion matrix, false reject, machine vision, food sorting, deep learning for beginners
