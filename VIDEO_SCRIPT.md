@@ -2176,6 +2176,8 @@ BERT explained, what does BERT stand for, bidirectional encoder representations 
 
 BrokenLabsFix · Kris Hornung · November 2026
 
+Watch the recorded video: https://www.youtube.com/watch?v=amnrI4AuNoc
+
 ## Episode 16 at a glance
 
 A 4-minute walkthrough of one page. The series put to work on one problem: fruit on a sorting line, one a second, filmed at 30 frames a second, with a reject arm 30 minutes downstream. Drawn avocados move down a belt in the page and a small real convolutional network grades each one live. The episode follows one fruit from 360 MB a second of video to one row in a table, shows the JSON that carries a still to a large vision model and the JSON that comes back, and measures the trade-offs: the reject cut-off, how many frames to average, shutter speed, and how much training data.
