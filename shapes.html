@@ -1,0 +1,282 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Shapes First: The Numpy Moves Behind a Transformer</title>
+<style>
+  :root {
+    --bg:#fbfaf7; --ink:#1d1d1b; --quiet:#6b6a65; --grid:#e4e2dc; --axis:#9a978f; --card:#fff;
+    --curve:#2f6fb3; --ball:#c2410c; --good:#2e7d4f; --warn:#b7791f; --bad:#b42318; --pad:#7a4fb5; --teal:#1f8a8a;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root { --bg:#1b1b1a; --ink:#ecebe7; --quiet:#a3a19b; --grid:#34332f; --axis:#6f6d67; --card:#242422;
+      --curve:#6aa6e8; --ball:#f08a4b; --good:#5fbf86; --warn:#e0b04f; --bad:#f2786d; --pad:#b497e6; --teal:#5cc4c4; }
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.5 ui-sans-serif,system-ui,-apple-system,"Segoe UI",sans-serif}
+  main{max-width:900px;margin:0 auto;padding:32px 20px 48px}
+  h1{font-size:26px;margin:0 0 6px;letter-spacing:-.01em}
+  h2{font-size:19px;margin:30px 0 10px}
+  .lead{color:var(--quiet);margin:0 0 22px}
+  .panel{background:var(--card);border:1px solid var(--grid);border-radius:12px;padding:16px}
+  button{font:inherit;padding:6px 14px;border-radius:8px;border:1px solid var(--grid);background:var(--card);color:var(--ink);cursor:pointer}
+  button.primary{background:var(--curve);color:#fff;border-color:var(--curve);font-weight:600}
+  button.chip{font-size:14px;padding:5px 12px}
+  button.chip.on{border-color:var(--curve);color:var(--curve);font-weight:600;box-shadow:inset 0 0 0 1px var(--curve)}
+  button.chip.done{border-color:var(--good);color:var(--good)}
+  .chips{display:flex;gap:8px;flex-wrap:wrap;margin:0 0 14px}
+  .buttons{display:flex;gap:8px;margin-top:12px;flex-wrap:wrap;align-items:center}
+  .mono{font:14.5px/1.75 ui-monospace,SFMono-Regular,Menlo,Consolas,monospace}
+  .code{border:1px solid var(--grid);border-radius:10px;background:var(--bg);padding:10px 0;overflow-x:auto}
+  .code .ln{display:block;padding:0 14px;white-space:pre;border-left:3px solid transparent}
+  .code.pick .ln{cursor:pointer}
+  .code.pick .ln:hover{background:color-mix(in srgb,var(--curve) 8%,transparent)}
+  .code .ln.miss{background:color-mix(in srgb,var(--warn) 14%,transparent);border-left-color:var(--warn)}
+  .code .ln.hit{background:color-mix(in srgb,var(--bad) 12%,transparent);border-left-color:var(--bad)}
+  .code .ln.out{color:var(--quiet)}
+  .code .ln.sep{border-top:1px dashed var(--grid);margin-top:6px;padding-top:6px;color:var(--quiet)}
+  .tok{cursor:pointer;border-radius:4px;padding:1px 2px;border-bottom:2px solid color-mix(in srgb,var(--curve) 45%,transparent)}
+  .tok.on{background:var(--curve);color:#fff;border-bottom-color:var(--curve)}
+  .big{font-size:17px;line-height:2.1;padding:14px 16px;white-space:pre;overflow-x:auto}
+  .flow{display:grid;grid-template-columns:repeat(5,1fr);gap:8px;margin-bottom:14px}
+  .move{border:1px solid var(--grid);border-radius:10px;padding:10px 12px;background:var(--bg);cursor:pointer;text-align:left}
+  .move .n{font-size:12px;color:var(--quiet)} .move .t{font-weight:700}
+  .move.on{border-color:var(--curve);box-shadow:inset 0 0 0 1px var(--curve)} .move.on .t{color:var(--curve)}
+  .io{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:12px}
+  .io div{border:1px solid var(--grid);border-radius:10px;padding:10px 14px;background:var(--bg);font-size:14.5px}
+  .io b{display:block;font-size:12.5px;color:var(--quiet);font-weight:600;margin-bottom:2px}
+  .verdict{margin-top:14px;padding:12px 14px;border-radius:10px;border-left:4px solid var(--good);
+    background:color-mix(in srgb,var(--good) 10%,transparent)}
+  .verdict.warn{border-left-color:var(--warn);background:color-mix(in srgb,var(--warn) 12%,transparent)}
+  .verdict.bad{border-left-color:var(--bad);background:color-mix(in srgb,var(--bad) 10%,transparent)}
+  .err{margin-top:12px;border:1px solid color-mix(in srgb,var(--bad) 40%,var(--grid));border-radius:10px;padding:10px 14px;
+    background:color-mix(in srgb,var(--bad) 7%,transparent);white-space:pre-wrap;color:var(--bad)}
+  .fix{margin-top:12px;border:1px solid color-mix(in srgb,var(--good) 40%,var(--grid));border-radius:10px;padding:10px 14px;
+    background:color-mix(in srgb,var(--good) 7%,transparent);white-space:pre;overflow-x:auto}
+  .cap{font-size:12.5px;color:var(--quiet);font-weight:600;margin:14px 0 4px}
+  .score{font-size:14px;color:var(--quiet);margin-left:auto}
+  .habits{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
+  .habit{border:1px solid var(--grid);border-radius:10px;padding:12px 14px;background:var(--bg);font-size:14.5px}
+  .habit b{display:block;margin-bottom:4px}
+  .note{color:var(--quiet);font-size:14px;margin-top:12px}
+  p.body{font-size:15px;margin:10px 0}
+  code{font:13.5px ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;background:var(--bg);border:1px solid var(--grid);border-radius:5px;padding:1px 5px}
+  [hidden]{display:none!important}
+  @media (max-width:720px){ .flow{grid-template-columns:repeat(2,1fr)} .io,.habits{grid-template-columns:1fr} }
+  .ctrls{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin:12px 0 4px}
+  .ctrl label{display:block;font-size:12.5px;color:var(--quiet);margin-bottom:2px} .ctrl .val{font-weight:650;color:var(--ink)}
+  .ctrl input[type=range]{width:100%;accent-color:var(--curve)}
+  input[type=text]{font:inherit;width:100%;padding:7px 10px;border-radius:8px;border:1px solid var(--grid);background:var(--bg);color:var(--ink)}
+  .seg{display:flex;gap:0} .seg button{border-radius:0;font-size:13px;padding:4px 10px} .seg button:first-child{border-radius:8px 0 0 8px} .seg button:last-child{border-radius:0 8px 8px 0;border-left:0}
+  .seg button.on{background:var(--curve);color:#fff;border-color:var(--curve)}
+  .toks{display:flex;flex-wrap:wrap;gap:6px;margin:6px 0 2px}
+  .tk{border:1px solid var(--grid);border-radius:7px;padding:4px 8px;text-align:center;background:var(--bg);min-width:44px}
+  .tk b{display:block;font:700 16px ui-monospace,SFMono-Regular,Menlo,Consolas,monospace} .tk span{font-size:12px;color:var(--quiet)}
+  .tk.oov{border-color:var(--ball)} .tk.oov b{color:var(--ball)} .tk.pad{border-style:dashed} .tk.pad b{color:var(--axis)} .tk.cut{opacity:.35;text-decoration:line-through}
+  .vocab{display:flex;flex-wrap:wrap;gap:5px;font:13px ui-monospace,SFMono-Regular,Menlo,Consolas,monospace}
+  .vocab span{border:1px solid var(--grid);border-radius:6px;padding:2px 7px;background:var(--bg)} .vocab span.out{opacity:.4;text-decoration:line-through}
+  .code .ln.chg{background:color-mix(in srgb,var(--curve) 13%,transparent);border-left-color:var(--curve)}
+  .shapes{display:flex;align-items:stretch;gap:6px;margin:14px 0 4px;flex-wrap:wrap}
+  .shape{flex:1;min-width:120px;border:1px solid var(--grid);border-radius:10px;padding:8px 10px;background:var(--bg);text-align:center}
+  .shape.mid{border-color:var(--curve);box-shadow:inset 0 0 0 1px var(--curve)}
+  .shape .n{font-size:12px;color:var(--quiet)} .shape .s{font:700 14.5px ui-monospace,SFMono-Regular,Menlo,Consolas,monospace} .shape .p{font-size:12.5px;color:var(--quiet)}
+  .arrow{align-self:center;color:var(--axis);font-size:18px}
+  table{width:100%;border-collapse:collapse;font-size:14.5px;margin-top:6px}
+  th,td{text-align:left;padding:6px 10px;border-bottom:1px solid var(--grid)} th{color:var(--quiet);font-weight:600;font-size:13px}
+  td.num,th.num{text-align:right;font-variant-numeric:tabular-nums} tr.on td{background:color-mix(in srgb,var(--curve) 9%,transparent);font-weight:600}
+  .two{display:grid;grid-template-columns:1fr 1fr;gap:14px} .two .cap{margin-top:0}
+  @media (max-width:720px){ .ctrls{grid-template-columns:1fr 1fr} .two{grid-template-columns:1fr} }
+  .fbox{margin-top:12px;padding:12px 14px;border:1px solid var(--grid);border-radius:10px;background:var(--bg);font:14.5px/1.8 ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;white-space:pre;overflow-x:auto}
+  .grid4{display:grid;grid-template-columns:repeat(4,44px);gap:3px} .cellx{height:44px;border-radius:6px;display:grid;place-items:center;font:700 15px ui-monospace,Menlo,monospace;color:#fff}
+  .rowsx{display:grid;gap:6px} .rowsx div{display:grid;grid-template-columns:repeat(4,44px);gap:3px}
+  .tri{display:grid;grid-template-columns:auto auto auto;gap:34px;align-items:start;justify-content:start}
+  .slide label{display:block;font-size:12.5px;color:var(--quiet)} .slide input{width:100%;accent-color:var(--curve)} .slide .val{font-weight:650;color:var(--ink)}
+  svg text{font:13px system-ui,sans-serif;fill:var(--ink)} svg .q{fill:var(--quiet)}
+  @media (max-width:720px){ .tri{grid-template-columns:1fr} }
+</style>
+</head>
+<body>
+<main>
+  <h1>Shapes first: the numpy moves behind a transformer, and nine ways to break them</h1>
+  <p class="lead">Every part of a transformer is a few lines of array code, and almost every mistake in those lines is a mistake about shape: how many rows, how many columns, and which axis is which. This page shows the three moves that matter most, on small examples made for it. Then a real comparison of a vision transformer and a convolutional network after 3 passes and after 30. It ends with nine real typing mistakes from one afternoon. One of them gives no error at all.</p>
+
+  <div class="panel">
+    <p class="body">A picture of 4 by 4 pixels, to be cut into four squares of 2 by 2. Each square should come out as one row of four numbers. There are two ways to write it that give exactly the same shape. Only one is right.</p>
+    <div class="chips" id="modeChips"><button class="chip" data-v="0">Reshape only</button><button class="chip" data-v="1">Reshape, swap two axes, reshape</button></div>
+    <div class="tri" style="margin-top:12px">
+      <div><div class="cap" style="margin-top:0">The picture</div><div class="grid4" id="pic"></div></div>
+      <div><div class="cap" style="margin-top:0">The four rows that come out</div><div class="rowsx" id="rows"></div></div>
+      <div><div class="cap" style="margin-top:0">Put the rows back as squares</div><div class="grid4" id="back"></div></div>
+    </div>
+    <div class="fbox" id="cutFormula"></div>
+    <div class="verdict" id="cutVerdict"></div>
+  </div>
+
+  <h2>Two small words that prevent most shape errors</h2>
+  <div class="panel">
+    <div class="two">
+      <div>
+        <div class="cap">-1 means "work this one out for me"</div>
+        <div class="slide"><label>Pictures in the table <span class="val" id="vn"></span></label><input id="n" type="range" min="1" max="8" value="6"></div>
+        <div class="chips" style="margin-top:8px" id="reChips"><button class="chip" data-v="-1">reshape(-1, 4, 4)</button><button class="chip" data-v="1">reshape(1, 4, 4)</button></div>
+        <div class="fbox" id="reFormula"></div>
+      </div>
+      <div>
+        <div class="cap">keepdims keeps the axis you averaged over</div>
+        <p class="note" style="margin:0 0 8px">Three rows of eight numbers. Subtract each row's own average from that row.</p>
+        <div class="chips" id="kdChips"><button class="chip" data-v="0">mean(axis=-1)</button><button class="chip" data-v="1">mean(axis=-1, keepdims=True)</button></div>
+        <div class="fbox" id="kdFormula"></div>
+      </div>
+    </div>
+    <div class="verdict" id="twoVerdict"></div>
+  </div>
+
+  <h2>Three passes, then thirty</h2>
+  <div class="panel">
+    <p class="body">A small vision transformer (39,370 weights) and a small convolutional network (220,234 weights), trained on the same 10,000 clothing pictures and checked on 2,000 others. The dots are one real run of three passes. The lines are a longer experiment: 30 passes, two random starts, averaged.</p>
+    <div class="slide"><label>Passes through the training pictures <span class="val" id="vp"></span></label><input id="p" type="range" min="1" max="30" value="3"></div>
+    <svg id="chart" role="img" aria-label="Accuracy by pass"></svg>
+    <div class="fbox" id="runFormula"></div>
+    <div class="verdict" id="runVerdict"></div>
+  </div>
+
+  <h2>Spot the bug</h2>
+  <div class="panel">
+    <div class="chips" id="bugNav" role="group" aria-label="Bugs"></div>
+    <p class="body" id="bugAsk"></p>
+    <div class="code mono pick" id="bugCode"></div>
+    <div class="buttons"><button id="reveal">Show me</button><button id="nextBug" class="primary">Next bug</button><span class="score" id="score"></span></div>
+    <div class="verdict warn" id="bugHint" hidden></div>
+    <div id="bugAnswer" hidden>
+      <div class="cap">What Python says</div>
+      <div class="err mono" id="bugErr"></div>
+      <div class="cap">The fix</div>
+      <div class="fix mono" id="bugFix"></div>
+      <div class="verdict" id="bugRule"></div>
+    </div>
+  </div>
+
+  <h2>Three habits for array code</h2>
+  <div class="panel">
+    <div class="habits">
+      <div class="habit"><b>Print the shape after every step</b>One line, <code>print(x.shape)</code>, after each move. A wrong shape caught on the line that made it takes seconds to fix. The same wrong shape caught five steps later arrives as an error about a layer you never wrote.</div>
+      <div class="habit"><b>A correct shape is not a correct result</b>The first panel has two versions with identical shapes, and one of them is scrambled. For anything that cuts or rearranges, do the reverse and compare with what you started with, or draw one example and look at it.</div>
+      <div class="habit"><b>When you copy a cell, change the data names first</b>A leftover name from the cell above still exists, so Python cannot warn you. It will train the new model on the old model's data, or check it against the wrong pictures.</div>
+    </div>
+    <p class="note">The code on this page is small examples written for it, and every error message is the real output of Python 3.13, numpy and Keras 3 for that exact mistake. The three-pass dots are one real notebook run. The 30-pass lines are a separate experiment on a different random sample of 10,000 Fashion-MNIST pictures, so the two do not match exactly. Goes with Episodes 13 and 14, and sections 11.7 and 11.8 of <i>Dive into Deep Learning</i>.</p>
+  </div>
+</main>
+
+<script>
+(function () {
+  const $ = id => document.getElementById(id), NS='http://www.w3.org/2000/svg', D={"vit":[0.6498,0.7072,0.7288,0.7495,0.7562,0.7568,0.771,0.774,0.773,0.779,0.7845,0.7868,0.787,0.794,0.7883,0.787,0.8017,0.8085,0.8093,0.8085,0.8055,0.808,0.811,0.8107,0.8155,0.8108,0.8177,0.8173,0.8173,0.8135],"cnn":[0.808,0.8438,0.8465,0.8622,0.8653,0.8725,0.8782,0.8762,0.88,0.8838,0.8827,0.8825,0.8815,0.8858,0.8822,0.888,0.8905,0.8895,0.8887,0.89,0.8852,0.8885,0.886,0.8838,0.8945,0.8865,0.8862,0.885,0.8875,0.8895],"vitT":[0.3666,0.6462,0.6999,0.7344,0.7507,0.7602,0.7714,0.7752,0.7829,0.7897,0.7942,0.7974,0.8012,0.8036,0.8106,0.8087,0.811,0.8136,0.816,0.8216,0.8206,0.8245,0.8247,0.8284,0.8279,0.8311,0.8347,0.8372,0.8378,0.8395],"cnnT":[0.6721,0.7984,0.8296,0.8449,0.8592,0.8662,0.875,0.8839,0.8879,0.8944,0.8965,0.9026,0.9082,0.91,0.9163,0.9182,0.9222,0.9278,0.9285,0.9337,0.9386,0.937,0.944,0.9439,0.9456,0.9506,0.9524,0.9546,0.9545,0.958],"lab":{"vit":[0.558,0.6645,0.6925],"cnn":[0.7665,0.823,0.839]}};
+  const pc = v => (v*100).toFixed(1)+'%';
+  const el = (t,a,txt) => { const e=document.createElementNS(NS,t); for (const k in a) e.setAttribute(k,a[k]); if (txt!==undefined) e.textContent=txt; return e; };
+  const chips=(id,get,set,after)=>{ const paint=()=>[...$(id).children].forEach(b=>b.classList.toggle('on',b.dataset.v===String(get()))); [...$(id).children].forEach(b=>b.onclick=()=>{ set(b.dataset.v); paint(); after(); }); paint(); };
+  const lines = (box, arr, cls) => { box.replaceChildren(); arr.forEach((t,i)=>{ const s=document.createElement('span'); s.className='ln '+(cls?cls(i,t):''); s.textContent=t||' '; s.dataset.i=i; box.append(s); }); };
+
+  /* ---------- panel 1: cutting a picture into squares ---------- */
+  const COL=['#2f6fb7','#c8642b','#3d8f4f','#8a4fb0'], quad=i=>(Math.floor(i/8))*2+(Math.floor((i%4)/2));
+  const cell=i=>{ const d=document.createElement('div'); d.className='cellx'; d.style.background=COL[quad(i)]; d.textContent=i; return d; };
+  let mode=0;
+  function cut(){ const rows = mode ? [[0,1,4,5],[2,3,6,7],[8,9,12,13],[10,11,14,15]] : [[0,1,2,3],[4,5,6,7],[8,9,10,11],[12,13,14,15]];
+    $('pic').replaceChildren(...[...Array(16).keys()].map(cell));
+    $('rows').replaceChildren(...rows.map(r=>{ const d=document.createElement('div'); r.forEach(i=>d.append(cell(i))); return d; }));
+    const back=new Array(16); rows.forEach((r,k)=>{ const R0=Math.floor(k/2)*2, C0=(k%2)*2; r.forEach((v,j)=>{ back[(R0+Math.floor(j/2))*4+C0+(j%2)]=v; }); });
+    $('back').replaceChildren(...back.map(cell));
+    $('cutFormula').innerHTML = mode ? 'start                    (4, 4)\ncut into a grid          (2, 2, 2, 2)   square-row, pixel-row, square-column, pixel-column\n<b>swap the two middle axes (2, 2, 2, 2)</b>   square-row, square-column, pixel-row, pixel-column\nflatten                  <b>(4, 4)</b>         four squares, four pixels each'
+      : 'start                    (4, 4)\ncut into a grid          (2, 2, 2, 2)   square-row, pixel-row, square-column, pixel-column\nflatten                  <b>(4, 4)</b>         four rows, four numbers each';
+    const V=$('cutVerdict');
+    if(mode){ V.className='verdict'; V.textContent='Now each row holds one colour: 0, 1, 4, 5 is the top-left square. Put back together, the picture is the original. The swap is the whole trick. After cutting, the axes are in the order square-row, pixel-row, square-column, pixel-column. Flattening only joins neighbours, so the two "which square" axes have to be brought next to each other first.'; }
+    else { V.className='verdict bad'; V.textContent='The shape is right: four rows of four. The content is wrong. The first row is 0, 1, 2, 3, which is a strip across the top of the picture, half blue and half orange, not a square. Put the rows back as squares and the picture is scrambled. A test that only checks the shape passes this.'; } }
+  chips('modeChips',()=>mode,v=>mode=+v,cut);
+
+  /* ---------- panel 2: -1 and keepdims ---------- */
+  let re=-1, kd=0;
+  function two(){ const n=+$('n').value; $('vn').textContent=n;
+    const ok = re===-1 || n===1;
+    $('reFormula').innerHTML='table.shape              = ('+n+', 16)\ntable.reshape('+re+', 4, 4)'+(re===-1?'':' ')+'  → '+(ok?'<b>('+n+', 4, 4)</b>':'<b style="color:var(--bad)">ValueError</b>\ncannot reshape array of size '+(n*16)+'\ninto shape (1,4,4)');
+    $('kdFormula').innerHTML='x.shape        = (3, 8)\naverage.shape  = <b>'+(kd?'(3, 1)':'(3,)')+'</b>\nx - average    → '+(kd?'<b>(3, 8)</b>   each row minus its own average':'<b style="color:var(--bad)">ValueError</b>\noperands could not be broadcast\ntogether with shapes (3,8) (3,)');
+    const V=$('twoVerdict');
+    if(!ok){ V.className='verdict bad'; V.textContent='reshape(1, 4, 4) asks for exactly one picture. There are '+n+' in the table, '+(n*16)+' numbers, and one picture holds 16. With -1 in that place, numpy counts for you. Drag the slider to 1 and the same line works, which is how this mistake hides in a quick test.'; }
+    else if(!kd){ V.className='verdict bad'; V.textContent='Averaging over an axis removes it. Three rows of eight become three plain numbers, shape (3,). numpy then tries to line those three up against the eight columns, and cannot. keepdims=True keeps the axis with length 1, shape (3, 1): one average per row, standing in a column, and the subtraction works.'; }
+    else { V.className='verdict'; V.textContent='Both lines work. In each case one small word told numpy which axis you meant: -1 for "however many there are", and keepdims for "leave the axis where it was". Most shape errors in this kind of code are one of these two.'; } }
+  $('n').oninput=two; chips('reChips',()=>re,v=>re=+v,two); chips('kdChips',()=>kd,v=>kd=+v,two);
+
+  /* ---------- panel 3: 3 passes and 30 ---------- */
+  function run(){ const p=+$('p').value; $('vp').textContent=p;
+    const s=$('chart'), W=860, H=280, L=54, Rr=150, T=14, B=40, lo=.5, hi=.95, X=e=>L+(e-1)*(W-L-Rr)/29, Y=v=>T+(1-(v-lo)/(hi-lo))*(H-T-B); s.setAttribute('viewBox','0 0 '+W+' '+H); s.replaceChildren();
+    for(let v=.5;v<=.951;v+=.1){ s.append(el('line',{x1:L,x2:W-Rr,y1:Y(v),y2:Y(v),stroke:'var(--grid)'})); s.append(el('text',{x:L-8,y:Y(v)+4,'text-anchor':'end',class:'q'},Math.round(v*100)+'%')); }
+    [1,5,10,15,20,25,30].forEach(e=>s.append(el('text',{x:X(e),y:H-18,'text-anchor':'middle',class:'q'},e))); s.append(el('text',{x:(L+W-Rr)/2,y:H-2,'text-anchor':'middle',class:'q'},'passes'));
+    s.append(el('line',{x1:X(p),x2:X(p),y1:T,y2:H-B,stroke:'var(--ink)','stroke-dasharray':'4 4'}));
+    [['cnn','var(--curve)','convolutional network'],['vit','var(--ball)','vision transformer']].forEach(([k,c,lab])=>{
+      s.append(el('path',{d:D[k].map((v,i)=>(i?'L':'M')+X(i+1)+' '+Y(v)).join(' '),stroke:c,'stroke-width':3,fill:'none'}));
+      D.lab[k].forEach((v,i)=>s.append(el('circle',{cx:X(i+1),cy:Y(v),r:5.5,fill:'var(--panel,#fff)',stroke:c,'stroke-width':2.5})));
+      s.append(el('circle',{cx:X(p),cy:Y(D[k][p-1]),r:5,fill:c})); s.append(el('text',{x:X(30)+12,y:Y(D[k][29])+4,fill:c,'font-weight':600},lab)); });
+    const v=D.vit[p-1], c=D.cnn[p-1];
+    $('runFormula').innerHTML='                              transformer      convolutional\none real run, passes 1 to 3   55.8  66.5  <b>69.3%</b>   76.7  82.3  <b>83.9%</b>\nlonger experiment, pass '+String(p).padStart(2)+'    <b>'+pc(v)+'</b>             <b>'+pc(c)+'</b>\non its own training pictures  '+pc(D.vitT[p-1])+'             '+pc(D.cnnT[p-1])+'\ngap at this pass              '+((c-v)*100).toFixed(1)+' points';
+    const V=$('runVerdict'), g3=(D.cnn[2]-D.vit[2])*100, g30=(D.cnn[29]-D.vit[29])*100;
+    if(p<=3){ V.className='verdict warn'; V.textContent='After three passes the convolutional network is far ahead: 83.9% against 69.3% in the single run, and '+g3.toFixed(0)+' points apart in the longer experiment. But look at the slope. The transformer is still climbing steeply. Three passes is not a verdict on it. It is a photograph of a network that has barely started.'; }
+    else if(p<15){ V.className='verdict warn'; V.textContent='By pass '+p+' the transformer has reached '+pc(v)+' and the gap is '+((c-v)*100).toFixed(1)+' points. It learns more slowly because it starts with no idea that neighbouring pixels belong together. The convolutional network was built knowing it.'; }
+    else { V.className='verdict'; V.textContent='At pass '+p+': transformer '+pc(v)+', convolutional network '+pc(c)+'. The gap shrank from '+g3.toFixed(0)+' points to '+g30.toFixed(0)+' by the end, and then stopped shrinking. More passes helped the transformer a lot, and did not make it win. Notice the training line: the convolutional network scores '+pc(D.cnnT[p-1])+' on its own training pictures, so it is memorising. The transformer is not. On 10,000 pictures the convolutional network is still the better tool, with five times the weights.'; } }
+  $('p').oninput=run;
+
+  /* ---------- panel 4: spot the bug ---------- */
+  const BUGS=[
+    { name:'The underscore that ate "return"', ask:'This function stops with an error when it is called. Click the line that is wrong.',
+      code:['def double(a):','    out = a * 2','    return_out, a','','double(3)'], bad:2,
+      err:"NameError: name 'return_out' is not defined", fix:'    return out, a',
+      rule:'One underscore where a space belongs, and the word return is gone. What is left is a made-up name, return_out, and Python can only say it has never heard of it. When a "not defined" name starts with a Python word, look for a missing space.' },
+    { name:'One name, two spellings', ask:'Click the line that is wrong. Read the names letter by letter.',
+      code:['def scale(x):','    normalized = x / x.max()','    return normailized * 2'], bad:2,
+      err:"NameError: name 'normailized' is not defined", fix:'    return normalized * 2',
+      rule:'Created as normalized, used as normailized. The eye reads both as the same word. Python does not. Long names are worth copying with a double-click instead of retyping.' },
+    { name:'One picture, or all of them', ask:'Six pictures of 16 numbers each, to be turned back into 4 by 4 squares. Click the line that is wrong.',
+      code:['rows = np.ones((6, 16))','pictures = rows.reshape(1, 4, 4)'], bad:1,
+      err:'ValueError: cannot reshape array of size 96 into shape (1,4,4)', fix:'pictures = rows.reshape(-1, 4, 4)',
+      rule:'A minus sign is missing. reshape(1, 4, 4) means exactly one picture. reshape(-1, 4, 4) means as many as there are. The message gives the clue: 96 numbers do not fit into 16.' },
+    { name:'Lowercase, with a prefix', ask:'Layers are reached through a shortcut, L. Click the line that is wrong.',
+      code:['L = tf.keras.layers','inputs = L.Input(shape=(9, 4))','x = L.dense(8)(inputs)'], bad:2,
+      err:"AttributeError: module 'keras._tf_keras.keras.layers' has no attribute 'dense'", fix:'x = L.Dense(8)(inputs)',
+      rule:'The same slip as in the earlier code episodes, a lowercase layer name, but a different message. Written alone, dense gives "name is not defined". Written as L.dense, it gives "has no attribute". Same cause, same fix: Keras layer names start with a capital.' },
+    { name:'A capital that should not be there', ask:'Click the line that is wrong. Then read the error message to the end.',
+      code:['model.compile(','    optimizer="adam",','    Loss="mse",',')'], bad:2,
+      err:"TypeError: Trainer.compile() got an unexpected keyword argument 'Loss'. Did you mean 'loss'?", fix:'    loss="mse",',
+      rule:'Setting names are all lowercase. This time Python does half the work: the message ends with "Did you mean \'loss\'?" It is worth reading error messages to the last word. The answer is sometimes sitting there.' },
+    { name:'Dots where underscores belong', ask:'The model is called model_small. Click the line that is wrong.',
+      code:['model_small = tf.keras.Sequential([L.Input(shape=(4,)), L.Dense(2)])','history.small = model.small.fit(x, y)'], bad:1,
+      err:"NameError: name 'model' is not defined", fix:'history_small = model_small.fit(x, y)',
+      rule:'An underscore joins two words into one name. A dot means "the thing inside". So model.small asks for something called small inside something called model, and there is no model.' },
+    { name:'The name left over from the cell above', ask:'A convolutional network for pictures of 8 by 8. Every name here exists. Click the line that is wrong.',
+      code:['rows = np.ones((10, 4, 16))        # patches, made earlier for another model','','cnn = tf.keras.Sequential([L.Input(shape=(8, 8, 1)), L.Conv2D(4, 3),','                           L.Flatten(), L.Dense(2, activation="softmax")])','cnn.compile(optimizer="adam", loss="sparse_categorical_crossentropy")','cnn.fit(rows, labels)'], bad:5,
+      err:"ValueError: Exception encountered when calling Sequential.call().\nInput 0 with name 'None' of layer 'dense' is incompatible with the layer: expected axis -1\nof input shape to have value 144, but received input with shape (None, 112)", fix:'cnn.fit(pictures, labels)',
+      rule:'The network was fed the patches made for a different model. The name rows exists, so there is no "not defined". Instead the error comes from deep inside, names a layer you did not make a mistake in, and quotes two numbers you never typed. When a shape error talks about numbers you do not recognise, check what you fed in before you check the model.' },
+    { name:'Checked against the wrong pictures', ask:'Training data and test data are prepared the same way. Click the line that is wrong.',
+      code:['train_x = prepare(train_pictures)','test_x = prepare(train_pictures)','','model.fit(train_x, train_y, validation_data=(test_x, test_y))'], bad:1,
+      err:"If the two sets have different sizes:\nValueError: Data cardinality is ambiguous. Make sure all arrays contain the same number of samples.\n'x' sizes: 40   'y' sizes: 10\n\nIf they happen to be the same size:\n(no error)", fix:'test_x = prepare(test_pictures)',
+      rule:'The second line was copied from the first and only half changed. If the two sets differ in size, Keras notices that 40 pictures came with 10 answers, and stops. If they are the same size, nothing stops it, and the model is checked against training pictures paired with the wrong answers. Being saved by a size difference is luck, not a safeguard.' },
+    { name:'One step too many', ask:'This should give back the mixed result and the shares. It runs with no error. Click the line that is wrong.',
+      code:['def mix(shares, values):            # shares (4, 4)   values (4, 8)','    out = shares @ values','    return out, shares @ values','','out, shares = mix(shares, values)','print(shares.shape)','output:','(4, 8)'], bad:2, also:[7], out:[6,7], sep:[6],
+      err:'(no error)', fix:'    return out, shares',
+      rule:'The multiplication was already done on the line above, and then written again in the return. Nothing fails. The function quietly hands back the wrong thing under the right name. The only sign is the shape: (4, 8) where the shares are (4, 4). This is what the first habit below is for.' },
+  ];
+  let bg=0; const found=new Set(), shown=new Set();
+  BUGS.forEach((b,i)=>{ const c=document.createElement('button'); c.className='chip'; c.textContent=(i+1)+' · '+b.name; c.onclick=()=>{ bg=i; bug(); }; $('bugNav').append(c); });
+  function bug(reveal){ const b=BUGS[bg], open=reveal||found.has(bg)||shown.has(bg);
+    [...$('bugNav').children].forEach((c,i)=>{ c.classList.toggle('on',i===bg); c.classList.toggle('done',found.has(i)&&i!==bg); });
+    $('bugAsk').textContent=b.ask;
+    lines($('bugCode'),b.code,(i)=>((b.out||[]).includes(i)?'out ':'')+((b.sep||[]).includes(i)?'sep ':'')+(open&&(i===b.bad||(b.also||[]).includes(i))?'hit':''));
+    [...$('bugCode').children].forEach(s=>s.onclick=()=>{ const i=+s.dataset.i; if((b.sep||[]).includes(i)||!b.code[i]) return;
+      if(i===b.bad||(b.also||[]).includes(i)){ found.add(bg); bug(true); }
+      else { [...$('bugCode').children].forEach(x=>x.classList.remove('miss')); s.classList.add('miss'); $('bugHint').hidden=false; $('bugHint').textContent='Not that line. It is correct as written. Check spelling, capitals, minus signs, and which data each line uses.'; } });
+    $('bugHint').hidden=true; $('bugAnswer').hidden=!open; $('bugErr').textContent=b.err; $('bugFix').textContent=b.fix; $('bugRule').textContent=b.rule;
+    $('score').textContent='Found '+found.size+' of '+BUGS.length; $('reveal').hidden=open; }
+  $('reveal').onclick=()=>{ shown.add(bg); bug(true); };
+  $('nextBug').onclick=()=>{ bg=(bg+1)%BUGS.length; bug(); };
+
+  cut(); two(); run(); bug();
+})();
+</script>
+</body>
+</html>
