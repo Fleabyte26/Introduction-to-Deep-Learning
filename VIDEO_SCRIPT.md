@@ -4,7 +4,7 @@ BrokenLabsFix · Kris Hornung · November 2026
 
 Watch the recorded video: https://www.youtube.com/watch?v=YQF4lMUv9d4
 
-This file holds fourteen scripts. Episode 1, below, covers the first three pages. [Episode 2](#episode-2-how-models-stop-memorizing-and-learn-faster) covers the six newer pages: weight decay, early stopping, dropout, SGD, minibatch size and momentum. [Episode 3](#episode-3-batch-normalization-you-can-drag) covers the batch normalization page. [Episode 4](#episode-4-four-ways-to-close-the-overfitting-gap) covers the regularization comparison page. [Episode 5](#episode-5-convolutions-channels-and-the-arrow) covers the three convolution pages. [Episode 6](#episode-6-image-augmentation-and-fine-tuning) covers the image augmentation and fine-tuning pages. [Episode 7](#episode-7-three-cnns-five-epochs) covers the three-CNN comparison page. [Episode 8](#episode-8-keras-in-five-moves-and-nine-ways-to-break-it) covers the Keras patterns page. [Episode 9](#episode-9-recurrent-neural-networks) covers the recurrent network page. [Episode 10](#episode-10-lstm-a-memory-with-gates) covers the LSTM page. [Episode 11](#episode-11-attention-do-not-remember-look-back) covers the attention page. [Episode 12](#episode-12-keras-for-text-from-words-to-a-model) covers the Keras-for-text page. [Episode 13](#episode-13-the-transformer-attention-plus-order-stacked) covers the transformer page. [Episode 14](#episode-14-vision-transformers-a-picture-as-a-sentence-of-patches) covers the vision transformer page.
+This file holds fifteen scripts. Episode 1, below, covers the first three pages. [Episode 2](#episode-2-how-models-stop-memorizing-and-learn-faster) covers the six newer pages: weight decay, early stopping, dropout, SGD, minibatch size and momentum. [Episode 3](#episode-3-batch-normalization-you-can-drag) covers the batch normalization page. [Episode 4](#episode-4-four-ways-to-close-the-overfitting-gap) covers the regularization comparison page. [Episode 5](#episode-5-convolutions-channels-and-the-arrow) covers the three convolution pages. [Episode 6](#episode-6-image-augmentation-and-fine-tuning) covers the image augmentation and fine-tuning pages. [Episode 7](#episode-7-three-cnns-five-epochs) covers the three-CNN comparison page. [Episode 8](#episode-8-keras-in-five-moves-and-nine-ways-to-break-it) covers the Keras patterns page. [Episode 9](#episode-9-recurrent-neural-networks) covers the recurrent network page. [Episode 10](#episode-10-lstm-a-memory-with-gates) covers the LSTM page. [Episode 11](#episode-11-attention-do-not-remember-look-back) covers the attention page. [Episode 12](#episode-12-keras-for-text-from-words-to-a-model) covers the Keras-for-text page. [Episode 13](#episode-13-the-transformer-attention-plus-order-stacked) covers the transformer page. [Episode 14](#episode-14-vision-transformers-a-picture-as-a-sentence-of-patches) covers the vision transformer page. [Episode 15](#episode-15-pretraining-and-bert-learn-by-filling-in-the-blank) covers the pretraining and BERT page.
 
 ## At a glance
 
@@ -2062,3 +2062,112 @@ Based on Dive into Deep Learning (d2l.ai), section 11.8. Previous episode: the t
 ## Episode 14 tags
 
 vision transformer, ViT explained, ViT vs CNN, image patches, patch embedding, class token, position embedding, inductive bias, an image is worth 16x16 words, transformer for images, convolutional neural network, Fashion-MNIST, Swin transformer, computer vision, deep learning for beginners, dive into deep learning, d2l
+
+# Episode 15: Pretraining and BERT: Learn by Filling in the Blank
+
+BrokenLabsFix · Kris Hornung · November 2026
+
+## Episode 15 at a glance
+
+A 4-minute walkthrough of one page. Two small real fill-in-the-blank networks run in the page: one reads both ways, like BERT, and one reads left to right only. The episode hides words to show what each can and cannot work out, walks through the 15 percent masking recipe, and measures what a pretrained network is worth against training from scratch with 0 to 512 labelled sentences, including an honest failure of the standard [CLS] read-out.
+
+Third of three episodes on transformers: the architecture, vision transformers, pretraining and BERT.
+
+Made the same way as Episodes 6 to 9: the page first, then this script, then the video rendered from the page with a synthetic narration voice.
+
+| Part | Time | What happens |
+| --- | --- | --- |
+| Hook | 0:00–0:45 | Fill in the blank |
+| Part 1 | 0:45–1:26 | What a blank can and cannot tell you |
+| Part 2 | 1:26–1:59 | No labels needed |
+| Part 3 | 1:59–2:56 | Zero labels against 512 |
+| Part 4 | 2:56–3:21 | Encoder against decoder |
+| Wrap-up | 3:21–3:38 | Know a lot before the first label |
+
+Page: [bert.html](https://fleabyte26.github.io/Introduction-to-Deep-Learning/bert.html)
+
+Same format: left column is what to do on screen, right column is what to say. Every number is printed on the page.
+
+## Episode 15 hook (0:00–0:45)
+
+| Show | Say |
+| --- | --- |
+| The page, first panel. The animal is hidden | "The big, blank, sat on the mat. What is the missing word? You know it is cat. So does this small network. 99.9 percent." |
+| Point at the row of attention numbers | "How? It looked across the sentence. A quarter of its attention is on the last word. Mat. That clue is to the right of the blank." |
+| Click "Reads left to right only" | "Now a network that may only read left to right. The same blank. To the left there is only, the big. It cannot see, mat. Its best guess is 9 percent. One in twelve. Pure guessing." |
+| Scroll to the top of the page | "Reading both ways is the B in BERT. Bidirectional Encoder Representations from Transformers. In this episode: how it is trained with no labels at all, and what that training is worth. Sections 11.9 and 15.8 of Dive into Deep Learning." |
+
+## Episode 15 Part 1: Both ways, or one way (0:45–1:26)
+
+| Show | Say |
+| --- | --- |
+| Click the last word to hide it | "Hide the last word instead. Now the clue, cat, is on the left. The left to right network is fine. Mat, 99.9 percent. That is why reading one way is enough for writing. And not enough for understanding." |
+| Click "Reads both ways". Click the adjective | "Back to both ways. Hide the adjective. Big? Small? Old? Nothing in the sentence decides it. So the network spreads its guess. That is correct. It is unsure exactly when the text leaves the answer open." |
+| Click the last word. Change the place to "hive" | "One more. Make the ending wrong. The cat sat in the hive. Hide it, and ask. The network expects, mat. It gives, hive, almost zero. It is surprised by this sentence. Remember that." |
+
+## Episode 15 Part 2: The training recipe (1:26–1:59)
+
+| Show | Say |
+| --- | --- |
+| Scroll to "The training recipe" | "How is it trained? Take any text. Pick 15 words in every hundred. Most are replaced by a blank, in orange. The network must say what was there." |
+| Click "Pick again" | "Pick again, and the same text is a new exercise. Nobody labelled anything. The text is its own answer key. That is why it works on billions of words." |
+| Click "Do it to 100,000 words" | "Over a hundred thousand words, you see the full recipe. About 80 percent are blanked. 10 percent are swapped for a random word. 10 percent are left alone. So the network learns to check every word. Not only the blanks." |
+
+## Episode 15 Part 3: What pretraining is worth (1:59–2:56)
+
+| Show | Say |
+| --- | --- |
+| Scroll to "What the pretrained network is worth" | "What is this training worth? A new job. Does a sentence make sense? The cat sat on the mat: yes. The cat sat in the hive: no. And suppose we have zero labelled examples." |
+| Point at the numbers | "The pretrained network can already do it. Hide the last word. Ask how likely the real word is. If it is surprised, the sentence is wrong. With zero labels, it is right 99 percent of the time." |
+| Drag labelled sentences to 32 | "Now a network trained from nothing, in blue. With 32 labelled sentences: 56 percent. Barely better than a coin." |
+| Drag to 512 | "It needs 512 labelled sentences to catch up. So here, pretraining was worth about five hundred labels." |
+| Drag back to 32. Point at the orange line | "And the orange line is an honest failure. I first read the answer from the special slot called CLS. That is the standard recipe. It was no better than no pretraining. In my small experiment, nothing ever trained that slot. Real BERT trains it with a second task. Now you know why." |
+
+## Episode 15 Part 4: BERT and its opposite (2:56–3:21)
+
+| Show | Say |
+| --- | --- |
+| Scroll to "BERT, and its opposite" | "BERT and GPT are opposites. BERT is the encoder. It reads both ways, learns by filling in blanks, and is good at understanding text. GPT is the decoder. It reads left to right, learns by guessing the next word, and is good at writing." |
+| Scroll down to the weight count | "BERT base is 12 of the blocks from two episodes ago. 110 million weights. It learned from 3.3 billion words, with no human labels." |
+
+## Episode 15 wrap-up (3:21–3:38)
+
+| Show | Say |
+| --- | --- |
+| Back to the first panel | "So. Hide a word. Guess it from both sides. Repeat on billions of words. What comes out is a network that already knows a great deal before it sees your first labelled example. That is pretraining. Next, we put the whole series to work, on a production line. See you there." |
+
+## Episode 15 recording checklist
+
+- [ ] Check the live link opens
+- [ ] Browser zoom at 125%, light mode, bookmarks bar hidden, notifications off
+- [ ] Publishing on BrokenLabsFix (Hindi/Bahasa audience, auto-dubbing on)
+
+## Episode 15 title options
+
+1. BERT Explained: Pretraining by Filling in the Blank | Deep Learning Without the Formula Wall Ep. 15
+2. What Does BERT Stand For? Bidirectional, Shown With a Real Network | Deep Learning Without the Formula Wall Ep. 15
+3. Pretraining Explained: Why BERT Needs No Labels (BERT vs GPT) | Deep Learning Without the Formula Wall Ep. 15
+
+## Episode 15 description
+
+```
+One free interactive page with two real fill-in-the-blank networks running in your browser. Hide any word and compare a network that reads both ways, like BERT, with one that reads left to right only. Then see the masking recipe, and a real measurement of what pretraining is worth against training from scratch. No install, no code.
+
+Pretraining and BERT: learn by filling in the blank
+https://fleabyte26.github.io/Introduction-to-Deep-Learning/bert.html
+
+All pages and source: https://github.com/Fleabyte26/Introduction-to-Deep-Learning
+
+Based on Dive into Deep Learning (d2l.ai), sections 11.9 and 15.8. Previous episodes: the transformer, and vision transformers.
+
+0:00 Fill in the blank
+0:45 Both ways, or one way
+1:26 The training recipe: no labels needed
+1:59 What pretraining is worth
+2:56 BERT and its opposite, GPT
+3:21 Know a lot before the first label
+```
+
+## Episode 15 tags
+
+BERT explained, what does BERT stand for, bidirectional encoder representations from transformers, masked language model, pretraining, fine-tuning, self-supervised learning, BERT vs GPT, encoder vs decoder, CLS token, next sentence prediction, transformer, large language models, NLP, deep learning for beginners, dive into deep learning, d2l
