@@ -4,7 +4,7 @@ BrokenLabsFix · Kris Hornung · November 2026
 
 Watch the recorded video: https://www.youtube.com/watch?v=YQF4lMUv9d4
 
-This file holds sixteen scripts. Episode 1, below, covers the first three pages. [Episode 2](#episode-2-how-models-stop-memorizing-and-learn-faster) covers the six newer pages: weight decay, early stopping, dropout, SGD, minibatch size and momentum. [Episode 3](#episode-3-batch-normalization-you-can-drag) covers the batch normalization page. [Episode 4](#episode-4-four-ways-to-close-the-overfitting-gap) covers the regularization comparison page. [Episode 5](#episode-5-convolutions-channels-and-the-arrow) covers the three convolution pages. [Episode 6](#episode-6-image-augmentation-and-fine-tuning) covers the image augmentation and fine-tuning pages. [Episode 7](#episode-7-three-cnns-five-epochs) covers the three-CNN comparison page. [Episode 8](#episode-8-keras-in-five-moves-and-nine-ways-to-break-it) covers the Keras patterns page. [Episode 9](#episode-9-recurrent-neural-networks) covers the recurrent network page. [Episode 10](#episode-10-lstm-a-memory-with-gates) covers the LSTM page. [Episode 11](#episode-11-attention-do-not-remember-look-back) covers the attention page. [Episode 12](#episode-12-keras-for-text-from-words-to-a-model) covers the Keras-for-text page. [Episode 13](#episode-13-the-transformer-attention-plus-order-stacked) covers the transformer page. [Episode 14](#episode-14-vision-transformers-a-picture-as-a-sentence-of-patches) covers the vision transformer page. [Episode 15](#episode-15-pretraining-and-bert-learn-by-filling-in-the-blank) covers the pretraining and BERT page. [Episode 16](#episode-16-a-camera-on-the-line-from-video-to-one-row-per-fruit) covers the production line page.
+This file holds seventeen scripts. Episode 1, below, covers the first three pages. [Episode 2](#episode-2-how-models-stop-memorizing-and-learn-faster) covers the six newer pages: weight decay, early stopping, dropout, SGD, minibatch size and momentum. [Episode 3](#episode-3-batch-normalization-you-can-drag) covers the batch normalization page. [Episode 4](#episode-4-four-ways-to-close-the-overfitting-gap) covers the regularization comparison page. [Episode 5](#episode-5-convolutions-channels-and-the-arrow) covers the three convolution pages. [Episode 6](#episode-6-image-augmentation-and-fine-tuning) covers the image augmentation and fine-tuning pages. [Episode 7](#episode-7-three-cnns-five-epochs) covers the three-CNN comparison page. [Episode 8](#episode-8-keras-in-five-moves-and-nine-ways-to-break-it) covers the Keras patterns page. [Episode 9](#episode-9-recurrent-neural-networks) covers the recurrent network page. [Episode 10](#episode-10-lstm-a-memory-with-gates) covers the LSTM page. [Episode 11](#episode-11-attention-do-not-remember-look-back) covers the attention page. [Episode 12](#episode-12-keras-for-text-from-words-to-a-model) covers the Keras-for-text page. [Episode 13](#episode-13-the-transformer-attention-plus-order-stacked) covers the transformer page. [Episode 14](#episode-14-vision-transformers-a-picture-as-a-sentence-of-patches) covers the vision transformer page. [Episode 15](#episode-15-pretraining-and-bert-learn-by-filling-in-the-blank) covers the pretraining and BERT page. [Episode 16](#episode-16-a-camera-on-the-line-from-video-to-one-row-per-fruit) covers the production line page. [Episode 14, Part 2](#episode-14-part-2-shapes-first-the-numpy-moves-behind-a-transformer) covers the shapes page.
 
 ## At a glance
 
@@ -2286,3 +2286,115 @@ Builds on the earlier episodes: convolutional networks, confusion matrices, how 
 ## Episode 16 tags
 
 video analytics, quality control AI, visual inspection, production line AI, computer vision, defect detection, convolutional neural network, vision language model, JSON structured output, image API, edge AI, two-stage inference, confusion matrix, false reject, machine vision, food sorting, deep learning for beginners
+
+# Episode 14, Part 2: Shapes First: The Numpy Moves Behind a Transformer
+
+BrokenLabsFix · Kris Hornung · November 2026
+
+## Episode 14, Part 2 at a glance
+
+A 4-minute walkthrough of one page. The hands-on companion to the transformer and vision transformer episodes. It shows the array moves behind image patches and normalisation on small examples made for the page: cutting a picture into squares with the right and the wrong axis order, -1 in a reshape, and keepdims. Then a real comparison of a small vision transformer and a small CNN after 3 passes and after 30, and a spot-the-bug game built from nine real typing mistakes with their real error messages.
+
+It explains patterns and results only; it contains no assignment text and no assignment solutions.
+
+Made the same way as Episodes 6 to 9: the page first, then this script, then the video rendered from the page with a synthetic narration voice.
+
+| Part | Time | What happens |
+| --- | --- | --- |
+| Hook | 0:00–0:35 | Right shape, wrong answer |
+| Part 1 | 0:35–0:59 | The move behind image patches |
+| Part 2 | 0:59–1:35 | Minus one, and keepdims |
+| Part 3 | 1:35–2:18 | Transformer against CNN |
+| Part 4 | 2:18–3:20 | Real mistakes, real messages |
+| Wrap-up | 3:20–3:35 | Three habits |
+
+Page: [shapes.html](https://fleabyte26.github.io/Introduction-to-Deep-Learning/shapes.html)
+
+Same format: left column is what to do on screen, right column is what to say. Every number is printed on the page.
+
+## Episode 14, Part 2 hook (0:00–0:35)
+
+| Show | Say |
+| --- | --- |
+| The page, first panel. "Reshape only" selected | "A picture of four by four pixels. Cut it into four squares. Each square should come out as one row. Here is the result. Four rows of four. The shape is exactly right." |
+| Point at the picture on the right | "And the answer is wrong. The first row is zero, one, two, three. That is a strip across the top. Not a square. Put it back together, and the picture is scrambled." |
+| Scroll to the top of the page | "This is part two of the vision transformer episode. The array moves behind a transformer. A real result, after three passes and after thirty. And nine real mistakes. One of them gives no error at all." |
+
+## Episode 14, Part 2 Part 1: Cut, swap, flatten (0:35–0:59)
+
+| Show | Say |
+| --- | --- |
+| Click "Reshape, swap two axes, reshape" | "Here is the fix. Cut into a grid. Swap two axes. Then flatten. Now every row has one colour. Zero, one, four, five. The top left square. And the picture goes back together." |
+| Point at the shapes | "Look at the shapes. They are the same in both versions. So a test that only checks the shape cannot tell them apart. You have to put it back together, or look at it." |
+
+## Episode 14, Part 2 Part 2: Two small words (0:59–1:35)
+
+| Show | Say |
+| --- | --- |
+| Scroll to "Two small words". Click reshape(1, 4, 4) | "Two small words prevent most shape errors. First, minus one. Six pictures in a table. Reshape to one, four, four, and it fails. One means exactly one picture." |
+| Click reshape(-1, 4, 4) | "Minus one means, work it out for me. Six pictures in, six pictures out." |
+| Point at the right-hand box | "Second. Keepdims. Three rows of eight numbers. Take the average of each row, and the result has shape three. The axis is gone. Now subtract, and numpy cannot line them up." |
+| Click mean(axis=-1, keepdims=True) | "Add keepdims equals true. The shape is three by one. One average per row. And the subtraction works." |
+
+## Episode 14, Part 2 Part 3: Three passes, then thirty (1:35–2:18)
+
+| Show | Say |
+| --- | --- |
+| Scroll to "Three passes, then thirty" | "Now a real result. A vision transformer, in orange. A convolutional network, in blue. The same ten thousand clothing pictures. After three passes: 69 percent, against 84. The dots are that run." |
+| Drag passes to 12 | "But three passes is not a verdict. I trained both for longer. The transformer keeps climbing. It learns slowly, because it starts with no idea that neighbouring pixels belong together." |
+| Drag passes to 30 | "After thirty passes: 81 percent, against 89. The gap went from twelve points to eight. Then it stopped closing. And look at the training line. The convolutional network scores 96 percent on its own training pictures. It is memorising. The transformer is not." |
+
+## Episode 14, Part 2 Part 4: Spot the bug (2:18–3:20)
+
+| Show | Say |
+| --- | --- |
+| Scroll to "Spot the bug", bug 1 | "Now the mistakes. All real, from one afternoon. Number one. Which line is wrong?" |
+| Click line 3 | "Line three. One underscore where a space belongs. The word, return, is gone. What is left is a made up name. And Python says it is not defined." |
+| Click bug 5, then line 3 | "Number five. Loss, with a capital L. Read the message to the end. Did you mean, loss? Sometimes Python gives you the answer." |
+| Click bug 7 | "Number seven. A convolutional network. Every name here exists. So where is the mistake?" |
+| Click the last line | "The last line. It was fed data made for a different model. A name left over from the cell above. The error names a layer you did not get wrong, and two numbers you never typed. When that happens, check what you fed in." |
+| Click bug 9 | "And number nine. No error at all. It runs. Can you see it?" |
+| Click line 3 | "Line three. The multiplication was done on the line above, and then typed again in the return. The function hands back the wrong thing, under the right name. The only clue is the shape. Four by eight, where it should be four by four." |
+
+## Episode 14, Part 2 wrap-up (3:20–3:35)
+
+| Show | Say |
+| --- | --- |
+| Scroll to "Three habits for array code" | "Three habits. Print the shape after every step. Remember that a correct shape is not a correct result. And when you copy a cell, change the data names first." |
+| Back to the top | "The other bugs are on the page. The link is in the description. See you in the next one." |
+
+## Episode 14, Part 2 recording checklist
+
+- [ ] Check the live link opens
+- [ ] Browser zoom at 125%, light mode, bookmarks bar hidden, notifications off
+- [ ] Publishing on BrokenLabsFix (Hindi/Bahasa audience, auto-dubbing on)
+
+## Episode 14, Part 2 title options
+
+1. Numpy Shapes for Transformers: Reshape, Transpose, keepdims and 9 Real Bugs | Deep Learning Without the Formula Wall Ep. 14, Part 2
+2. Right Shape, Wrong Answer: The Numpy Moves Behind a Vision Transformer | Deep Learning Without the Formula Wall Ep. 14, Part 2
+3. ViT vs CNN After 3 Epochs and After 30, Plus Nine Real Python Bugs | Deep Learning Without the Formula Wall Ep. 14, Part 2
+
+## Episode 14, Part 2 description
+
+```
+One free interactive page on the array code behind a transformer. See why a reshape can give the right shape and the wrong answer, what -1 and keepdims do, how a vision transformer and a CNN compare after 3 passes and after 30, and find nine real bugs, one of which gives no error at all. No install, no code.
+
+Shapes first: the numpy moves behind a transformer, and nine ways to break them
+https://fleabyte26.github.io/Introduction-to-Deep-Learning/shapes.html
+
+All pages and source: https://github.com/Fleabyte26/Introduction-to-Deep-Learning
+
+Goes with Dive into Deep Learning (d2l.ai), sections 11.7 and 11.8. Part 1: vision transformers. Before that: the transformer.
+
+0:00 Right shape, wrong answer
+0:35 Cut, swap, flatten
+0:59 Two small words: -1 and keepdims
+1:35 Three passes, then thirty
+2:18 Spot the bug
+3:20 Three habits
+```
+
+## Episode 14, Part 2 tags
+
+numpy reshape, numpy transpose, keepdims, reshape -1, numpy shapes, image patches, patch embedding, vision transformer, ViT vs CNN, layer normalization, numpy broadcasting error, cannot reshape array, operands could not be broadcast, keras errors, python bugs, deep learning for beginners, dive into deep learning, d2l
