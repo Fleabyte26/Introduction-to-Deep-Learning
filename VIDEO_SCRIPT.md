@@ -4,7 +4,7 @@ BrokenLabsFix · Kris Hornung · November 2026
 
 Watch the recorded video: https://www.youtube.com/watch?v=YQF4lMUv9d4
 
-This file holds thirteen scripts. Episode 1, below, covers the first three pages. [Episode 2](#episode-2-how-models-stop-memorizing-and-learn-faster) covers the six newer pages: weight decay, early stopping, dropout, SGD, minibatch size and momentum. [Episode 3](#episode-3-batch-normalization-you-can-drag) covers the batch normalization page. [Episode 4](#episode-4-four-ways-to-close-the-overfitting-gap) covers the regularization comparison page. [Episode 5](#episode-5-convolutions-channels-and-the-arrow) covers the three convolution pages. [Episode 6](#episode-6-image-augmentation-and-fine-tuning) covers the image augmentation and fine-tuning pages. [Episode 7](#episode-7-three-cnns-five-epochs) covers the three-CNN comparison page. [Episode 8](#episode-8-keras-in-five-moves-and-nine-ways-to-break-it) covers the Keras patterns page. [Episode 9](#episode-9-recurrent-neural-networks) covers the recurrent network page. [Episode 10](#episode-10-lstm-a-memory-with-gates) covers the LSTM page. [Episode 11](#episode-11-attention-do-not-remember-look-back) covers the attention page. [Episode 12](#episode-12-keras-for-text-from-words-to-a-model) covers the Keras-for-text page. [Episode 13](#episode-13-the-transformer-attention-plus-order-stacked) covers the transformer page.
+This file holds fourteen scripts. Episode 1, below, covers the first three pages. [Episode 2](#episode-2-how-models-stop-memorizing-and-learn-faster) covers the six newer pages: weight decay, early stopping, dropout, SGD, minibatch size and momentum. [Episode 3](#episode-3-batch-normalization-you-can-drag) covers the batch normalization page. [Episode 4](#episode-4-four-ways-to-close-the-overfitting-gap) covers the regularization comparison page. [Episode 5](#episode-5-convolutions-channels-and-the-arrow) covers the three convolution pages. [Episode 6](#episode-6-image-augmentation-and-fine-tuning) covers the image augmentation and fine-tuning pages. [Episode 7](#episode-7-three-cnns-five-epochs) covers the three-CNN comparison page. [Episode 8](#episode-8-keras-in-five-moves-and-nine-ways-to-break-it) covers the Keras patterns page. [Episode 9](#episode-9-recurrent-neural-networks) covers the recurrent network page. [Episode 10](#episode-10-lstm-a-memory-with-gates) covers the LSTM page. [Episode 11](#episode-11-attention-do-not-remember-look-back) covers the attention page. [Episode 12](#episode-12-keras-for-text-from-words-to-a-model) covers the Keras-for-text page. [Episode 13](#episode-13-the-transformer-attention-plus-order-stacked) covers the transformer page. [Episode 14](#episode-14-vision-transformers-a-picture-as-a-sentence-of-patches) covers the vision transformer page.
 
 ## At a glance
 
@@ -1953,3 +1953,112 @@ Based on Dive into Deep Learning (d2l.ai), section 11.7. Previous episode on the
 ## Episode 13 tags
 
 transformer explained, transformer architecture, positional encoding, self-attention, multi-head attention, skip connections, residual connections, layer normalization, pre-norm vs post-norm, encoder decoder, BERT vs GPT, attention is all you need, causal mask, deep learning for beginners, dive into deep learning, d2l, large language models
+
+# Episode 14: Vision Transformers: A Picture as a Sentence of Patches
+
+BrokenLabsFix · Kris Hornung · November 2026
+
+## Episode 14 at a glance
+
+A 4-minute walkthrough of one page. A small real vision transformer runs in the page on 20 test pictures. The episode shows a picture cut into 49 patches, shuffles the row to show that only the position tags carry the layout, looks at what the network learned about position, and compares it with a convolutional network of the same size at four training-set sizes and on scrambled pictures.
+
+Second of three episodes on transformers: the architecture, vision transformers, pretraining and BERT.
+
+Made the same way as Episodes 6 to 9: the page first, then this script, then the video rendered from the page with a synthetic narration voice.
+
+| Part | Time | What happens |
+| --- | --- | --- |
+| Hook | 0:00–0:34 | A transformer that looks at pictures |
+| Part 1 | 0:34–1:11 | Shuffle the row |
+| Part 2 | 1:11–1:47 | What a CNN gets for free |
+| Part 3 | 1:47–2:47 | CNN against transformer, by data size |
+| Part 4 | 2:47–3:18 | 16 by 16 words |
+| Wrap-up | 3:18–3:37 | Squares as words |
+
+Page: [vit.html](https://fleabyte26.github.io/Introduction-to-Deep-Learning/vit.html)
+
+Same format: left column is what to do on screen, right column is what to say. Every number is printed on the page.
+
+## Episode 14 hook (0:00–0:34)
+
+| Show | Say |
+| --- | --- |
+| The page, first panel. Click the ankle boot picture | "This network has never seen this picture. It says ankle boot, 87 percent. It is right. But this is not a convolutional network. It is a transformer. The same kind that reads sentences." |
+| Point at the row of 49 small squares | "So how does a transformer read a picture? Cut it into squares. 49 of them. Each square becomes a vector, like a word. Line them up in a row. That is the whole idea." |
+| Scroll to the top of the page | "This is a vision transformer. Section 11.8 of Dive into Deep Learning. In this episode: what it has to learn that a convolutional network gets for free. And what that costs." |
+
+## Episode 14 Part 1: A bag of tagged squares (0:34–1:11)
+
+| Show | Say |
+| --- | --- |
+| Point at the orange picture | "One extra vector, called the class token, looks over all the squares and gives the answer. Orange shows where it looked hardest. Five squares hold about half of its attention." |
+| Click "Shuffle the row" | "Now shuffle the row. The squares are in a random order. And the answer does not move. Ankle boot, 87 percent. Exactly the same." |
+| Point at the numbers under the squares | "Why? Each square carries a position tag. That is the number under it. The network never used the order of the row. To a transformer, a picture is a bag of tagged squares." |
+| Click "Put it back in order". Click the last picture | "And it is not perfect. This one is an ankle boot too. The network says sandal. It is right on 85 percent of test pictures." |
+
+## Episode 14 Part 2: Learning where the squares are (1:11–1:47)
+
+| Show | Say |
+| --- | --- |
+| Scroll to "It has to learn where the patches are" | "A convolutional network is built knowing that pixels next to each other belong together. A transformer is not. Each position starts with a random tag. Training has to work out the layout of the picture by itself." |
+| Point at the numbers | "Did it? Here I have to be honest. Not really. Squares that touch have tags that are only slightly alike. With sixty thousand small pictures, this network has not worked out the grid. Large models, trained on far more pictures, do." |
+| Point at the verdict | "But the tags still matter. I trained the same network with no position tags at all. It scores 79 percent, instead of 85." |
+
+## Episode 14 Part 3: What it costs (1:47–2:47)
+
+| Show | Say |
+| --- | --- |
+| Scroll to "What that costs, and when it stops mattering" | "So what does that cost? Two networks, about twenty thousand weights each. A convolutional network, in blue. The vision transformer, in orange. With only 500 training pictures, the convolutional network is 8 points ahead." |
+| Drag training pictures to 2,000, then 8,000 | "Two thousand pictures. The gap stays. Eight thousand. The gap is down to about five and a half." |
+| Drag to 60,000 | "All sixty thousand. Four points. The convolutional network still wins here. But the gap has halved. With hundreds of millions of pictures, the published result is that the transformer catches up, and then passes it." |
+| Scroll down to the scrambled pictures | "One more test. Scramble every picture. The same squares, moved to the same wrong places. The convolutional network loses a little more than one point. The transformer loses nothing. It never assumed that neighbours belong together. So there was nothing to break." |
+| Point at the verdict | "That is the trade. An assumption about pictures helps when it is true and data is short. The transformer makes none. More to learn. Nothing to lose." |
+
+## Episode 14 Part 4: Patch size is the price (2:47–3:18)
+
+| Show | Say |
+| --- | --- |
+| Scroll to "Patch size is the price" | "Why squares, and not single pixels? Cost. A normal picture, 224 pixels wide, with squares of 16, gives 197 vectors. That is the model from the 2020 paper. Its title: an image is worth 16 by 16 words. 86 million weights." |
+| Drag patch size down to 8 | "Make the squares smaller. 8 pixels. Four times as many squares. Sixteen times the comparisons. Over six hundred thousand, in every layer, for one picture." |
+
+## Episode 14 wrap-up (3:18–3:37)
+
+| Show | Say |
+| --- | --- |
+| Back to the first panel | "So. Cut the picture into squares. Treat the squares as words. Use the same transformer. It knows nothing about pictures, so it needs more data. With enough data, that stops being a weakness. Next episode: how these models are trained before you ever see them. Pretraining, and BERT. See you there." |
+
+## Episode 14 recording checklist
+
+- [ ] Check the live link opens
+- [ ] Browser zoom at 125%, light mode, bookmarks bar hidden, notifications off
+- [ ] Publishing on BrokenLabsFix (Hindi/Bahasa audience, auto-dubbing on)
+
+## Episode 14 title options
+
+1. Vision Transformers Explained: A Picture as a Sentence of Patches | Deep Learning Without the Formula Wall Ep. 14
+2. ViT vs CNN, Tested for Real: Why Transformers Need More Data | Deep Learning Without the Formula Wall Ep. 14
+3. How a Transformer Sees an Image (With a Real Network You Can Click) | Deep Learning Without the Formula Wall Ep. 14
+
+## Episode 14 description
+
+```
+One free interactive page with a real vision transformer running in your browser. See a picture cut into 49 patches, shuffle them and watch the answer stay the same, then compare a vision transformer with a CNN of the same size at 500 to 60,000 training pictures, and on scrambled images. No install, no code.
+
+Vision transformers: a picture as a sentence of patches
+https://fleabyte26.github.io/Introduction-to-Deep-Learning/vit.html
+
+All pages and source: https://github.com/Fleabyte26/Introduction-to-Deep-Learning
+
+Based on Dive into Deep Learning (d2l.ai), section 11.8. Previous episode: the transformer.
+
+0:00 A transformer that looks at pictures
+0:34 A bag of tagged squares
+1:11 Learning where the squares are
+1:47 What it costs: CNN against transformer
+2:47 Patch size is the price
+3:18 Squares as words
+```
+
+## Episode 14 tags
+
+vision transformer, ViT explained, ViT vs CNN, image patches, patch embedding, class token, position embedding, inductive bias, an image is worth 16x16 words, transformer for images, convolutional neural network, Fashion-MNIST, Swin transformer, computer vision, deep learning for beginners, dive into deep learning, d2l
